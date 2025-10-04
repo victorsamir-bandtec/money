@@ -1,0 +1,134 @@
+"error.title" = "Something went wrong";
+"error.generic" = "The operation could not be completed.";
+"error.debtor.name" = "Enter a name for the debtor.";
+"error.expense.name" = "Enter a name for the expense.";
+"error.notifications.denied" = "Enable notifications in Settings to receive reminders.";
+"error.principal.invalid" = "Invalid principal amount.";
+"error.installments.invalid" = "Invalid number of installments.";
+"error.icloudunavailable" = "iCloud is currently unavailable.";
+"error.notfound" = "Requested resource not found.";
+
+"common.cancel" = "Cancel";
+"common.save" = "Save";
+"common.ok" = "OK";
+"common.remove" = "Remove";
+
+"tab.dashboard" = "Overview";
+"tab.debtors" = "Debtors";
+"tab.expenses" = "Expenses";
+"tab.settings" = "Settings";
+
+"dashboard.title" = "Overview";
+"dashboard.refresh" = "Reload";
+"dashboard.summary" = "Snapshot";
+"dashboard.metric.income" = "Incoming";
+"dashboard.metric.income.caption" = "Expected this month";
+"dashboard.metric.received" = "Received";
+"dashboard.metric.received.caption" = "Posted payments";
+"dashboard.metric.overdue" = "Overdue";
+"dashboard.metric.overdue.caption" = "Sum of overdue installments";
+"dashboard.metric.expenses" = "Expenses";
+"dashboard.metric.expenses.caption" = "Active fixed costs";
+"dashboard.metric.salary" = "Salary";
+"dashboard.metric.salary.caption" = "For current month";
+"dashboard.metric.balance" = "Balance";
+"dashboard.metric.balance.caption" = "Salary + received - expenses";
+"dashboard.upcoming" = "Upcoming installments";
+"dashboard.upcoming.empty" = "No payments due in the next 14 days.";
+
+"status.pending" = "Pending";
+"status.partial" = "Partial";
+"status.paid" = "Paid";
+"status.overdue" = "Overdue";
+
+"debtors.title" = "Debtors";
+"debtors.search" = "Search by name";
+"debtors.empty" = "Add your first debtor.";
+"debtors.add" = "New debtor";
+"debtors.filter.archived" = "Archived";
+"debtors.summary.title" = "Debtor portfolio";
+"debtors.summary.subtitle" = "Keep agreements organized and easy to follow";
+"debtors.filter.caption" = "Filter";
+"debtors.filter.active" = "Active only";
+"debtors.filter.all" = "Include archived";
+"debtors.metric.active" = "Active";
+"debtors.metric.active.caption" = "Total active debtors";
+"debtors.metric.archived" = "Archived";
+"debtors.metric.archived.caption" = "Total archived debtors";
+"debtors.search.clear" = "Clear search";
+"debtors.empty.title" = "A better way to track people";
+"debtors.empty.message" = "Add debtors to manage agreements and reminders in one place.";
+"debtors.empty.action" = "Add debtor";
+"debtors.row.archive" = "Archive";
+"debtors.row.unarchive" = "Restore";
+"debtors.row.archived" = "Archived";
+"debtors.row.agreements" = "%1$lld active agreements";
+"debtors.row.agreements.none" = "No active agreements";
+"debtors.row.agreements.single" = "%1$lld active agreement";
+"debtors.row.agreements.multiple" = "%1$lld active agreements";
+"debtors.row.phone" = "Phone: %1$@";
+"debtors.form.title" = "Add debtor";
+"debtors.form.info" = "Information";
+"debtors.form.name" = "Name";
+"debtors.form.phone" = "Phone";
+"debtors.form.note" = "Notes";
+
+"debtor.info" = "Debtor details";
+"debtor.name" = "Name";
+"debtor.phone" = "Phone";
+"debtor.agreements" = "Agreements";
+"debtor.agreements.empty" = "No agreements yet.";
+"debtor.addAgreement" = "New agreement";
+"debtor.agreement.untitled" = "Agreement";
+"debtor.agreement.summary" = "%1$lld installments • %2$lld open";
+"debtor.agreement.closed" = "Closed";
+"debtor.agreement.open" = "Active";
+"debtor.installment.number" = "Installment %1$lld";
+
+"agreement.form.details" = "Details";
+"agreement.form.title" = "Agreement name";
+"agreement.form.principal" = "Principal amount";
+"agreement.form.installments" = "%1$lld installments";
+"agreement.form.firstDue" = "First due date";
+"agreement.form.interest" = "Monthly interest (%)";
+"agreement.form.title.header" = "New agreement";
+
+"notification.installment.title" = "Installment due soon";
+"notification.installment.subtitle" = "Review your receivables";
+"notification.installment.body" = "Installment %1$lld is about to fall due.";
+
+"expenses.title" = "Expenses";
+"expenses.section.salary" = "Salary";
+"expenses.salary.add" = "Log salary";
+"expenses.salary.edit" = "Edit salary";
+"expenses.section.list" = "Fixed costs";
+"expenses.empty" = "No fixed expenses yet.";
+"expenses.add" = "New expense";
+"expenses.due" = "Due on %1$lld";
+"expenses.form.details" = "Details";
+"expenses.form.title" = "Add expense";
+"expenses.form.name" = "Description";
+"expenses.form.amount" = "Amount";
+"expenses.form.category" = "Category";
+"expenses.form.dueDay" = "Due day %1$lld";
+
+"salary.form.section" = "Monthly salary";
+"salary.form.amount" = "Amount received";
+"salary.form.month" = "For";
+"salary.form.title" = "Log salary";
+
+"settings.title" = "Settings";
+"settings.features" = "Features";
+"settings.liquid" = "Liquid Glass style";
+"settings.cloud" = "Sync with iCloud";
+"settings.notifications" = "Due reminders";
+"settings.notifications.request" = "Allow notifications";
+"settings.data" = "Data";
+"settings.sample" = "Populate with sample";
+"settings.export" = "Export CSV";
+"settings.share" = "Share export";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.developer" = "Money App Team";
+
+"sample.marlon.title" = "January Loan";

@@ -1,32 +1,16 @@
-//
-//  MoneyApp.swift
-//  Money
-//
-//  Created by victor samir on 03/10/25.
-//
-
 import SwiftUI
 import SwiftData
+import Observation
 
 @main
 struct MoneyApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
+    @State private var environment = AppEnvironment()
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .appEnvironment(environment)
         }
-        .modelContainer(sharedModelContainer)
+        .modelContainer(environment.container)
     }
 }

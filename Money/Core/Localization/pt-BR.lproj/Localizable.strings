@@ -1,0 +1,135 @@
+"error.title" = "Algo deu errado";
+"error.generic" = "Não foi possível concluir a operação.";
+"error.debtor.name" = "Informe um nome para o devedor.";
+"error.expense.name" = "Informe um nome para a despesa.";
+"error.notifications.denied" = "Ative as notificações em Ajustes para receber alertas de parcelas.";
+"error.principal.invalid" = "Valor principal inválido.";
+"error.installments.invalid" = "Número de parcelas inválido.";
+"error.icloudunavailable" = "iCloud indisponível no momento.";
+"error.notfound" = "Não encontramos o recurso solicitado.";
+
+"common.cancel" = "Cancelar";
+"common.save" = "Salvar";
+"common.ok" = "OK";
+"common.remove" = "Remover";
+
+"tab.dashboard" = "Resumo";
+"tab.debtors" = "Devedores";
+"tab.expenses" = "Despesas";
+"tab.settings" = "Ajustes";
+
+"dashboard.title" = "Resumo";
+"dashboard.refresh" = "Recarregar";
+"dashboard.summary" = "Visão geral";
+"dashboard.summary.subtitle" = "Panorama financeiro do mês";
+"dashboard.metric.income" = "A receber";
+"dashboard.metric.income.caption" = "Total previsto no mês";
+"dashboard.metric.received" = "Recebido";
+"dashboard.metric.received.caption" = "Baixas registradas";
+"dashboard.metric.overdue" = "Em atraso";
+"dashboard.metric.overdue.caption" = "Soma das parcelas atrasadas";
+"dashboard.metric.expenses" = "Despesas";
+"dashboard.metric.expenses.caption" = "Fixas ativas";
+"dashboard.metric.salary" = "Salário";
+"dashboard.metric.salary.caption" = "Referente ao mês";
+"dashboard.metric.balance" = "Saldo";
+"dashboard.metric.balance.caption" = "Salário + recebidos - despesas";
+"dashboard.upcoming" = "Próximas parcelas";
+"dashboard.upcoming.empty" = "Sem cobranças nos próximos 14 dias.";
+
+"status.pending" = "Pendente";
+"status.partial" = "Parcial";
+"status.paid" = "Pago";
+"status.overdue" = "Atrasado";
+
+"debtors.title" = "Devedores";
+"debtors.search" = "Buscar por nome";
+"debtors.empty" = "Cadastre seu primeiro devedor.";
+"debtors.add" = "Novo devedor";
+"debtors.filter.archived" = "Arquivados";
+"debtors.summary.title" = "Carteira de devedores";
+"debtors.summary.subtitle" = "Acompanhe acordos e mantenha tudo sob controle";
+"debtors.filter.caption" = "Filtrar";
+"debtors.filter.active" = "Somente ativos";
+"debtors.filter.all" = "Incluir arquivados";
+"debtors.metric.active" = "Ativos";
+"debtors.metric.active.caption" = "Devedores ativos no total";
+"debtors.metric.archived" = "Arquivados";
+"debtors.metric.archived.caption" = "Devedores arquivados";
+"debtors.search.clear" = "Limpar busca";
+"debtors.empty.title" = "Organize seus devedores";
+"debtors.empty.message" = "Cadastre pessoas e acompanhe seus acordos em um só lugar.";
+"debtors.empty.action" = "Adicionar devedor";
+"debtors.row.archive" = "Arquivar";
+"debtors.row.unarchive" = "Reativar";
+"debtors.row.archived" = "Arquivado";
+"debtors.row.agreements" = "%1$lld acordos ativos";
+"debtors.row.agreements.none" = "Sem acordos ativos";
+"debtors.row.agreements.single" = "%1$lld acordo ativo";
+"debtors.row.agreements.multiple" = "%1$lld acordos ativos";
+"debtors.row.phone" = "Telefone: %1$@";
+"debtors.form.title" = "Adicionar devedor";
+"debtors.form.info" = "Informações";
+"debtors.form.name" = "Nome";
+"debtors.form.phone" = "Telefone";
+"debtors.form.note" = "Anotações";
+
+"debtor.info" = "Dados do devedor";
+"debtor.name" = "Nome";
+"debtor.phone" = "Telefone";
+"debtor.agreements" = "Acordos";
+"debtor.agreements.empty" = "Nenhum acordo cadastrado.";
+"debtor.addAgreement" = "Novo acordo";
+"debtor.agreement.untitled" = "Acordo";
+"debtor.agreement.summary" = "%1$lld parcelas • %2$lld abertas";
+"debtor.agreement.closed" = "Encerrado";
+"debtor.agreement.open" = "Ativo";
+"debtor.installment.number" = "Parcela %1$lld";
+
+"agreement.form.details" = "Detalhes";
+"agreement.form.title" = "Nome do acordo";
+"agreement.form.principal" = "Valor total";
+"agreement.form.installments" = "%1$lld parcelas";
+"agreement.form.firstDue" = "Primeiro vencimento";
+"agreement.form.interest" = "Juros ao mês (%)";
+"agreement.form.title.header" = "Novo acordo";
+
+"notification.installment.title" = "Parcela próxima ao vencimento";
+"notification.installment.subtitle" = "Revise seus recebimentos";
+"notification.installment.body" = "Parcela %1$lld vence em breve.";
+
+"expenses.title" = "Despesas";
+"expenses.section.salary" = "Salário";
+"expenses.salary.add" = "Registrar salário";
+"expenses.salary.edit" = "Editar salário";
+"expenses.section.list" = "Fixas";
+"expenses.empty" = "Nenhuma despesa fixa cadastrada.";
+"expenses.add" = "Nova despesa";
+"expenses.due" = "Vence dia %1$lld";
+"expenses.form.details" = "Detalhes";
+"expenses.form.title" = "Adicionar despesa";
+"expenses.form.name" = "Descrição";
+"expenses.form.amount" = "Valor";
+"expenses.form.category" = "Categoria";
+"expenses.form.dueDay" = "Vence no dia %1$lld";
+
+"salary.form.section" = "Salário mensal";
+"salary.form.amount" = "Valor recebido";
+"salary.form.month" = "Referente a";
+"salary.form.title" = "Registrar salário";
+
+"settings.title" = "Ajustes";
+"settings.features" = "Recursos";
+"settings.liquid" = "Visual Liquid Glass";
+"settings.cloud" = "Sincronizar com iCloud";
+"settings.notifications" = "Alertas de vencimento";
+"settings.notifications.request" = "Permitir notificações";
+"settings.data" = "Dados";
+"settings.sample" = "Popular com exemplo";
+"settings.export" = "Exportar CSV";
+"settings.share" = "Compartilhar exportação";
+"settings.about" = "Sobre";
+"settings.version" = "Versão";
+"settings.developer" = "Equipe Money";
+
+"sample.marlon.title" = "Empréstimo Janeiro";

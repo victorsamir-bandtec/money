@@ -1,0 +1,31 @@
+import SwiftUI
+import SwiftData
+
+struct RootView: View {
+    @Environment(\.appEnvironment) private var environment
+    @Environment(\.modelContext) private var modelContext
+
+    var body: some View {
+        TabView {
+            DashboardScene(environment: environment, context: modelContext)
+                .tabItem {
+                    Label(String(localized: "tab.dashboard"), systemImage: "chart.bar.xaxis")
+                }
+            DebtorsScene(environment: environment, context: modelContext)
+                .tabItem {
+                    Label(String(localized: "tab.debtors"), systemImage: "person.3")
+                }
+            ExpensesScene(environment: environment, context: modelContext)
+                .tabItem {
+                    Label(String(localized: "tab.expenses"), systemImage: "creditcard")
+                }
+            SettingsScene(environment: environment)
+                .tabItem {
+                    Label(String(localized: "tab.settings"), systemImage: "gear")
+                }
+        }
+        .task {
+            try? environment.sampleDataService.populateIfNeeded()
+        }
+    }
+}
