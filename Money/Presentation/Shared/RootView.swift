@@ -24,6 +24,7 @@ struct RootView: View {
                     Label(String(localized: "tab.settings"), systemImage: "gear")
                 }
         }
+        .tint(.appThemeColor)
         .task {
             try? environment.sampleDataService.populateIfNeeded()
         }
