@@ -99,6 +99,7 @@ struct ExpensesScene: View {
                             } label: {
                                 Label(String(localized: "common.remove"), systemImage: "trash")
                             }
+                            .tint(.red)
                         }
                 }
             }
