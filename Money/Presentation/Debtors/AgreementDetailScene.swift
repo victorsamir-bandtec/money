@@ -5,7 +5,6 @@ struct AgreementDetailScene: View {
     @StateObject private var viewModel: AgreementDetailViewModel
     private let environment: AppEnvironment
     @State private var selectedInstallment: Installment?
-    @State private var showingPaymentForm = false
     @State private var paymentDraft = PaymentDraft()
     @State private var showingSuccessToast = false
     @State private var successMessage = ""
@@ -29,30 +28,29 @@ struct AgreementDetailScene: View {
         .background(AgreementDetailBackground())
         .navigationTitle(viewModel.agreement.title ?? String(localized: "debtor.agreement.untitled"))
         .navigationBarTitleDisplayMode(.inline)
-        .sheet(isPresented: $showingPaymentForm) {
-            if let installment = selectedInstallment {
-                PaymentForm(
-                    installment: installment,
-                    draft: $paymentDraft,
-                    formatter: environment.currencyFormatter
-                ) { action in
-                    switch action {
-                    case .save(let draft):
-                        viewModel.registerPayment(
-                            for: installment,
-                            amount: draft.amount,
-                            date: draft.date,
-                            method: draft.method,
-                            note: draft.note.isEmpty ? nil : draft.note
-                        )
-                        showingPaymentForm = false
-                        paymentDraft = PaymentDraft()
-                    case .cancel:
-                        showingPaymentForm = false
-                        paymentDraft = PaymentDraft()
-                    }
+        .sheet(item: $selectedInstallment) { installment in
+            RegisterPaymentScene(
+                installment: installment,
+                draft: $paymentDraft,
+                formatter: environment.currencyFormatter
+            ) { action in
+                switch action {
+                case .save(let draft):
+                    viewModel.registerPayment(
+                        for: installment,
+                        amount: draft.amount,
+                        date: draft.date,
+                        method: draft.method,
+                        note: draft.note.isEmpty ? nil : draft.note
+                    )
+                    selectedInstallment = nil
+                    paymentDraft = PaymentDraft()
+                case .cancel:
+                    selectedInstallment = nil
+                    paymentDraft = PaymentDraft()
                 }
             }
+            .presentationDetents([.medium, .large])
         }
         .task { try? viewModel.load() }
         .alert(item: errorBinding) { wrapper in
@@ -270,7 +268,6 @@ struct AgreementDetailScene: View {
                             onPayment: {
                                 selectedInstallment = installment
                                 paymentDraft = PaymentDraft(amount: installment.remainingAmount)
-                                showingPaymentForm = true
                             },
                             onMarkAsPaid: {
                                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
@@ -562,66 +559,7 @@ private struct PaymentRow: View {
     }
 }
 
-private struct PaymentForm: View {
-    let installment: Installment
-    @Binding var draft: PaymentDraft
-    let formatter: CurrencyFormatter
-    var completion: (ResultAction) -> Void
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(String(localized: "payment.form.details")) {
-                    TextField(String(localized: "payment.form.amount"), value: $draft.amount, format: .number)
-                        .keyboardType(.decimalPad)
-                    DatePicker(String(localized: "payment.form.date"), selection: $draft.date, displayedComponents: .date)
-                    Picker(String(localized: "payment.form.method"), selection: $draft.method) {
-                        ForEach(PaymentMethod.allCases, id: \.self) { method in
-                            Text(methodLabel(for: method)).tag(method)
-                        }
-                    }
-                    TextField(String(localized: "payment.form.note"), text: $draft.note, axis: .vertical)
-                        .lineLimit(3...6)
-                }
-
-                Section {
-                    HStack {
-                        Text(String(localized: "payment.form.remaining"))
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(formatter.string(from: installment.remainingAmount))
-                            .fontWeight(.semibold)
-                    }
-                }
-            }
-            .navigationTitle(String(localized: "payment.form.title"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel")) { completion(.cancel) }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save")) { completion(.save(draft)) }
-                        .disabled(draft.amount <= 0 || draft.amount > installment.remainingAmount)
-                }
-            }
-        }
-    }
-
-    private func methodLabel(for method: PaymentMethod) -> LocalizedStringKey {
-        switch method {
-        case .pix: return "payment.method.pix"
-        case .cash: return "payment.method.cash"
-        case .transfer: return "payment.method.transfer"
-        case .other: return "payment.method.other"
-        }
-    }
-
-    enum ResultAction {
-        case save(PaymentDraft)
-        case cancel
-    }
-}
+// Moved to RegisterPaymentScene.swift
 
 private struct AgreementDetailBackground: View {
     @Environment(\.colorScheme) private var colorScheme

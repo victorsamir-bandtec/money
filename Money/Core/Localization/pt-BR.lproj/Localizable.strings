@@ -175,6 +175,7 @@
 "payment.form.method" = "Método de pagamento";
 "payment.form.note" = "Observações";
 "payment.form.remaining" = "Restante da parcela";
+"payment.form.amount.invalid" = "Valor inválido ou maior que o restante";
 "payment.method.pix" = "PIX";
 "payment.method.cash" = "Dinheiro";
 "payment.method.transfer" = "Transferência";
