@@ -20,6 +20,7 @@ struct DashboardSummary: Sendable, Equatable {
 final class DashboardViewModel: ObservableObject {
     private let context: ModelContext
     private let currencyFormatter: CurrencyFormatter
+    private var notificationObservers: [Any] = []
 
     @Published var summary: DashboardSummary = .empty
     @Published var upcoming: [Installment] = []
@@ -28,6 +29,37 @@ final class DashboardViewModel: ObservableObject {
     init(context: ModelContext, currencyFormatter: CurrencyFormatter) {
         self.context = context
         self.currencyFormatter = currencyFormatter
+        setupNotificationObservers()
+    }
+
+    deinit {
+        notificationObservers.forEach { NotificationCenter.default.removeObserver($0) }
+    }
+
+    private func setupNotificationObservers() {
+        // Observe financial data changes to reload dashboard metrics
+        let financialObserver = NotificationCenter.default.addObserver(
+            forName: .financialDataDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                try? self?.load()
+            }
+        }
+        notificationObservers.append(financialObserver)
+
+        // Also observe payment data changes specifically
+        let paymentObserver = NotificationCenter.default.addObserver(
+            forName: .paymentDataDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                try? self?.load()
+            }
+        }
+        notificationObservers.append(paymentObserver)
     }
 
     func load(currentDate: Date = .now) throws {
@@ -39,22 +71,32 @@ final class DashboardViewModel: ObservableObject {
         let calendar = Calendar.current
         let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: date, end: date)
 
+        // Income for the month is based on installments due in this month
         let installmentDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
             installment.dueDate >= monthInterval.start && installment.dueDate < monthInterval.end
         })
         let installments = try context.fetch(installmentDescriptor)
 
+        // Force access to ensure fresh data from ModelContext (not cached)
+        installments.forEach { _ = $0.paidAmount }
+
         var monthIncome: Decimal = .zero
         var overdue: Decimal = .zero
-        var received: Decimal = .zero
-
         for installment in installments {
             monthIncome += installment.amount
             if installment.isOverdue {
                 overdue += installment.remainingAmount
             }
-            received += installment.paidAmount
         }
+
+        // Received in the month is derived from actual payments logged in the month,
+        // regardless of the installment's due month. This ensures the dashboard reacts
+        // immediately after a payment is registered.
+        let paymentsDescriptor = FetchDescriptor<Payment>(predicate: #Predicate { payment in
+            payment.date >= monthInterval.start && payment.date < monthInterval.end
+        })
+        let payments = try context.fetch(paymentsDescriptor)
+        let received: Decimal = payments.reduce(.zero) { $0 + $1.amount }
 
         let expenseDescriptor = FetchDescriptor<FixedExpense>(predicate: #Predicate { expense in
             expense.active
@@ -83,6 +125,10 @@ final class DashboardViewModel: ObservableObject {
             installment.dueDate >= date && installment.dueDate <= nextInterval
         }, sortBy: [SortDescriptor(\.dueDate)])
         let installments = try context.fetch(descriptor)
+
+        // Force access to ensure fresh data from ModelContext (not cached)
+        installments.forEach { _ = $0.paidAmount }
+
         upcoming = installments
         alerts = installments.filter { $0.isOverdue || $0.remainingAmount > .zero }
     }

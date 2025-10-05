@@ -89,6 +89,10 @@ final class AgreementDetailViewModel: ObservableObject {
 
             try context.save()
             try load()
+
+            // Notify other ViewModels that payment data changed
+            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
+            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
         } catch let error as AppError {
             context.rollback()
             self.error = error
@@ -103,6 +107,9 @@ final class AgreementDetailViewModel: ObservableObject {
             installment.status = status
             try context.save()
             try load()
+            // Notify listeners to refresh any dependent summaries or lists
+            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
+            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
@@ -129,6 +136,10 @@ final class AgreementDetailViewModel: ObservableObject {
 
             try context.save()
             try load()
+
+            // Notify other ViewModels that payment data changed
+            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
+            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
         } catch let error as AppError {
             context.rollback()
             self.error = error
@@ -159,6 +170,10 @@ final class AgreementDetailViewModel: ObservableObject {
 
             try context.save()
             try load()
+
+            // Notify other ViewModels that payment data changed
+            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
+            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")

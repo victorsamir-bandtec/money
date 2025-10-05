@@ -5,48 +5,99 @@ import Combine
 @MainActor
 final class DebtorDetailViewModel: ObservableObject {
     @Published private(set) var agreements: [DebtAgreement] = []
+    @Published private(set) var installments: [Installment] = []
     @Published var error: AppError?
 
     let debtor: Debtor
     private let context: ModelContext
     private let calculator: FinanceCalculator
     private let notificationScheduler: NotificationScheduling?
+    private var notificationObservers: [Any] = []
 
     init(debtor: Debtor, context: ModelContext, calculator: FinanceCalculator, notificationScheduler: NotificationScheduling?) {
         self.debtor = debtor
         self.context = context
         self.calculator = calculator
         self.notificationScheduler = notificationScheduler
+        setupNotificationObservers()
+    }
+
+    deinit {
+        notificationObservers.forEach { NotificationCenter.default.removeObserver($0) }
+    }
+
+    private func setupNotificationObservers() {
+        // Observe payment data changes to reload agreements when payments are registered
+        let paymentObserver = NotificationCenter.default.addObserver(
+            forName: .paymentDataDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                try? self?.load()
+            }
+        }
+        notificationObservers.append(paymentObserver)
+
+        // Observe agreement data changes to reload when agreements are modified
+        let agreementObserver = NotificationCenter.default.addObserver(
+            forName: .agreementDataDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                try? self?.load()
+            }
+        }
+        notificationObservers.append(agreementObserver)
+
+        // Observe financial changes as a catch‑all to keep metrics fresh
+        let financialObserver = NotificationCenter.default.addObserver(
+            forName: .financialDataDidChange,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                try? self?.load()
+            }
+        }
+        notificationObservers.append(financialObserver)
     }
 
     // MARK: - Computed Metrics
 
-    var totalAgreementsValue: Decimal {
-        agreements.flatMap { $0.installments }.reduce(.zero) { $0 + $1.amount }
-    }
+    var totalAgreementsValue: Decimal { installments.reduce(.zero) { $0 + $1.amount } }
 
-    var totalPaid: Decimal {
-        agreements.flatMap { $0.installments }.reduce(.zero) { $0 + $1.paidAmount }
-    }
+    var totalPaid: Decimal { installments.reduce(.zero) { $0 + $1.paidAmount } }
 
     var totalRemaining: Decimal {
         (totalAgreementsValue - totalPaid).clamped(to: .zero...totalAgreementsValue)
     }
 
-    var paidInstallmentsCount: Int {
-        agreements.flatMap { $0.installments }.filter { $0.status == .paid }.count
-    }
+    var paidInstallmentsCount: Int { installments.filter { $0.status == .paid }.count }
 
-    var totalInstallmentsCount: Int {
-        agreements.flatMap { $0.installments }.count
-    }
+    var totalInstallmentsCount: Int { installments.count }
 
     func load() throws {
         let targetID = debtor.id
-        let descriptor = FetchDescriptor<DebtAgreement>(predicate: #Predicate { agreement in
+        // Fetch agreements for the debtor for the list section
+        let agreementsDescriptor = FetchDescriptor<DebtAgreement>(predicate: #Predicate { agreement in
             agreement.debtor.id == targetID
         }, sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
-        agreements = try context.fetch(descriptor)
+        agreements = try context.fetch(agreementsDescriptor)
+
+        // Fetch all installments for the debtor to compute metrics using fresh values
+        let installmentsDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
+            installment.agreement.debtor.id == targetID
+        })
+        var fetchedInstallments = try context.fetch(installmentsDescriptor)
+        // Fallback: if nested predicate fails for any reason, rely on relationships
+        if fetchedInstallments.isEmpty && !agreements.isEmpty {
+            fetchedInstallments = agreements.flatMap { $0.installments }
+        }
+        // Force access to refresh values from context
+        fetchedInstallments.forEach { _ = $0.paidAmount }
+        installments = fetchedInstallments.sorted(by: { $0.number < $1.number })
     }
 
     func createAgreement(from draft: AgreementDraft) {
@@ -124,6 +175,11 @@ final class DebtorDetailViewModel: ObservableObject {
                 Task { try? await scheduler.scheduleReminder(for: payload) }
             }
             try load()
+            // Notify other views that financial/payment data changed so dashboards and
+            // lists can refresh immediately after a manual status change performed
+            // from DebtorDetailScene.
+            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
+            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
