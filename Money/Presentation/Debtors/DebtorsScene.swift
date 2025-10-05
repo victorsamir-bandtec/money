@@ -306,14 +306,6 @@ private struct DebtorRow: View {
         return debtor.agreements.isEmpty ? .orange : .green
     }
 
-    private var initials: String {
-        debtor.name
-            .split(separator: " ")
-            .prefix(2)
-            .map { String($0.prefix(1)).uppercased() }
-            .joined()
-    }
-
     private var baseFill: Color {
         colorScheme == .dark
             ? Color.white.opacity(0.05)
@@ -323,7 +315,7 @@ private struct DebtorRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top, spacing: 14) {
-                DebtorAvatar(initials: initials)
+                DebtorAvatar(initials: debtor.initials)
 
                 VStack(alignment: .leading, spacing: 6) {
                     Text(debtor.name)
@@ -360,28 +352,6 @@ private struct DebtorRow: View {
             RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.12))
         )
-    }
-}
-
-private struct DebtorAvatar: View {
-    let initials: String
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [Color.accentColor, Color.accentColor.opacity(0.45)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            Text(initials)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.white)
-        }
-        .frame(width: 48, height: 48)
-        .shadow(color: Color.accentColor.opacity(0.35), radius: 8, x: 0, y: 4)
     }
 }
 

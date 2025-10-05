@@ -19,6 +19,28 @@ final class DebtorDetailViewModel: ObservableObject {
         self.notificationScheduler = notificationScheduler
     }
 
+    // MARK: - Computed Metrics
+
+    var totalAgreementsValue: Decimal {
+        agreements.flatMap { $0.installments }.reduce(.zero) { $0 + $1.amount }
+    }
+
+    var totalPaid: Decimal {
+        agreements.flatMap { $0.installments }.reduce(.zero) { $0 + $1.paidAmount }
+    }
+
+    var totalRemaining: Decimal {
+        (totalAgreementsValue - totalPaid).clamped(to: .zero...totalAgreementsValue)
+    }
+
+    var paidInstallmentsCount: Int {
+        agreements.flatMap { $0.installments }.filter { $0.status == .paid }.count
+    }
+
+    var totalInstallmentsCount: Int {
+        agreements.flatMap { $0.installments }.count
+    }
+
     func load() throws {
         let targetID = debtor.id
         let descriptor = FetchDescriptor<DebtAgreement>(predicate: #Predicate { agreement in

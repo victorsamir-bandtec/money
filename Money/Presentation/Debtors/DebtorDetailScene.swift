@@ -4,11 +4,13 @@ import SwiftData
 struct DebtorDetailScene: View {
     @StateObject private var viewModel: DebtorDetailViewModel
     private let environment: AppEnvironment
+    private let context: ModelContext
     @State private var showingAgreementForm = false
     @State private var draft = AgreementDraft()
 
     init(debtor: Debtor, environment: AppEnvironment, context: ModelContext) {
         self.environment = environment
+        self.context = context
         let scheduler: NotificationScheduling? = environment.featureFlags.enableNotifications ? environment.notificationScheduler : nil
         let viewModel = DebtorDetailViewModel(
             debtor: debtor,
@@ -20,11 +22,16 @@ struct DebtorDetailScene: View {
     }
 
     var body: some View {
-        List {
-            infoSection
-            agreementsSection
+        ScrollView {
+            VStack(spacing: 28) {
+                metricsSection
+                debtorInfoSection
+                agreementsSection
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 24)
         }
-        .listStyle(.insetGrouped)
+        .background(DebtorDetailBackground())
         .navigationTitle(viewModel.debtor.name)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -55,45 +62,164 @@ struct DebtorDetailScene: View {
         }
     }
 
-    private var infoSection: some View {
-        Section(String(localized: "debtor.info")) {
-            LabeledContent(String(localized: "debtor.name"), value: viewModel.debtor.name)
-            if let phone = viewModel.debtor.phone {
-                phoneRow(phone)
+    private var metricsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            MetricCard(
+                title: "debtor.metric.remaining",
+                value: environment.currencyFormatter.string(from: viewModel.totalRemaining),
+                caption: "debtor.metric.remaining.caption",
+                icon: "exclamationmark.triangle.fill",
+                tint: viewModel.totalRemaining > 0 ? .orange : .green,
+                style: .prominent
+            )
+
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], alignment: .leading, spacing: 16) {
+                MetricCard(
+                    title: "debtor.metric.total",
+                    value: environment.currencyFormatter.string(from: viewModel.totalAgreementsValue),
+                    caption: "debtor.metric.total.caption",
+                    icon: "banknote.fill",
+                    tint: .blue
+                )
+                MetricCard(
+                    title: "debtor.metric.paid",
+                    value: environment.currencyFormatter.string(from: viewModel.totalPaid),
+                    caption: "debtor.metric.paid.caption",
+                    icon: "checkmark.seal.fill",
+                    tint: .green
+                )
+                MetricCard(
+                    title: "debtor.metric.installments.paid",
+                    value: "\(viewModel.paidInstallmentsCount)",
+                    caption: "debtor.metric.installments.paid.caption",
+                    icon: "checklist",
+                    tint: .teal
+                )
+                MetricCard(
+                    title: "debtor.metric.installments.total",
+                    value: "\(viewModel.totalInstallmentsCount)",
+                    caption: "debtor.metric.installments.total.caption",
+                    icon: "list.number",
+                    tint: .purple
+                )
             }
-            if let note = viewModel.debtor.note, !note.isEmpty {
-                Text(note)
-                    .font(.body)
+        }
+    }
+
+    private var debtorInfoSection: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(String(localized: "debtor.info.title"))
+                    .font(.headline)
                     .foregroundStyle(.secondary)
+            }
+
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 14) {
+                    DebtorAvatar(initials: viewModel.debtor.initials)
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(viewModel.debtor.name)
+                            .font(.title3.weight(.semibold))
+
+                        if let phone = viewModel.debtor.phone {
+                            phoneLink(phone)
+                        }
+                    }
+
+                    Spacer(minLength: 0)
+                }
+
+                if let note = viewModel.debtor.note, !note.isEmpty {
+                    Text(note)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+                }
+            }
+            .padding(20)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.08))
+            )
+        }
+    }
+
+    private func phoneLink(_ phone: String) -> some View {
+        Group {
+            if let url = URL(string: "tel://\(phone)") {
+                Link(destination: url) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "phone.fill")
+                            .font(.caption)
+                        Text(phone)
+                            .font(.subheadline)
+                    }
+                    .foregroundStyle(Color.accentColor)
+                }
+            } else {
+                HStack(spacing: 6) {
+                    Image(systemName: "phone.fill")
+                        .font(.caption)
+                    Text(phone)
+                        .font(.subheadline)
+                }
+                .foregroundStyle(.secondary)
             }
         }
     }
 
     private var agreementsSection: some View {
-        Section(String(localized: "debtor.agreements")) {
-            if viewModel.agreements.isEmpty {
-                ContentUnavailableView(String(localized: "debtor.agreements.empty"), systemImage: "doc.text")
-            } else {
-                ForEach(viewModel.agreements, id: \.id) { agreement in
-                    AgreementCard(agreement: agreement, formatter: environment.currencyFormatter) { installment, status in
-                        viewModel.mark(installment: installment, as: status)
-                    }
-                    .listRowSeparator(.hidden)
-                    .padding(.vertical, 8)
-                }
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(String(localized: "debtor.agreements"))
+                    .font(.headline)
+                    .foregroundStyle(.secondary)
+                Text(String(localized: "debtor.agreements.subtitle"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
-        }
-    }
 
-    private func phoneRow(_ phone: String) -> some View {
-        Group {
-            if let url = URL(string: "tel://\(phone)") {
-                LabeledContent(String(localized: "debtor.phone")) {
-                    Link(phone, destination: url)
-                        .tint(.accentColor)
+            if viewModel.agreements.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "doc.text.fill")
+                        .font(.system(size: 44, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+
+                    Text(String(localized: "debtor.agreements.empty"))
+                        .font(.headline)
+
+                    Text(String(localized: "debtor.agreements.empty.message"))
+                        .font(.subheadline)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
                 }
+                .padding(32)
+                .frame(maxWidth: .infinity)
+                .background(
+                    GlassBackgroundStyle.current.material,
+                    in: RoundedRectangle(cornerRadius: 28, style: .continuous)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.08))
+                )
             } else {
-                LabeledContent(String(localized: "debtor.phone"), value: phone)
+                VStack(spacing: 16) {
+                    ForEach(viewModel.agreements, id: \.id) { agreement in
+                        NavigationLink(destination: AgreementDetailScene(agreement: agreement, environment: environment, context: context)) {
+                            AgreementCard(agreement: agreement, formatter: environment.currencyFormatter) { installment, status in
+                                viewModel.mark(installment: installment, as: status)
+                            }
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
             }
         }
     }
@@ -234,5 +360,41 @@ private struct AgreementForm: View {
     enum ResultAction {
         case save(AgreementDraft)
         case cancel
+    }
+}
+
+private struct DebtorDetailBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        ZStack {
+            Color(.systemBackground)
+            LinearGradient(
+                colors: gradientColors,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .opacity(colorScheme == .dark ? 1 : 0.6)
+            RadialGradient(
+                colors: [Color.accentColor.opacity(colorScheme == .dark ? 0.20 : 0.10), Color.clear],
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 400
+            )
+        }
+        .ignoresSafeArea()
+    }
+
+    private var gradientColors: [Color] {
+        if colorScheme == .dark {
+            return [
+                Color(red: 0.05, green: 0.08, blue: 0.13),
+                Color(red: 0.01, green: 0.02, blue: 0.05)
+            ]
+        }
+        return [
+            Color(.systemGroupedBackground),
+            Color(.secondarySystemGroupedBackground)
+        ]
     }
 }
