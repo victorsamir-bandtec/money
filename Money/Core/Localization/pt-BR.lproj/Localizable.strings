@@ -181,3 +181,14 @@
 "payment.method.other" = "Outro";
 "payment.history" = "Histórico de pagamentos";
 "payment.paid" = "Pago";
+"payment.paid.full" = "Pago integralmente";
+"payment.mark.paid" = "Marcar como pago";
+"payment.mark.paid.full" = "Marcar como pago total";
+"payment.mark.paid.confirm" = "Confirmar pagamento?";
+"payment.mark.paid.success" = "🎉 Parcela marcada como paga!";
+"payment.undo" = "Desfazer";
+"payment.quick.note" = "Pagamento total via marcação rápida";
+"payment.celebrating" = "🎉 Parcela quitada!";
+
+"agreement.installments.empty" = "Nenhuma parcela encontrada";
+"agreement.installments.empty.message" = "Este acordo ainda não possui parcelas cadastradas.";

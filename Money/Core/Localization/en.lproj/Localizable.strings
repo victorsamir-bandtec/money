@@ -180,3 +180,14 @@
 "payment.method.other" = "Other";
 "payment.history" = "Payment history";
 "payment.paid" = "Paid";
+"payment.paid.full" = "Paid in full";
+"payment.mark.paid" = "Mark as paid";
+"payment.mark.paid.full" = "Mark as fully paid";
+"payment.mark.paid.confirm" = "Confirm payment?";
+"payment.mark.paid.success" = "🎉 Installment marked as paid!";
+"payment.undo" = "Undo";
+"payment.quick.note" = "Full payment via quick action";
+"payment.celebrating" = "🎉 Installment settled!";
+
+"agreement.installments.empty" = "No installments found";
+"agreement.installments.empty.message" = "This agreement doesn't have any installments yet.";

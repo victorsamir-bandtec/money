@@ -18,11 +18,11 @@ final class AgreementDetailViewModel: ObservableObject {
     // MARK: - Computed Metrics
 
     var totalAmount: Decimal {
-        agreement.installments.reduce(.zero) { $0 + $1.amount }
+        installments.reduce(.zero) { $0 + $1.amount }
     }
 
     var totalPaid: Decimal {
-        agreement.installments.reduce(.zero) { $0 + $1.paidAmount }
+        installments.reduce(.zero) { $0 + $1.paidAmount }
     }
 
     var remainingAmount: Decimal {
@@ -30,11 +30,11 @@ final class AgreementDetailViewModel: ObservableObject {
     }
 
     var paidInstallmentsCount: Int {
-        agreement.installments.filter { $0.status == .paid }.count
+        installments.filter { $0.status == .paid }.count
     }
 
     var overdueInstallmentsCount: Int {
-        agreement.installments.filter { $0.isOverdue }.count
+        installments.filter { $0.isOverdue }.count
     }
 
     var progressPercentage: Double {
@@ -44,7 +44,7 @@ final class AgreementDetailViewModel: ObservableObject {
     }
 
     var sortedInstallments: [Installment] {
-        agreement.installments.sorted { $0.number < $1.number }
+        installments.sorted { $0.number < $1.number }
     }
 
     // MARK: - Methods
@@ -101,6 +101,62 @@ final class AgreementDetailViewModel: ObservableObject {
     func updateInstallmentStatus(_ installment: Installment, to status: InstallmentStatus) {
         do {
             installment.status = status
+            try context.save()
+            try load()
+        } catch {
+            context.rollback()
+            self.error = .persistence("error.generic")
+        }
+    }
+
+    func markAsPaidFull(_ installment: Installment, method: PaymentMethod = .other) {
+        do {
+            let remainingAmount = installment.remainingAmount
+
+            // Create automatic payment for remaining amount
+            let payment = Payment(
+                installment: installment,
+                date: .now,
+                amount: remainingAmount,
+                method: method,
+                note: String(localized: "payment.quick.note")
+            )
+            context.insert(payment)
+
+            // Mark as fully paid
+            installment.paidAmount = installment.amount
+            installment.status = .paid
+
+            try context.save()
+            try load()
+        } catch let error as AppError {
+            context.rollback()
+            self.error = error
+        } catch {
+            context.rollback()
+            self.error = .persistence("error.generic")
+        }
+    }
+
+    func undoLastPayment(_ installment: Installment) {
+        do {
+            guard let lastPayment = installment.payments.sorted(by: { $0.date > $1.date }).first else {
+                return
+            }
+
+            // Remove payment
+            context.delete(lastPayment)
+
+            // Update paid amount
+            installment.paidAmount -= lastPayment.amount
+
+            // Update status
+            if installment.paidAmount == 0 {
+                installment.status = installment.isOverdue ? .overdue : .pending
+            } else if installment.paidAmount < installment.amount {
+                installment.status = .partial
+            }
+
             try context.save()
             try load()
         } catch {

@@ -7,6 +7,8 @@ struct AgreementDetailScene: View {
     @State private var selectedInstallment: Installment?
     @State private var showingPaymentForm = false
     @State private var paymentDraft = PaymentDraft()
+    @State private var showingSuccessToast = false
+    @State private var successMessage = ""
 
     init(agreement: DebtAgreement, environment: AppEnvironment, context: ModelContext) {
         self.environment = environment
@@ -59,6 +61,13 @@ struct AgreementDetailScene: View {
                 message: Text(wrapper.localizedDescription),
                 dismissButton: .default(Text(String(localized: "common.ok")))
             )
+        }
+        .overlay(alignment: .top) {
+            if showingSuccessToast {
+                SuccessToast(message: successMessage)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .zIndex(999)
+            }
         }
     }
 
@@ -227,17 +236,62 @@ struct AgreementDetailScene: View {
                     .foregroundStyle(.secondary)
             }
 
-            VStack(spacing: 12) {
-                ForEach(viewModel.sortedInstallments, id: \.id) { installment in
-                    InstallmentCard(
-                        installment: installment,
-                        formatter: environment.currencyFormatter,
-                        onPayment: {
-                            selectedInstallment = installment
-                            paymentDraft = PaymentDraft(amount: installment.remainingAmount)
-                            showingPaymentForm = true
-                        }
-                    )
+            if viewModel.sortedInstallments.isEmpty {
+                // Empty state
+                VStack(spacing: 16) {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.system(size: 48, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+
+                    Text(String(localized: "agreement.installments.empty"))
+                        .font(.headline)
+
+                    Text(String(localized: "agreement.installments.empty.message"))
+                        .font(.subheadline)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(40)
+                .frame(maxWidth: .infinity)
+                .background(
+                    GlassBackgroundStyle.current.material,
+                    in: RoundedRectangle(cornerRadius: 28, style: .continuous)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.08))
+                )
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(viewModel.sortedInstallments, id: \.id) { installment in
+                        InstallmentCard(
+                            installment: installment,
+                            formatter: environment.currencyFormatter,
+                            onPayment: {
+                                selectedInstallment = installment
+                                paymentDraft = PaymentDraft(amount: installment.remainingAmount)
+                                showingPaymentForm = true
+                            },
+                            onMarkAsPaid: {
+                                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                                    viewModel.markAsPaidFull(installment)
+                                    successMessage = String(localized: "payment.mark.paid.success")
+                                    showingSuccessToast = true
+                                }
+                                // Hide toast after 2 seconds
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                    withAnimation {
+                                        showingSuccessToast = false
+                                    }
+                                }
+                            },
+                            onUndo: {
+                                withAnimation {
+                                    viewModel.undoLastPayment(installment)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -279,7 +333,10 @@ private struct InstallmentCard: View {
     let installment: Installment
     let formatter: CurrencyFormatter
     var onPayment: () -> Void
+    var onMarkAsPaid: () -> Void
+    var onUndo: () -> Void
     @State private var showPayments = false
+    @State private var showCheckAnimation = false
 
     private var statusColor: Color {
         switch installment.status {
@@ -383,20 +440,60 @@ private struct InstallmentCard: View {
                 }
             }
 
-            // Register payment button
-            if installment.status != .paid {
-                Button(action: onPayment) {
+            // Action buttons
+            if installment.status == .paid {
+                // Paid status with undo option
+                HStack(spacing: 12) {
                     HStack {
-                        Image(systemName: "plus.circle.fill")
-                        Text(String(localized: "payment.register"))
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                        Text(String(localized: "payment.paid.full"))
                             .fontWeight(.semibold)
+                            .foregroundStyle(.green)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 14))
-                    .foregroundStyle(.white)
+                    .background(Color.green.opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+
+                    if !installment.payments.isEmpty {
+                        Button(action: onUndo) {
+                            Image(systemName: "arrow.uturn.backward")
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.orange)
+                                .frame(width: 44, height: 44)
+                                .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+                        }
+                        .buttonStyle(.plain)
+                    }
                 }
-                .buttonStyle(.plain)
+            } else {
+                // Quick action buttons for unpaid installments
+                HStack(spacing: 12) {
+                    // Quick mark as paid button
+                    QuickActionButton(
+                        title: "payment.mark.paid",
+                        icon: "checkmark.circle.fill",
+                        color: .green
+                    ) {
+                        onMarkAsPaid()
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                            showCheckAnimation = true
+                        }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                            showCheckAnimation = false
+                        }
+                    }
+
+                    // Detailed payment button
+                    QuickActionButton(
+                        title: "payment.register",
+                        icon: "dollarsign.circle.fill",
+                        color: .accentColor,
+                        style: .secondary
+                    ) {
+                        onPayment()
+                    }
+                }
             }
         }
         .padding(18)
@@ -409,6 +506,21 @@ private struct InstallmentCard: View {
                 .strokeBorder(statusColor.opacity(0.25), lineWidth: 1.5)
         )
         .shadow(color: statusColor.opacity(0.1), radius: 8, x: 0, y: 4)
+        .overlay {
+            if showCheckAnimation {
+                CheckmarkAnimation()
+            }
+        }
+        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+            if installment.status != .paid {
+                Button {
+                    onMarkAsPaid()
+                } label: {
+                    Label("payment.mark.paid", systemImage: "checkmark.circle.fill")
+                }
+                .tint(.green)
+            }
+        }
     }
 }
 
@@ -553,5 +665,115 @@ private struct LocalizedErrorWrapper: Identifiable {
 
     var localizedDescription: String {
         error.errorDescription ?? ""
+    }
+}
+
+// MARK: - Quick Action Components
+
+private struct QuickActionButton: View {
+    enum ButtonStyle {
+        case primary
+        case secondary
+    }
+
+    let title: LocalizedStringKey
+    let icon: String
+    let color: Color
+    var style: ButtonStyle = .primary
+    let action: () -> Void
+    @State private var isPressed = false
+
+    var body: some View {
+        Button(action: {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                isPressed = true
+            }
+            action()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isPressed = false
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+            }
+            .frame(maxWidth: style == .primary ? .infinity : nil)
+            .padding(.vertical, 12)
+            .padding(.horizontal, style == .primary ? 16 : 14)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(style == .primary ? color : color.opacity(0.15))
+            )
+            .foregroundStyle(style == .primary ? .white : color)
+            .scaleEffect(isPressed ? 0.95 : 1.0)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct CheckmarkAnimation: View {
+    @State private var scale: CGFloat = 0.5
+    @State private var opacity: Double = 0
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(Color.green.opacity(0.2))
+                .frame(width: 100, height: 100)
+
+            Image(systemName: "checkmark.circle.fill")
+                .font(.system(size: 60))
+                .foregroundStyle(.green)
+        }
+        .scaleEffect(scale)
+        .opacity(opacity)
+        .onAppear {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                scale = 1.2
+                opacity = 1
+            }
+            withAnimation(.easeOut(duration: 0.3).delay(0.4)) {
+                opacity = 0
+            }
+        }
+    }
+}
+
+private struct SuccessToast: View {
+    let message: String
+    @State private var offset: CGFloat = -100
+    @State private var opacity: Double = 0
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "checkmark.circle.fill")
+                .font(.title3)
+                .foregroundStyle(.green)
+
+            Text(message)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+
+            Spacer()
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.1), radius: 12, x: 0, y: 4)
+        )
+        .padding(.horizontal, 20)
+        .padding(.top, 60)
+        .offset(y: offset)
+        .opacity(opacity)
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                offset = 0
+                opacity = 1
+            }
+        }
     }
 }
