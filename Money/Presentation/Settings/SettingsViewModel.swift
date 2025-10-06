@@ -31,6 +31,7 @@ final class SettingsViewModel: ObservableObject {
     func toggleNotifications(_ enabled: Bool) {
         notificationsEnabled = enabled
         environment.featureFlags.enableNotifications = enabled
+        environment.saveFeatureFlags()
     }
 
     func requestNotificationPermission() async {

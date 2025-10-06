@@ -13,6 +13,7 @@ final class DebtorDetailViewModel: ObservableObject {
     private let calculator: FinanceCalculator
     private let notificationScheduler: NotificationScheduling?
     private var notificationObservers: [Any] = []
+    private var reminderSyncTask: Task<Void, Never>?
 
     init(debtor: Debtor, context: ModelContext, calculator: FinanceCalculator, notificationScheduler: NotificationScheduling?) {
         self.debtor = debtor
@@ -153,6 +154,7 @@ final class DebtorDetailViewModel: ObservableObject {
     }
 
     func mark(installment: Installment, as status: InstallmentStatus) {
+        let agreement = installment.agreement
         switch status {
         case .paid:
             installment.paidAmount = installment.amount
@@ -165,26 +167,54 @@ final class DebtorDetailViewModel: ObservableObject {
             installment.status = .pending
         }
         do {
+            let closedChanged = agreement.updateClosedStatus()
             try context.save()
-            if let scheduler = notificationScheduler {
-                let payload = InstallmentReminderPayload(
-                    agreementID: installment.agreement.id,
-                    installmentNumber: installment.number,
-                    dueDate: installment.dueDate
-                )
-                Task { try? await scheduler.scheduleReminder(for: payload) }
-            }
+            syncReminders(for: agreement)
             try load()
             // Notify other views that financial/payment data changed so dashboards and
             // lists can refresh immediately after a manual status change performed
             // from DebtorDetailScene.
             NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
             NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
+            if closedChanged {
+                NotificationCenter.default.post(name: .agreementDataDidChange, object: nil)
+            }
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
         }
     }
+
+    private func syncReminders(for agreement: DebtAgreement) {
+        guard let scheduler = notificationScheduler else { return }
+        let agreementID = agreement.id
+        let installments = agreement.installments
+        let isClosed = agreement.closed
+        let startOfToday = Calendar.current.startOfDay(for: Date())
+
+        reminderSyncTask?.cancel()
+        reminderSyncTask = Task { @MainActor in
+            await scheduler.cancelReminders(for: agreementID)
+            guard !isClosed else { return }
+
+            let upcoming = installments.filter { installment in
+                installment.status != .paid && installment.dueDate >= startOfToday
+            }
+
+            for installment in upcoming {
+                let payload = InstallmentReminderPayload(
+                    agreementID: agreementID,
+                    installmentNumber: installment.number,
+                    dueDate: installment.dueDate
+                )
+                try? await scheduler.scheduleReminder(for: payload)
+            }
+        }
+    }
+
+#if DEBUG
+    var reminderSyncTaskForTesting: Task<Void, Never>? { reminderSyncTask }
+#endif
 }
 
 struct AgreementDraft: Equatable {

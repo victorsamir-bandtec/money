@@ -69,41 +69,42 @@ final class DashboardViewModel: ObservableObject {
 
     private func fetchSummary(for date: Date) throws {
         let calendar = Calendar.current
-        let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: date, end: date)
+        let startOfDay = calendar.startOfDay(for: date)
+        let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: startOfDay, end: startOfDay)
 
-        // Income for the month is based on installments due in this month
-        let installmentDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
+        // Income previsto no mês corrente
+        let monthlyDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
             installment.dueDate >= monthInterval.start && installment.dueDate < monthInterval.end
         })
-        let installments = try context.fetch(installmentDescriptor)
+        var monthInstallments = try context.fetch(monthlyDescriptor)
+        monthInstallments.forEach { _ = $0.paidAmount }
+        let monthIncome = monthInstallments.reduce(into: Decimal.zero) { $0 += $1.amount }
 
-        // Force access to ensure fresh data from ModelContext (not cached)
-        installments.forEach { _ = $0.paidAmount }
+        // Total em atraso acumulado (qualquer parcela vencida com valor restante)
+        let paidStatusRawValue = InstallmentStatus.paid.rawValue
+        let overdueDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
+            installment.dueDate < startOfDay && installment.statusRaw != paidStatusRawValue
+        })
+        var overdueInstallments = try context.fetch(overdueDescriptor)
+        overdueInstallments.forEach { _ = $0.paidAmount }
+        overdueInstallments = overdueInstallments.filter { $0.remainingAmount > .zero }
+        let overdueTotal = overdueInstallments.reduce(into: Decimal.zero) { $0 += $1.remainingAmount }
 
-        var monthIncome: Decimal = .zero
-        var overdue: Decimal = .zero
-        for installment in installments {
-            monthIncome += installment.amount
-            if installment.isOverdue {
-                overdue += installment.remainingAmount
-            }
-        }
-
-        // Received in the month is derived from actual payments logged in the month,
-        // regardless of the installment's due month. This ensures the dashboard reacts
-        // immediately after a payment is registered.
+        // Recebido no mês corrente
         let paymentsDescriptor = FetchDescriptor<Payment>(predicate: #Predicate { payment in
             payment.date >= monthInterval.start && payment.date < monthInterval.end
         })
         let payments = try context.fetch(paymentsDescriptor)
         let received: Decimal = payments.reduce(.zero) { $0 + $1.amount }
 
+        // Despesas fixas ativas
         let expenseDescriptor = FetchDescriptor<FixedExpense>(predicate: #Predicate { expense in
             expense.active
         })
         let expenses = try context.fetch(expenseDescriptor)
         let fixedExpenses = expenses.reduce(into: Decimal.zero) { $0 += $1.amount }
 
+        // Salário registrado para o mês corrente
         let salaryDescriptor = FetchDescriptor<SalarySnapshot>(predicate: #Predicate { snapshot in
             snapshot.referenceMonth >= monthInterval.start && snapshot.referenceMonth < monthInterval.end
         })
@@ -112,7 +113,7 @@ final class DashboardViewModel: ObservableObject {
         summary = DashboardSummary(
             monthIncome: monthIncome,
             received: received,
-            overdue: overdue,
+            overdue: overdueTotal,
             fixedExpenses: fixedExpenses,
             salary: salary
         )
@@ -120,17 +121,43 @@ final class DashboardViewModel: ObservableObject {
 
     private func fetchUpcoming(for date: Date) throws {
         let calendar = Calendar.current
-        let nextInterval = calendar.date(byAdding: .day, value: 14, to: date) ?? date
-        let descriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
-            installment.dueDate >= date && installment.dueDate <= nextInterval
-        }, sortBy: [SortDescriptor(\.dueDate)])
-        let installments = try context.fetch(descriptor)
+        let startOfDay = calendar.startOfDay(for: date)
+        let windowEnd = calendar.date(byAdding: .day, value: 14, to: startOfDay) ?? startOfDay
 
-        // Force access to ensure fresh data from ModelContext (not cached)
-        installments.forEach { _ = $0.paidAmount }
+        let paidStatusRawValue = InstallmentStatus.paid.rawValue
+        let overdueDescriptor = FetchDescriptor<Installment>(
+            predicate: #Predicate { installment in
+                installment.dueDate < startOfDay && installment.statusRaw != paidStatusRawValue
+            },
+            sortBy: [SortDescriptor(\.dueDate)]
+        )
+        var overdueInstallments = try context.fetch(overdueDescriptor)
+        overdueInstallments.forEach { _ = $0.paidAmount }
+        overdueInstallments = overdueInstallments.filter { $0.remainingAmount > .zero }
 
-        upcoming = installments
-        alerts = installments.filter { $0.isOverdue || $0.remainingAmount > .zero }
+        let upcomingDescriptor = FetchDescriptor<Installment>(
+            predicate: #Predicate { installment in
+                installment.dueDate >= startOfDay && installment.dueDate <= windowEnd && installment.statusRaw != paidStatusRawValue
+            },
+            sortBy: [SortDescriptor(\.dueDate)]
+        )
+        var upcomingInstallments = try context.fetch(upcomingDescriptor)
+        upcomingInstallments.forEach { _ = $0.paidAmount }
+        upcomingInstallments = upcomingInstallments.filter { $0.remainingAmount > .zero }
+
+        var combined = overdueInstallments
+        let existingIds = Set(combined.map(\.id))
+        let filteredUpcoming = upcomingInstallments.filter { !existingIds.contains($0.id) }
+        combined.append(contentsOf: filteredUpcoming)
+        combined.sort { lhs, rhs in
+            if lhs.dueDate == rhs.dueDate {
+                return lhs.number < rhs.number
+            }
+            return lhs.dueDate < rhs.dueDate
+        }
+
+        upcoming = combined
+        alerts = combined
     }
 
     func formatted(_ value: Decimal) -> String {

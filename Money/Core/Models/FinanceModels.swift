@@ -70,6 +70,18 @@ import SwiftData
     }
 }
 
+extension DebtAgreement {
+    /// Synchronizes the `closed` flag with the current state of the installments.
+    /// - Returns: `true` when the stored value was modified.
+    @discardableResult
+    func updateClosedStatus() -> Bool {
+        let shouldClose = installments.allSatisfy { $0.status == .paid }
+        guard closed != shouldClose else { return false }
+        closed = shouldClose
+        return true
+    }
+}
+
 enum InstallmentStatus: Int, Codable, Sendable {
     case pending, partial, paid, overdue
 }

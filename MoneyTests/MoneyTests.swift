@@ -109,6 +109,63 @@ struct DebtorDetailViewModelTests {
     }
 }
 
+struct DashboardViewModelTests {
+    @Test("Inclui parcelas vencidas e próximas no dashboard") @MainActor
+    func loadsOverdueAndUpcoming() throws {
+        let schema = Schema([
+            Debtor.self,
+            DebtAgreement.self,
+            Installment.self,
+            Payment.self,
+            FixedExpense.self,
+            SalarySnapshot.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = container.mainContext
+
+        let debtor = Debtor(name: "Cliente Teste")
+        context.insert(debtor)
+
+        let now = Date(timeIntervalSince1970: 1_700_000_000) // referência fixa para estabilidade dos testes
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: now, installmentCount: 3)
+        context.insert(agreement)
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        let overdueDate = calendar.date(byAdding: .day, value: -10, to: now)!
+        let upcomingDate = calendar.date(byAdding: .day, value: 5, to: now)!
+        let futurePaidDate = calendar.date(byAdding: .day, value: 25, to: now)!
+
+        let overdueInstallment = Installment(agreement: agreement, number: 1, dueDate: overdueDate, amount: 100)
+        overdueInstallment.paidAmount = 20
+        overdueInstallment.status = .partial
+        context.insert(overdueInstallment)
+
+        let upcomingInstallment = Installment(agreement: agreement, number: 2, dueDate: upcomingDate, amount: 150)
+        context.insert(upcomingInstallment)
+
+        let paidInstallment = Installment(agreement: agreement, number: 3, dueDate: futurePaidDate, amount: 200, status: .paid)
+        paidInstallment.paidAmount = 200
+        context.insert(paidInstallment)
+
+        try context.save()
+
+        let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
+        try viewModel.load(currentDate: now)
+
+        #expect(viewModel.summary.overdue == Decimal(80))
+        #expect(viewModel.upcoming.count == 2)
+
+        let upcomingIdentifiers = viewModel.upcoming.map(\.id)
+        #expect(upcomingIdentifiers.contains(overdueInstallment.id))
+        #expect(upcomingIdentifiers.contains(upcomingInstallment.id))
+        #expect(viewModel.upcoming.first?.id == overdueInstallment.id)
+        #expect(viewModel.alerts.map(\.id) == upcomingIdentifiers)
+    }
+}
+
 struct ExpensesViewModelTests {
     @Test("Aplica filtros por texto, status e categoria") @MainActor
     func filtersExpenses() throws {
@@ -182,6 +239,25 @@ struct ExpensesViewModelTests {
     }
 }
 
+@MainActor
+final class FeatureFlagsStoreSpy: FeatureFlagsStoring {
+    private(set) var savedFlags: [FeatureFlags] = []
+    var storedFlags: FeatureFlags
+
+    init(initialFlags: FeatureFlags) {
+        self.storedFlags = initialFlags
+    }
+
+    func load() -> FeatureFlags {
+        storedFlags
+    }
+
+    func save(_ featureFlags: FeatureFlags) {
+        savedFlags.append(featureFlags)
+        storedFlags = featureFlags
+    }
+}
+
 struct SettingsViewModelTests {
     @Test("Atualiza salário e histórico a partir de Ajustes") @MainActor
     func updatesSalary() throws {
@@ -208,9 +284,10 @@ struct SettingsViewModelTests {
     }
 
     @Test("Alterna alertas de vencimento sincronizando ambiente") @MainActor
-    func togglesNotifications() {
+    func togglesNotifications() throws {
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        let environment = AppEnvironment(featureFlags: FeatureFlags(enableNotifications: false), configuration: configuration)
+        let store = FeatureFlagsStoreSpy(initialFlags: FeatureFlags(enableNotifications: false))
+        let environment = AppEnvironment(featureFlagsStore: store, configuration: configuration)
         let viewModel = SettingsViewModel(environment: environment)
 
         #expect(!viewModel.notificationsEnabled)
@@ -219,5 +296,8 @@ struct SettingsViewModelTests {
 
         #expect(viewModel.notificationsEnabled)
         #expect(environment.featureFlags.enableNotifications)
+        let persistedFlags = try #require(store.savedFlags.last)
+        #expect(persistedFlags.enableNotifications)
+        #expect(store.savedFlags.count == 1)
     }
 }

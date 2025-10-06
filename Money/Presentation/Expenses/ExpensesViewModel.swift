@@ -108,10 +108,15 @@ final class ExpensesViewModel: ObservableObject {
             try context.save()
             try fetchExpenses()
             recalculateDerivedState()
+            notifyFinancialChange()
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
         }
+    }
+
+    private func notifyFinancialChange() {
+        NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
     }
 
     private func fetchExpenses() throws {

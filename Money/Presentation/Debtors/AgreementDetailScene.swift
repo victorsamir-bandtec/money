@@ -13,7 +13,8 @@ struct AgreementDetailScene: View {
 
     init(agreement: DebtAgreement, environment: AppEnvironment, context: ModelContext) {
         self.environment = environment
-        let viewModel = AgreementDetailViewModel(agreement: agreement, context: context)
+        let scheduler: NotificationScheduling? = environment.featureFlags.enableNotifications ? environment.notificationScheduler : nil
+        let viewModel = AgreementDetailViewModel(agreement: agreement, context: context, notificationScheduler: scheduler)
         _viewModel = StateObject(wrappedValue: viewModel)
     }
 

@@ -4,6 +4,7 @@ import UserNotifications
 
 @MainActor
 final class AppEnvironment {
+    let featureFlagsStore: FeatureFlagsStoring
     var featureFlags: FeatureFlags
     let container: ModelContainer
     let modelContext: ModelContext
@@ -12,8 +13,21 @@ final class AppEnvironment {
     let notificationScheduler: NotificationScheduling
     let sampleDataService: SampleDataService
 
-    init(featureFlags: FeatureFlags = FeatureFlags(), configuration: ModelConfiguration? = nil) {
-        self.featureFlags = featureFlags
+    init(
+        featureFlags: FeatureFlags? = nil,
+        featureFlagsStore: FeatureFlagsStoring? = nil,
+        configuration: ModelConfiguration? = nil
+    ) {
+        let store = featureFlagsStore ?? FeatureFlagsStore()
+        self.featureFlagsStore = store
+        let resolvedFeatureFlags: FeatureFlags
+        if let featureFlags {
+            resolvedFeatureFlags = featureFlags
+            store.save(featureFlags)
+        } else {
+            resolvedFeatureFlags = store.load()
+        }
+        self.featureFlags = resolvedFeatureFlags
         let schema = Schema([
             Debtor.self,
             DebtAgreement.self,
@@ -33,5 +47,9 @@ final class AppEnvironment {
         currencyFormatter = CurrencyFormatter()
         notificationScheduler = LocalNotificationScheduler(center: UNUserNotificationCenter.current())
         sampleDataService = SampleDataService(context: modelContext, financeCalculator: financeCalculator)
+    }
+
+    func saveFeatureFlags() {
+        featureFlagsStore.save(featureFlags)
     }
 }
