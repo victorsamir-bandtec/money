@@ -33,8 +33,18 @@ struct LogInstallmentPaymentIntent: AppIntent {
 struct MoneyAppShortcuts: AppShortcutsProvider {
     @AppShortcutsBuilder
     static var appShortcuts: [AppShortcut] {
-        AppShortcut(intent: QuickAddDebtorIntent(), phrases: ["Novo devedor no \(.applicationName)"])
-        AppShortcut(intent: LogInstallmentPaymentIntent(), phrases: ["Registrar parcela no \(.applicationName)"])
+        AppShortcut(
+            intent: QuickAddDebtorIntent(),
+            phrases: ["Novo devedor no \(.applicationName)"],
+            shortTitle: "Novo Devedor",
+            systemImageName: "person.badge.plus"
+        )
+        AppShortcut(
+            intent: LogInstallmentPaymentIntent(),
+            phrases: ["Registrar parcela no \(.applicationName)"],
+            shortTitle: "Registrar Pagamento",
+            systemImageName: "dollarsign.circle"
+        )
     }
 }
 #endif

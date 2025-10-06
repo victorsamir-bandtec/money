@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import SwiftData
 
 struct AgreementDetailScene: View {
@@ -8,6 +9,7 @@ struct AgreementDetailScene: View {
     @State private var paymentDraft = PaymentDraft()
     @State private var showingSuccessToast = false
     @State private var successMessage = ""
+    @State private var toastDismissTask: Task<Void, Never>?
 
     init(agreement: DebtAgreement, environment: AppEnvironment, context: ModelContext) {
         self.environment = environment
@@ -16,16 +18,100 @@ struct AgreementDetailScene: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
+        List {
+            // Metrics
+            Section {
                 metricsSection
-                agreementInfoSection
-                installmentsSection
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 24)
+            .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 8, trailing: 20))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+
+            // Agreement info
+            Section {
+                agreementInfoSection
+            }
+            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 16, trailing: 20))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+
+            // Installments
+            Section {
+                if viewModel.sortedInstallments.isEmpty {
+                    // Empty state inside list
+                    VStack(spacing: 16) {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.system(size: 48, weight: .semibold))
+                            .foregroundStyle(Color.accentColor)
+                        Text(String(localized: "agreement.installments.empty"))
+                            .font(.headline)
+                        Text(String(localized: "agreement.installments.empty.message"))
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(40)
+                    .frame(maxWidth: .infinity)
+                    .background(
+                        GlassBackgroundStyle.current.material,
+                        in: RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 28, style: .continuous)
+                            .strokeBorder(Color.primary.opacity(0.08))
+                    )
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 24, trailing: 20))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                } else {
+                    ForEach(viewModel.sortedInstallments, id: \.id) { installment in
+                        InstallmentCard(
+                            installment: installment,
+                            formatter: environment.currencyFormatter,
+                            onPayment: {
+                                selectedInstallment = installment
+                                paymentDraft = PaymentDraft(amount: installment.remainingAmount)
+                            },
+            onMarkAsPaid: {
+                viewModel.markAsPaidFull(installment)
+                successMessage = String(localized: "payment.mark.paid.success")
+                withAnimation(UIAnim.primarySpring) { showingSuccessToast = true }
+                toastDismissTask?.cancel()
+                toastDismissTask = Task { [toastHideDelay = UIAnim.toastHideDelay] in
+                    try? await Task.sleep(nanoseconds: UInt64(toastHideDelay * 1_000_000_000))
+                    await MainActor.run { withAnimation(UIAnim.toastOut) { showingSuccessToast = false } }
+                }
+            },
+            onUndo: {
+                viewModel.undoLastPayment(installment)
+            }
+        )
+                        .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                    }
+                }
+            } header: {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(String(localized: "agreement.installments.title"))
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                    Text(String(localized: "agreement.installments.subtitle"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.leading, 4)
+            }
+            .textCase(nil)
+            .headerProminence(.increased)
         }
+        .listStyle(.plain)
+        .listRowSpacing(12)
+        .scrollIndicators(.hidden)
+        .scrollContentBackground(.hidden)
         .background(AgreementDetailBackground())
+        // Drive list animations by an Equatable proxy (IDs + status)
+        .transaction { $0.animation = nil }
         .navigationTitle(viewModel.agreement.title ?? String(localized: "debtor.agreement.untitled"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(item: $selectedInstallment) { installment in
@@ -67,6 +153,7 @@ struct AgreementDetailScene: View {
                     .zIndex(999)
             }
         }
+        .onDisappear { toastDismissTask?.cancel() }
     }
 
     private var metricsSection: some View {
@@ -112,6 +199,7 @@ struct AgreementDetailScene: View {
             }
 
             // Progress Card
+            // Conteúdo do cartão que se move com o gesto
             VStack(alignment: .leading, spacing: 14) {
                 HStack {
                     Image(systemName: "chart.bar.fill")
@@ -223,76 +311,7 @@ struct AgreementDetailScene: View {
         }
     }
 
-    private var installmentsSection: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(String(localized: "agreement.installments.title"))
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-                Text(String(localized: "agreement.installments.subtitle"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-
-            if viewModel.sortedInstallments.isEmpty {
-                // Empty state
-                VStack(spacing: 16) {
-                    Image(systemName: "doc.text.magnifyingglass")
-                        .font(.system(size: 48, weight: .semibold))
-                        .foregroundStyle(Color.accentColor)
-
-                    Text(String(localized: "agreement.installments.empty"))
-                        .font(.headline)
-
-                    Text(String(localized: "agreement.installments.empty.message"))
-                        .font(.subheadline)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(40)
-                .frame(maxWidth: .infinity)
-                .background(
-                    GlassBackgroundStyle.current.material,
-                    in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .strokeBorder(Color.primary.opacity(0.08))
-                )
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(viewModel.sortedInstallments, id: \.id) { installment in
-                        InstallmentCard(
-                            installment: installment,
-                            formatter: environment.currencyFormatter,
-                            onPayment: {
-                                selectedInstallment = installment
-                                paymentDraft = PaymentDraft(amount: installment.remainingAmount)
-                            },
-                            onMarkAsPaid: {
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
-                                    viewModel.markAsPaidFull(installment)
-                                    successMessage = String(localized: "payment.mark.paid.success")
-                                    showingSuccessToast = true
-                                }
-                                // Hide toast after 2 seconds
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                                    withAnimation {
-                                        showingSuccessToast = false
-                                    }
-                                }
-                            },
-                            onUndo: {
-                                withAnimation {
-                                    viewModel.undoLastPayment(installment)
-                                }
-                            }
-                        )
-                    }
-                }
-            }
-        }
-    }
+    // Removed "installmentsSection" (substituído por List + Section no body)
 
     private var errorBinding: Binding<LocalizedErrorWrapper?> {
         Binding(
@@ -300,6 +319,27 @@ struct AgreementDetailScene: View {
             set: { _ in viewModel.error = nil }
         )
     }
+}
+
+// Equatable animation key for list updates (IDs + status)
+private struct InstallmentAnimKey: Hashable, Equatable {
+    let id: UUID
+    let status: Int
+}
+
+// Centraliza timings de animação para harmonia visual
+private enum UIAnim {
+    static let listSnappy = Animation.snappy(duration: 0.22)
+    static let disclosure = Animation.snappy(duration: 0.22)
+    static let primarySpring = Animation.spring(response: 0.32, dampingFraction: 0.82)
+    static let buttonPress = Animation.spring(response: 0.22, dampingFraction: 0.8)
+    static let toastIn = Animation.spring(response: 0.32, dampingFraction: 0.82)
+    static let toastOut = Animation.easeOut(duration: 0.24)
+    static let checkIn = Animation.spring(response: 0.32, dampingFraction: 0.82)
+    static let checkFade = Animation.easeOut(duration: 0.24)
+    static let checkFadeDelay: Double = 0.35
+    static let toastHideDelay: Double = 1.8
+    static let checkVisible: Double = 0.9
 }
 
 // MARK: - Supporting Views
@@ -333,7 +373,15 @@ private struct InstallmentCard: View {
     var onMarkAsPaid: () -> Void
     var onUndo: () -> Void
     @State private var showPayments = false
-    @State private var showCheckAnimation = false
+    @State private var animationPhase: PaymentAnimationPhase = .idle
+    @State private var animationTask: Task<Void, Never>?
+    // Swipe state handled by built-in `.swipeActions`.
+
+    private enum PaymentAnimationPhase: Equatable {
+        case idle
+        case confirming
+        case completed
+    }
 
     private var statusColor: Color {
         switch installment.status {
@@ -362,8 +410,28 @@ private struct InstallmentCard: View {
         }
     }
 
+    private var highlightBorderColor: Color {
+        switch animationPhase {
+        case .confirming:
+            return statusColor.opacity(0.35)
+        default:
+            return statusColor.opacity(0.18)
+        }
+    }
+
+    private var highlightFill: Color {
+        switch animationPhase {
+        case .confirming:
+            return statusColor.opacity(0.12)
+        default:
+            return .clear
+        }
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        // Card content
+        ZStack {
+            VStack(alignment: .leading, spacing: 14) {
             // Header
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
@@ -410,34 +478,31 @@ private struct InstallmentCard: View {
                 }
             }
 
-            // Payments list
+            // Payments list (DisclosureGroup melhora gesto de swipe do row)
             if !installment.payments.isEmpty {
-                Button(action: { showPayments.toggle() }) {
+                DisclosureGroup(isExpanded: $showPayments) {
+                    VStack(spacing: 8) {
+                        ForEach(installment.payments.sorted(by: { $0.date > $1.date }), id: \.id) { payment in
+                            PaymentRow(payment: payment, formatter: formatter)
+                        }
+                    }
+                    .padding(.top, 6)
+                } label: {
                     HStack {
                         Image(systemName: "doc.text.fill")
                             .font(.caption)
                         Text(String(localized: "payment.history"))
                             .font(.caption.weight(.semibold))
                         Spacer()
-                        Image(systemName: showPayments ? "chevron.up" : "chevron.down")
-                            .font(.caption)
                     }
                     .foregroundStyle(.blue)
                     .padding(10)
                     .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                 }
-                .buttonStyle(.plain)
-
-                if showPayments {
-                    VStack(spacing: 8) {
-                        ForEach(installment.payments.sorted(by: { $0.date > $1.date }), id: \.id) { payment in
-                            PaymentRow(payment: payment, formatter: formatter)
-                        }
-                    }
-                }
+                .animation(UIAnim.disclosure, value: showPayments)
             }
 
-            // Action buttons
+            // Action area
             if installment.status == .paid {
                 // Paid status with undo option
                 HStack(spacing: 12) {
@@ -463,60 +528,81 @@ private struct InstallmentCard: View {
                         .buttonStyle(.plain)
                     }
                 }
-            } else {
-                // Quick action buttons for unpaid installments
-                HStack(spacing: 12) {
-                    // Quick mark as paid button
-                    QuickActionButton(
-                        title: "payment.mark.paid",
-                        icon: "checkmark.circle.fill",
-                        color: .green
-                    ) {
-                        onMarkAsPaid()
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                            showCheckAnimation = true
-                        }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                            showCheckAnimation = false
-                        }
-                    }
-
-                    // Detailed payment button
-                    QuickActionButton(
-                        title: "payment.register",
-                        icon: "dollarsign.circle.fill",
-                        color: .accentColor,
-                        style: .secondary
-                    ) {
-                        onPayment()
-                    }
+            }
+            // Fecha VStack do conteúdo antes dos modificadores do cartão
+            }
+            .padding(18)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color(.secondarySystemBackground))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(highlightFill)
+                            .animation(.easeOut(duration: 0.25), value: animationPhase)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .strokeBorder(highlightBorderColor, lineWidth: animationPhase == .confirming ? 2 : 1)
+                    .animation(.easeOut(duration: 0.25), value: animationPhase)
+            )
+            .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: 2)
+            .overlay {
+                if animationPhase == .confirming {
+                    CheckmarkAnimation()
+                        .transition(.scale.combined(with: .opacity))
+                        .allowsHitTesting(false)
                 }
             }
+            // Movimento visual do cartão
         }
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(statusColor.opacity(0.25), lineWidth: 1.5)
-        )
-        .shadow(color: statusColor.opacity(0.1), radius: 8, x: 0, y: 4)
-        .overlay {
-            if showCheckAnimation {
-                CheckmarkAnimation()
-            }
-        }
-        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+        // Clip para manter o cartão com cantos arredondados
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .contentShape(Rectangle())
+        // Swipe right-to-left (trailing) → Mark as paid
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             if installment.status != .paid {
                 Button {
+                    startConfirmationHighlight()
                     onMarkAsPaid()
                 } label: {
                     Label("payment.mark.paid", systemImage: "checkmark.circle.fill")
                 }
                 .tint(.green)
             }
+        }
+        // Swipe left-to-right (leading) → Open register payment
+        .swipeActions(edge: .leading, allowsFullSwipe: false) {
+            if installment.status != .paid {
+                Button {
+                    onPayment()
+                } label: {
+                    Label("payment.register", systemImage: "dollarsign.circle.fill")
+                }
+                .tint(.accentColor)
+            }
+        }
+        .onAppear { animationPhase = installment.status == .paid ? .completed : .idle }
+        .onChange(of: installment.status) { handleStatusChange($0) }
+        .onDisappear { animationTask?.cancel() }
+    }
+
+    private func startConfirmationHighlight() {
+        animationTask?.cancel()
+        animationPhase = .confirming
+        animationTask = Task { [delay = UIAnim.checkVisible] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            await MainActor.run { animationPhase = .completed }
+        }
+    }
+
+    private func handleStatusChange(_ status: InstallmentStatus) {
+        switch status {
+        case .paid:
+            startConfirmationHighlight()
+        case .partial, .pending, .overdue:
+            animationTask?.cancel()
+            animationPhase = .idle
         }
     }
 }
@@ -623,12 +709,10 @@ private struct QuickActionButton: View {
 
     var body: some View {
         Button(action: {
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                isPressed = true
-            }
+            withAnimation(UIAnim.buttonPress) { isPressed = true }
             action()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                isPressed = false
+                withAnimation(UIAnim.buttonPress) { isPressed = false }
             }
         }) {
             HStack(spacing: 8) {
@@ -668,11 +752,11 @@ private struct CheckmarkAnimation: View {
         .scaleEffect(scale)
         .opacity(opacity)
         .onAppear {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                scale = 1.2
+            withAnimation(UIAnim.checkIn) {
+                scale = 1.1
                 opacity = 1
             }
-            withAnimation(.easeOut(duration: 0.3).delay(0.4)) {
+            withAnimation(UIAnim.checkFade.delay(UIAnim.checkFadeDelay)) {
                 opacity = 0
             }
         }
@@ -708,7 +792,7 @@ private struct SuccessToast: View {
         .offset(y: offset)
         .opacity(opacity)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            withAnimation(UIAnim.toastIn) {
                 offset = 0
                 opacity = 1
             }

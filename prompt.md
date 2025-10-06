@@ -22,7 +22,7 @@ Gere um app **iOS 26** em **Swift 6**, **SwiftUI**, **MVVM**, com **SwiftData** 
 - **Injeção por inicializadores**. Nada de singletons opacos para domínio.
 - **Erros tipados** (`AppError`) com mensagens localizadas.
 - **Decimal** para dinheiro. Nada de `Double` em valores monetários.
-- **Feature flags** simples (ex.: `FeatureFlags.useLiquidGlass`, `FeatureFlags.useCloudSync`).
+- **Feature flags** simples (ex.: `FeatureFlags.enableNotifications`).
 
 ---
 
@@ -173,9 +173,9 @@ enum PaymentMethod: String, Codable { case pix, cash, transfer, other }
     var currencyCode: String  // “BRL” padrão
     var notifyDaysBefore: Int // ex.: 3
     var themeAuto: Bool
-    var useCloudSync: Bool
-    init(id: UUID = UUID(), currencyCode: String = "BRL", notifyDaysBefore: Int = 3, themeAuto: Bool = true, useCloudSync: Bool = false) {
-        self.id = id; self.currencyCode = currencyCode; self.notifyDaysBefore = notifyDaysBefore; self.themeAuto = themeAuto; self.useCloudSync = useCloudSync
+    var notificationsEnabled: Bool
+    init(id: UUID = UUID(), currencyCode: String = "BRL", notifyDaysBefore: Int = 3, themeAuto: Bool = true, notificationsEnabled: Bool = true) {
+        self.id = id; self.currencyCode = currencyCode; self.notifyDaysBefore = notifyDaysBefore; self.themeAuto = themeAuto; self.notificationsEnabled = notificationsEnabled
     }
 }
 ```
@@ -339,7 +339,7 @@ actor PaymentsAllocator {
 
 ## 10) Persistência e Sync
 - **SwiftData** com containers nomeados. Migração leve habilitada.
-- **iCloud sync** opcional guardado em `AppSettings.useCloudSync`.
+- **iCloud sync** planejada; integração manual quando necessário.
 - Predicados eficientes para status, mês, atraso. Ex.:
 ```swift
 // Parcelas que vencem no mês X
@@ -496,8 +496,8 @@ extension Collection where Element == Installment {
 ## 22) README mínimo
 - **Requisitos**: Xcode recente, iOS 26 SDK (build), iOS 17+ runtime (fallbacks), Swift 6.
 - **Rodar**: abrir `QuemMeDeve.xcodeproj` → Run em device/simulator.
-- **iCloud**: alternar em Configurações dentro do app.
-- **Dados de exemplo**: botão “Popular com Exemplo” em Configurações.
+- **iCloud**: integração planejada (necessita ajuste manual no projeto).
+- **Dados de exemplo**: carregados automaticamente na primeira execução.
 - **CSV**: Exportar/Importar na mesma tela.
 
 ---

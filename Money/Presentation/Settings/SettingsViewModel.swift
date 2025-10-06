@@ -4,30 +4,32 @@ import Combine
 
 @MainActor
 final class SettingsViewModel: ObservableObject {
-    @Published var featureFlags: FeatureFlags
-    @Published var isLoadingSampleData = false
+    @Published var notificationsEnabled: Bool
+    @Published var salary: SalarySnapshot?
+    @Published var salaryHistory: [SalarySnapshot] = []
     @Published var error: AppError?
     @Published var exportURL: URL?
 
     private let environment: AppEnvironment
+    private let calendar: Calendar
 
-    init(environment: AppEnvironment) {
+    init(environment: AppEnvironment, calendar: Calendar = .current) {
         self.environment = environment
-        self.featureFlags = environment.featureFlags
+        self.calendar = calendar
+        self.notificationsEnabled = environment.featureFlags.enableNotifications
     }
 
-    func toggleCloudSync(_ enabled: Bool) {
-        featureFlags.useCloudSync = enabled
-        environment.featureFlags.useCloudSync = enabled
-    }
-
-    func toggleLiquidGlass(_ enabled: Bool) {
-        featureFlags.useLiquidGlass = enabled
-        environment.featureFlags.useLiquidGlass = enabled
+    func load(referenceDate: Date = .now) {
+        do {
+            try fetchSalary(for: referenceDate)
+            try fetchSalaryHistory(limit: 6)
+        } catch {
+            self.error = .persistence("error.generic")
+        }
     }
 
     func toggleNotifications(_ enabled: Bool) {
-        featureFlags.enableNotifications = enabled
+        notificationsEnabled = enabled
         environment.featureFlags.enableNotifications = enabled
     }
 
@@ -42,19 +44,35 @@ final class SettingsViewModel: ObservableObject {
         }
     }
 
-    func loadSampleDataIfNeeded() {
-        Task {
-            await populateSample()
+    func updateSalary(amount: Decimal, month: Date, note: String?) {
+        guard amount >= 0 else {
+            error = .validation("error.salary.invalid")
+            return
         }
-    }
 
-    func populateSample() async {
-        isLoadingSampleData = true
-        defer { isLoadingSampleData = false }
+        let context = environment.modelContext
+        let interval = calendar.dateInterval(of: .month, for: month) ?? DateInterval(start: month, end: month)
+        let descriptor = FetchDescriptor<SalarySnapshot>(predicate: #Predicate { snapshot in
+            snapshot.referenceMonth >= interval.start && snapshot.referenceMonth < interval.end
+        })
+
         do {
-            try await Task.sleep(nanoseconds: 200_000_000)
-            try environment.sampleDataService.populateIfNeeded()
+            let snapshots = try context.fetch(descriptor)
+            if let existing = snapshots.first {
+                existing.amount = amount
+                existing.referenceMonth = month
+                existing.note = normalized(note)
+                salary = existing
+            } else {
+                let snapshot = SalarySnapshot(referenceMonth: month, amount: amount, note: normalized(note))
+                context.insert(snapshot)
+                salary = snapshot
+            }
+
+            try context.save()
+            refreshAfterSaving(month: month)
         } catch {
+            context.rollback()
             self.error = .persistence("error.generic")
         }
     }
@@ -68,5 +86,29 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             self.error = .persistence("error.generic")
         }
+    }
+
+    private func fetchSalary(for month: Date) throws {
+        let interval = calendar.dateInterval(of: .month, for: month) ?? DateInterval(start: month, end: month)
+        let descriptor = FetchDescriptor<SalarySnapshot>(predicate: #Predicate { snapshot in
+            snapshot.referenceMonth >= interval.start && snapshot.referenceMonth < interval.end
+        })
+        salary = try environment.modelContext.fetch(descriptor).first
+    }
+
+    private func fetchSalaryHistory(limit: Int) throws {
+        var descriptor = FetchDescriptor<SalarySnapshot>(sortBy: [SortDescriptor(\.referenceMonth, order: .reverse)])
+        descriptor.fetchLimit = limit
+        salaryHistory = try environment.modelContext.fetch(descriptor)
+    }
+
+    private func refreshAfterSaving(month: Date) {
+        NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
+        load(referenceDate: month)
+    }
+
+    private func normalized(_ value: String?) -> String? {
+        guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else { return nil }
+        return trimmed
     }
 }

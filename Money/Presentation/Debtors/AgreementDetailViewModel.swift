@@ -77,6 +77,10 @@ final class AgreementDetailViewModel: ObservableObject {
             )
             context.insert(payment)
 
+            if !installment.payments.contains(where: { $0.id == payment.id }) {
+                installment.payments.append(payment)
+            }
+
             // Update installment paid amount
             installment.paidAmount += amount
 
@@ -88,7 +92,7 @@ final class AgreementDetailViewModel: ObservableObject {
             }
 
             try context.save()
-            try load()
+            publishInstallmentsChange()
 
             // Notify other ViewModels that payment data changed
             NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
@@ -106,7 +110,7 @@ final class AgreementDetailViewModel: ObservableObject {
         do {
             installment.status = status
             try context.save()
-            try load()
+            publishInstallmentsChange()
             // Notify listeners to refresh any dependent summaries or lists
             NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
             NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
@@ -130,12 +134,16 @@ final class AgreementDetailViewModel: ObservableObject {
             )
             context.insert(payment)
 
+            if !installment.payments.contains(where: { $0.id == payment.id }) {
+                installment.payments.append(payment)
+            }
+
             // Mark as fully paid
             installment.paidAmount = installment.amount
             installment.status = .paid
 
             try context.save()
-            try load()
+            publishInstallmentsChange()
 
             // Notify other ViewModels that payment data changed
             NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
@@ -158,6 +166,10 @@ final class AgreementDetailViewModel: ObservableObject {
             // Remove payment
             context.delete(lastPayment)
 
+            if let index = installment.payments.firstIndex(where: { $0.id == lastPayment.id }) {
+                installment.payments.remove(at: index)
+            }
+
             // Update paid amount
             installment.paidAmount -= lastPayment.amount
 
@@ -169,7 +181,7 @@ final class AgreementDetailViewModel: ObservableObject {
             }
 
             try context.save()
-            try load()
+            publishInstallmentsChange()
 
             // Notify other ViewModels that payment data changed
             NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
@@ -178,6 +190,10 @@ final class AgreementDetailViewModel: ObservableObject {
             context.rollback()
             self.error = .persistence("error.generic")
         }
+    }
+
+    private func publishInstallmentsChange() {
+        installments = Array(installments)
     }
 }
 

@@ -72,13 +72,13 @@ struct DebtorsScene: View {
                 }
             }
             .onChange(of: viewModel.searchText) { _ in
-                try? viewModel.load()
+                reload()
             }
             .onChange(of: viewModel.showArchived) { _ in
-                try? viewModel.load()
+                reload()
             }
             .task {
-                try? viewModel.load()
+                reload()
             }
             .sheet(isPresented: $showingCreateSheet) {
                 NavigationStack {
@@ -117,6 +117,11 @@ struct DebtorsScene: View {
             active: viewModel.activeCount,
             archived: viewModel.archivedCount
         )
+    }
+
+    @MainActor
+    private func reload() {
+        try? viewModel.load()
     }
 }
 

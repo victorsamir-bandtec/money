@@ -1,6 +1,526 @@
-/Users/victorsamir/Documents/Money/Money/App/AppEnvironment.swift:15:39: warning: call to main actor-isolated initializer 'init(useLiquidGlass:useCloudSync:enableWidgets:enableNotifications:)' in a synchronous nonisolated context
-    init(featureFlags: FeatureFlags = FeatureFlags()) {
-                                      ^
-/Users/victorsamir/Documents/Money/Money/App/FeatureFlags.swift:9:5: note: calls to initializer 'init(useLiquidGlass:useCloudSync:enableWidgets:enableNotifications:)' from outside of its actor context are implicitly asynchronous
-    init(
-    ^
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme Money -sdk iphonesimulator -destination "platform=iOS Simulator,name=iPhone 17" clean build
+
+Build settings from command line:
+    SDKROOT = iphonesimulator26.0
+
+2025-10-05 20:46:48.521 xcodebuild[24005:497223] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+** CLEAN SUCCEEDED **
+
+ComputePackagePrebuildTargetDependencyGraph
+
+Prepare packages
+
+CreateBuildRequest
+
+SendProjectDescription
+
+CreateBuildOperation
+
+ComputeTargetDependencyGraph
+note: Building targets in dependency order
+note: Target dependency graph (1 target)
+    Target 'Money' in project 'Money' (no dependencies)
+
+GatherProvisioningInputs
+
+CreateBuildDescription
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -v -E -dM -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -x c -c /dev/null
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --print-asset-tag-combinations --output-format xml1 /Users/victorsamir/Documents/Money/Money/Assets.xcassets
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/usr/bin/actool --version --output-format xml1
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc --version
+
+ExecuteExternalTool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld -version_details
+
+Build description signature: 3e2c1edd739924b2dba547b30c1c442a
+Build description path: /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/XCBuildData/3e2c1edd739924b2dba547b30c1c442a.xcbuilddata
+ClangStatCache /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk /Users/victorsamir/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A339-26257891a6c027eb51374368541b8346.sdkstatcache
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang-stat-cache /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A339-26257891a6c027eb51374368541b8346.sdkstatcache
+
+CreateBuildDirectory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    builtin-create-build-directory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products
+
+CreateBuildDirectory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    builtin-create-build-directory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex
+
+CreateBuildDirectory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/ExplicitPrecompiledModules
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    builtin-create-build-directory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/ExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    builtin-create-build-directory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules
+
+CreateBuildDirectory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    builtin-create-build-directory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator
+
+CreateBuildDirectory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    builtin-create-build-directory /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money-92e67119976d981bfc053ee41e9040d5-VFS-iphonesimulator/all-product-headers.yaml
+    cd /Users/victorsamir/Documents/Money/Money.xcodeproj
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money-92e67119976d981bfc053ee41e9040d5-VFS-iphonesimulator/all-product-headers.yaml
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.hmap (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.hmap
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_const_extract_protocols.json (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_const_extract_protocols.json
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-OutputFileMap.json (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-OutputFileMap.json
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-project-headers.hmap (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-project-headers.hmap
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/empty-Money.plist (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/empty-Money.plist
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-generated-files.hmap (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-generated-files.hmap
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-all-target-headers.hmap (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-all-target-headers.hmap
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-DebugDylibPath-normal-arm64.txt (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-DebugDylibPath-normal-arm64.txt
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-own-target-headers.hmap (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-own-target-headers.hmap
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftFileList (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftFileList
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-all-non-framework-target-headers.hmap (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-all-non-framework-target-headers.hmap
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftConstValuesFileList (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftConstValuesFileList
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.LinkFileList (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.LinkFileList
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.DependencyStaticMetadataFileList (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.DependencyStaticMetadataFileList
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.DependencyMetadataFileList (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.DependencyMetadataFileList
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-DebugDylibInstallName-normal-arm64.txt (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-DebugDylibInstallName-normal-arm64.txt
+
+MkDir /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /bin/mkdir -p /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app
+
+WriteAuxiliaryFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/Entitlements-Simulated.plist (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    write-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/Entitlements-Simulated.plist
+
+ProcessProductPackaging "" /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+    Entitlements:
+    
+    {
+    "application-identifier" = "77F93T3UC9.victor-samir.Money";
+}
+    
+    builtin-productPackagingUtility -entitlements -format xml -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent
+
+ProcessProductPackagingDER /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent.der (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /usr/bin/derq query -f xml -i /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent.der --raw
+
+Ld /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/__preview.dylib normal (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios26.0-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -O0 -L/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -F/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -install_name @rpath/Money.debug.dylib -dead_strip -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_dependency_info.dat -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent.der -Xlinker -no_adhoc_codesign -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/__preview.dylib
+
+GenerateAssetSymbols /Users/victorsamir/Documents/Money/Money/Assets.xcassets (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/victorsamir/Documents/Money/Money/Assets.xcassets --compile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app --output-format human-readable-text --notices --warnings --export-dependency-info /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_dependencies --output-partial-info-plist /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_generated_info.plist --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 26.0 --platform iphonesimulator --bundle-identifier victor-samir.Money --generate-swift-asset-symbols /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols.swift --generate-objc-asset-symbols /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols.h --generate-asset-symbol-index /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/* com.apple.actool.compilation-results */
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols-Index.plist
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols.h
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols.swift
+
+
+MkDir /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/thinned (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /bin/mkdir -p /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/thinned
+
+MkDir /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/unthinned (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /bin/mkdir -p /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/unthinned
+
+CopyStringsFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/pt-BR.lproj/Localizable.strings /Users/victorsamir/Documents/Money/Money/Core/Localization/pt-BR.lproj/Localizable.strings (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/pt-BR.lproj -- /Users/victorsamir/Documents/Money/Money/Core/Localization/pt-BR.lproj/Localizable.strings
+/Users/victorsamir/Documents/Money/Money/Core/Localization/pt-BR.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Money' from project 'Money')
+
+CopyStringsFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/en.lproj/Localizable.strings /Users/victorsamir/Documents/Money/Money/Core/Localization/en.lproj/Localizable.strings (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-copyStrings --validate --outputencoding binary --outfilename Localizable.strings --outdir /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/en.lproj -- /Users/victorsamir/Documents/Money/Money/Core/Localization/en.lproj/Localizable.strings
+/Users/victorsamir/Documents/Money/Money/Core/Localization/en.lproj/Localizable.strings:1:1: note: detected encoding of input file as Unicode (UTF-8) (in target 'Money' from project 'Money')
+
+CompileAssetCatalogVariant thinned /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app /Users/victorsamir/Documents/Money/Money/Assets.xcassets (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /Applications/Xcode.app/Contents/Developer/usr/bin/actool /Users/victorsamir/Documents/Money/Money/Assets.xcassets --compile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/thinned --output-format human-readable-text --notices --warnings --export-dependency-info /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_dependencies_thinned --output-partial-info-plist /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_generated_info.plist_thinned --app-icon AppIcon --accent-color AccentColor --compress-pngs --enable-on-demand-resources YES --filter-for-thinning-device-configuration iPhone18,3 --filter-for-device-os-version 26.0 --development-region en --target-device iphone --target-device ipad --minimum-deployment-target 26.0 --platform iphonesimulator
+objc[24055]: Class _NoAnimationDelegate is implemented in both /Library/Developer/CoreSimulator/Volumes/iOS_23A343/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/Frameworks/SwiftUICore.framework/SwiftUICore (0x145434130) and /Library/Developer/CoreSimulator/Volumes/iOS_23A343/Library/Developer/CoreSimulator/Profiles/Runtimes/iOS 26.0.simruntime/Contents/Resources/RuntimeRoot/System/Library/PrivateFrameworks/UIKitCore.framework/UIKitCore (0x14259d198). This may cause spurious casting failures and mysterious crashes. One of the duplicates must be removed or renamed.
+/* com.apple.actool.compilation-results */
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_generated_info.plist_thinned
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/thinned/Assets.car
+
+
+SwiftDriver Money normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-SwiftDriver -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Money -Onone -enforce-exclusivity\=checked @/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -F /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64 -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A339-26257891a6c027eb51374368541b8346.sdkstatcache -output-file-map /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_const_extract_protocols.json -Xcc -iquote -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-generated-files.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-own-target-headers.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-all-target-headers.hmap -Xcc -iquote -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-project-headers.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources-normal/arm64 -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/arm64 -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-Swift.h -working-directory /Users/victorsamir/Documents/Money -experimental-emit-module-separately -disable-cmo
+
+SwiftCompile normal arm64 Compiling\ FeatureFlags.swift,\ FinanceModels.swift,\ CSVExporter.swift /Users/victorsamir/Documents/Money/Money/App/FeatureFlags.swift /Users/victorsamir/Documents/Money/Money/Core/Models/FinanceModels.swift /Users/victorsamir/Documents/Money/Money/Core/Services/CSVExporter.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/App/FeatureFlags.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Core/Models/FinanceModels.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Core/Services/CSVExporter.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ AppEnvironment.swift,\ AppError.swift,\ AppTheme.swift /Users/victorsamir/Documents/Money/Money/App/AppEnvironment.swift /Users/victorsamir/Documents/Money/Money/App/AppError.swift /Users/victorsamir/Documents/Money/Money/App/AppTheme.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/App/AppEnvironment.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/App/AppError.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/App/AppTheme.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ AgreementDetailScene.swift,\ AgreementDetailViewModel.swift,\ DebtorDetailScene.swift /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/AgreementDetailScene.swift /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/AgreementDetailViewModel.swift /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorDetailScene.swift (in target 'Money' from project 'Money')
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/AgreementDetailScene.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/AgreementDetailViewModel.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorDetailScene.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ CurrencyFormatter.swift,\ FinanceCalculator.swift,\ NotificationScheduler.swift /Users/victorsamir/Documents/Money/Money/Core/Services/CurrencyFormatter.swift /Users/victorsamir/Documents/Money/Money/Core/Services/FinanceCalculator.swift /Users/victorsamir/Documents/Money/Money/Core/Services/NotificationScheduler.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Core/Services/CurrencyFormatter.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Core/Services/FinanceCalculator.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Core/Services/NotificationScheduler.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ SampleDataService.swift,\ DashboardScene.swift,\ DashboardViewModel.swift /Users/victorsamir/Documents/Money/Money/Core/Services/SampleDataService.swift /Users/victorsamir/Documents/Money/Money/Presentation/Dashboard/DashboardScene.swift /Users/victorsamir/Documents/Money/Money/Presentation/Dashboard/DashboardViewModel.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Core/Services/SampleDataService.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Dashboard/DashboardScene.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Dashboard/DashboardViewModel.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ DebtorDetailViewModel.swift,\ DebtorsListViewModel.swift,\ DebtorsScene.swift /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorDetailViewModel.swift /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorsListViewModel.swift /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorsScene.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorDetailViewModel.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorsListViewModel.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/DebtorsScene.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ RegisterPaymentScene.swift,\ ExpensesScene.swift /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/RegisterPaymentScene.swift /Users/victorsamir/Documents/Money/Money/Presentation/Expenses/ExpensesScene.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Debtors/RegisterPaymentScene.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Expenses/ExpensesScene.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ ExpensesViewModel.swift,\ SettingsScene.swift /Users/victorsamir/Documents/Money/Money/Presentation/Expenses/ExpensesViewModel.swift /Users/victorsamir/Documents/Money/Money/Presentation/Settings/SettingsScene.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Expenses/ExpensesViewModel.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Settings/SettingsScene.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ SettingsViewModel.swift,\ DebtorAvatar.swift /Users/victorsamir/Documents/Money/Money/Presentation/Settings/SettingsViewModel.swift /Users/victorsamir/Documents/Money/Money/Presentation/Shared/DebtorAvatar.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Settings/SettingsViewModel.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Shared/DebtorAvatar.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftEmitModule normal arm64 Emitting\ module\ for\ Money (in target 'Money' from project 'Money')
+
+EmitSwiftModule normal arm64 (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ Bundle+Module.swift,\ Environment+Injection.swift /Users/victorsamir/Documents/Money/Money/Support/Bundle+Module.swift /Users/victorsamir/Documents/Money/Money/Support/Environment+Injection.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Support/Bundle+Module.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Support/Environment+Injection.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ ModelContextNotifications.swift,\ MoneyShortcuts.swift /Users/victorsamir/Documents/Money/Money/Support/ModelContextNotifications.swift /Users/victorsamir/Documents/Money/Money/Support/MoneyShortcuts.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Support/ModelContextNotifications.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Support/MoneyShortcuts.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ GlassBackgroundStyle.swift,\ LocalizationHelpers.swift /Users/victorsamir/Documents/Money/Money/Support/GlassBackgroundStyle.swift /Users/victorsamir/Documents/Money/Money/Support/LocalizationHelpers.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Support/GlassBackgroundStyle.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Support/LocalizationHelpers.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 Compiling\ MetricCard.swift,\ RootView.swift /Users/victorsamir/Documents/Money/Money/Presentation/Shared/MetricCard.swift /Users/victorsamir/Documents/Money/Money/Presentation/Shared/RootView.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Shared/MetricCard.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/Presentation/Shared/RootView.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling GlassBackgroundStyle.swift, LocalizationHelpers.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 Compiling\ MoneyApp.swift,\ GeneratedAssetSymbols.swift /Users/victorsamir/Documents/Money/Money/MoneyApp.swift /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Money' from project 'Money')
+
+SwiftCompile normal arm64 /Users/victorsamir/Documents/Money/Money/MoneyApp.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftCompile normal arm64 /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/GeneratedAssetSymbols.swift (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+
+SwiftDriverJobDiscovery normal arm64 Compiling Bundle+Module.swift, Environment+Injection.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ModelContextNotifications.swift, MoneyShortcuts.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling CurrencyFormatter.swift, FinanceCalculator.swift, NotificationScheduler.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling MoneyApp.swift, GeneratedAssetSymbols.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AppEnvironment.swift, AppError.swift, AppTheme.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SettingsViewModel.swift, DebtorAvatar.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling ExpensesViewModel.swift, SettingsScene.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Emitting module for Money (in target 'Money' from project 'Money')
+
+SwiftDriver\ Compilation\ Requirements Money normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-Swift-Compilation-Requirements -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Money -Onone -enforce-exclusivity\=checked @/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -F /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64 -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A339-26257891a6c027eb51374368541b8346.sdkstatcache -output-file-map /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_const_extract_protocols.json -Xcc -iquote -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-generated-files.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-own-target-headers.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-all-target-headers.hmap -Xcc -iquote -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-project-headers.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources-normal/arm64 -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/arm64 -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-Swift.h -working-directory /Users/victorsamir/Documents/Money -experimental-emit-module-separately -disable-cmo
+
+SwiftMergeGeneratedHeaders /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/Money-Swift.h /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-Swift.h (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-swiftHeaderTool -arch arm64 /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-Swift.h -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/Money-Swift.h
+
+Copy /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/arm64-apple-ios-simulator.swiftdoc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftdoc (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftdoc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/arm64-apple-ios-simulator.swiftdoc
+
+Copy /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/arm64-apple-ios-simulator.swiftmodule /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftmodule (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftmodule /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/arm64-apple-ios-simulator.swiftmodule
+
+Copy /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/arm64-apple-ios-simulator.abi.json /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.abi.json (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.abi.json /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/arm64-apple-ios-simulator.abi.json
+
+Copy /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftsourceinfo (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-copy -exclude .DS_Store -exclude CVS -exclude .svn -exclude .git -exclude .hg -resolve-src-symlinks -rename /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftsourceinfo /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.swiftmodule/Project/arm64-apple-ios-simulator.swiftsourceinfo
+
+SwiftDriverJobDiscovery normal arm64 Compiling MetricCard.swift, RootView.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling RegisterPaymentScene.swift, ExpensesScene.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling SampleDataService.swift, DashboardScene.swift, DashboardViewModel.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling FeatureFlags.swift, FinanceModels.swift, CSVExporter.swift (in target 'Money' from project 'Money')
+
+LinkAssetCatalog /Users/victorsamir/Documents/Money/Money/Assets.xcassets (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-linkAssetCatalog --thinned /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/thinned --thinned-dependencies /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_dependencies_thinned --thinned-info-plist-content /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_generated_info.plist_thinned --unthinned /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_output/unthinned --unthinned-dependencies /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_dependencies_unthinned --unthinned-info-plist-content /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_generated_info.plist_unthinned --output /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app --plist-output /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_generated_info.plist
+note: Emplaced /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Assets.car (in target 'Money' from project 'Money')
+
+ProcessInfoPlistFile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Info.plist /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/empty-Money.plist (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-infoPlistUtility /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/empty-Money.plist -producttype com.apple.product-type.application -genpkginfo /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/PkgInfo -expandbuildsettings -format binary -platform iphonesimulator -additionalcontentfile /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/assetcatalog_generated_info.plist -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Info.plist
+
+SwiftDriverJobDiscovery normal arm64 Compiling DebtorDetailViewModel.swift, DebtorsListViewModel.swift, DebtorsScene.swift (in target 'Money' from project 'Money')
+
+SwiftDriverJobDiscovery normal arm64 Compiling AgreementDetailScene.swift, AgreementDetailViewModel.swift, DebtorDetailScene.swift (in target 'Money' from project 'Money')
+
+SwiftDriver\ Compilation Money normal arm64 com.apple.xcode.tools.swift.compiler (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-Swift-Compilation -- /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc -module-name Money -Onone -enforce-exclusivity\=checked @/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftFileList -DDEBUG -default-isolation\=MainActor -enable-bare-slash-regex -enable-upcoming-feature DisableOutwardActorInference -enable-upcoming-feature InferSendableFromCaptures -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InferIsolatedConformances -enable-upcoming-feature NonisolatedNonsendingByDefault -enable-experimental-feature DebugDescriptionMacro -sdk /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -target arm64-apple-ios26.0-simulator -g -module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -Xfrontend -serialize-debugging-options -profile-coverage-mapping -profile-generate -enable-testing -index-store-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Index.noindex/DataStore -Xcc -D_LIBCPP_HARDENING_MODE\=_LIBCPP_HARDENING_MODE_DEBUG -swift-version 5 -I /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -F /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -emit-localized-strings -emit-localized-strings-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64 -c -j14 -enable-batch-mode -incremental -Xcc -ivfsstatcache -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphonesimulator26.0-23A339-26257891a6c027eb51374368541b8346.sdkstatcache -output-file-map /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-OutputFileMap.json -use-frontend-parseable-output -save-temps -no-color-diagnostics -explicit-module-build -module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/SwiftExplicitPrecompiledModules -clang-scanner-module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -sdk-module-cache-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex -serialize-diagnostics -emit-dependencies -emit-module -emit-module-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftmodule -validate-clang-modules-once -clang-build-session-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/swift-overrides.hmap -emit-const-values -Xfrontend -const-gather-protocols-file -Xfrontend /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_const_extract_protocols.json -Xcc -iquote -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-generated-files.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-own-target-headers.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-all-target-headers.hmap -Xcc -iquote -Xcc /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-project-headers.hmap -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/include -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources-normal/arm64 -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources/arm64 -Xcc -I/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/DerivedSources -Xcc -DDEBUG\=1 -emit-objc-header -emit-objc-header-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-Swift.h -working-directory /Users/victorsamir/Documents/Money -experimental-emit-module-separately -disable-cmo
+
+Ld /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money.debug.dylib normal (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios26.0-simulator -dynamiclib -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -O0 -L/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -L/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -F/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/EagerLinkingTBDs/Debug-iphonesimulator -F/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -filelist /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.LinkFileList -install_name @rpath/Money.debug.dylib -Xlinker -rpath -Xlinker @executable_path/Frameworks -dead_strip -Xlinker -object_path_lto -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_lto.o -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -Xlinker -dependency_info -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_dependency_info.dat -fobjc-link-runtime -fprofile-instr-generate -L/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator -L/usr/lib/swift -Xlinker -add_ast_path -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.swiftmodule @/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money-linker-args.resp -Xlinker -alias -Xlinker _main -Xlinker ___debug_main_executable_dylib_entry_point -Xlinker -no_adhoc_codesign -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money.debug.dylib
+
+ConstructStubExecutorLinkFileList /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-ExecutorLinkFileList-normal-arm64.txt (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    construct-stub-executor-link-file-list /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money.debug.dylib /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor_no_swift_entry_point.a /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/usr/lib/libPreviewsJITStubExecutor.a --output /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-ExecutorLinkFileList-normal-arm64.txt
+note: Using stub executor library with Swift entry point. (in target 'Money' from project 'Money')
+
+Ld /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money normal (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -Xlinker -reproducible -target arm64-apple-ios26.0-simulator -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk -O0 -L/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -F/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator -Xlinker -rpath -Xlinker @executable_path -Xlinker -rpath -Xlinker @executable_path/Frameworks -rdynamic -Xlinker -no_deduplicate -Xlinker -objc_abi_version -Xlinker 2 -Xlinker -debug_variant -e ___debug_blank_executor_main -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_dylib -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-DebugDylibPath-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __debug_instlnm -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-DebugDylibInstallName-normal-arm64.txt -Xlinker -filelist -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money-ExecutorLinkFileList-normal-arm64.txt -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __entitlements -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent -Xlinker -sectcreate -Xlinker __TEXT -Xlinker __ents_der -Xlinker /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.app-Simulated.xcent.der /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money.debug.dylib -Xlinker -no_adhoc_codesign -o /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money
+
+CopySwiftLibs /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-swiftStdLibTool --copy --verbose --sign - --scan-executable /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money.debug.dylib --scan-folder /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Frameworks --scan-folder /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/PlugIns --scan-folder /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/SystemExtensions --scan-folder /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Extensions --platform iphonesimulator --toolchain /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --destination /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Frameworks --strip-bitcode --strip-bitcode-tool /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/bitcode_strip --emit-dependency-info /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/SwiftStdLibToolInputDependencies.dep --filter-for-swift-os
+
+ExtractAppIntentsMetadata (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsmetadataprocessor --toolchain-dir /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain --module-name Money --sdk-root /Applications/Xcode.app/Contents/Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator26.0.sdk --xcode-version 17A324 --platform-family iOS --deployment-target 26.0 --bundle-identifier victor-samir.Money --output /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app --target-triple arm64-apple-ios26.0-simulator --binary-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money --dependency-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money_dependency_info.dat --stringsdata-file /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/ExtractedAppShortcutsMetadata.stringsdata --source-file-list /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftFileList --metadata-file-list /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.DependencyMetadataFileList --static-metadata-file-list /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.DependencyStaticMetadataFileList --swift-const-vals-list /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Objects-normal/arm64/Money.SwiftConstValuesFileList --compile-time-extraction --deployment-aware-processing --validate-assistant-intents --no-app-shortcuts-localization
+2025-10-05 20:46:52.158 appintentsmetadataprocessor[24071:497684] Starting appintentsmetadataprocessor export
+2025-10-05 20:46:52.225 appintentsmetadataprocessor[24071:497684] Writing Metadata.appintents
+2025-10-05 20:46:52.225 appintentsmetadataprocessor[24071:497684] Metadata root: /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Metadata.appintents
+
+AppIntentsSSUTraining (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/appintentsnltrainingprocessor --infoplist-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Info.plist --temp-dir-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/ssu --bundle-id victor-samir.Money --product-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app --extracted-metadata-path /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Metadata.appintents --metadata-file-list /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/Money.DependencyMetadataFileList --archive-ssu-assets
+2025-10-05 20:46:52.241 appintentsnltrainingprocessor[24072:497687] Parsing options for appintentsnltrainingprocessor
+2025-10-05 20:46:52.241 appintentsnltrainingprocessor[24072:497687] Starting AppIntents SSU YAML Generation
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Training 'Novo devedor no ${+applicationName}' for en
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Training 'Novo devedor no ${+applicationName}' for pt-BR
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Training 'Registrar parcela no ${+applicationName}' for en
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Training 'Registrar parcela no ${+applicationName}' for pt-BR
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Training Negative Phrases '' for en
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Training Negative Phrases '' for pt-BR
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Application name 'Money' for en
+2025-10-05 20:46:52.248 appintentsnltrainingprocessor[24072:497687] Application name 'Money' for pt-BR
+2025-10-05 20:46:52.253 appintentsnltrainingprocessor[24072:497687] Generated AppIntents SSU YAML files in file:///Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Intermediates.noindex/Money.build/Debug-iphonesimulator/Money.build/ssu/
+2025-10-05 20:46:52.253 appintentsnltrainingprocessor[24072:497687] Copied AppIntents SSU YAML files to file:///Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Metadata.appintents/
+Archiving all locales.
+[------------------------------------------------------------] 0% archiving en[🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢------------------------------] 50% archived en[🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢------------------------------] 50% archiving pt-BR[🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢] 100% archived pt-BR[🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢🁢] 100% archived 2 locales/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/en.lproj/nlu.appintents
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/en.lproj/nlu.appintents/0ecb1acd3c4f56a19be8cad5bd123686.version
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/pt-BR.lproj/nlu.appintents
+/Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/pt-BR.lproj/nlu.appintents/0a2f2545b5f275cc7b139a1fa41f014a.version
+
+
+CodeSign /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money.debug.dylib (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/Money.debug.dylib
+
+CodeSign /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/__preview.dylib (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app/__preview.dylib
+
+CodeSign /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    
+    Signing Identity:     "Sign to Run Locally"
+    
+    /usr/bin/codesign --force --sign - --timestamp\=none --generate-entitlement-der /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app
+
+RegisterExecutionPolicyException /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-RegisterExecutionPolicyException /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app
+
+Validate /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    builtin-validationUtility /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app -shallow-bundle -infoplist-subpath Info.plist
+
+Touch /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app (in target 'Money' from project 'Money')
+    cd /Users/victorsamir/Documents/Money
+    /usr/bin/touch -c /Users/victorsamir/Library/Developer/Xcode/DerivedData/Money-gejdruvrzmbeckhfjgdiljhvstqq/Build/Products/Debug-iphonesimulator/Money.app
+
+** BUILD SUCCEEDED **
+

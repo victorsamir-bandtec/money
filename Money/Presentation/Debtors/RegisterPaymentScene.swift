@@ -59,7 +59,7 @@ struct RegisterPaymentScene: View {
         VStack(alignment: .leading, spacing: 6) {
             TextField(String(localized: "payment.form.amount"), value: $draft.amount, format: .number)
                 .keyboardType(.decimalPad)
-                .onChange(of: draft.amount) { validate() }
+                .onChange(of: draft.amount) { _ in validate() }
             if !isValidAmount {
                 // Dica de validação discreta
                 Text(String(localized: "payment.form.amount.invalid"))

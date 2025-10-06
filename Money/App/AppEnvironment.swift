@@ -12,7 +12,7 @@ final class AppEnvironment {
     let notificationScheduler: NotificationScheduling
     let sampleDataService: SampleDataService
 
-    init(featureFlags: FeatureFlags = FeatureFlags()) {
+    init(featureFlags: FeatureFlags = FeatureFlags(), configuration: ModelConfiguration? = nil) {
         self.featureFlags = featureFlags
         let schema = Schema([
             Debtor.self,
@@ -22,9 +22,9 @@ final class AppEnvironment {
             FixedExpense.self,
             SalarySnapshot.self
         ])
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: false)
+        let modelConfiguration = configuration ?? ModelConfiguration(isStoredInMemoryOnly: false)
         do {
-            container = try ModelContainer(for: schema, configurations: configuration)
+            container = try ModelContainer(for: schema, configurations: modelConfiguration)
         } catch {
             fatalError("Não foi possível configurar SwiftData: \(error)")
         }

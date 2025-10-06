@@ -117,7 +117,7 @@ xcodebuild test -scheme Money -destination 'platform=iOS Simulator,name=iPhone 1
 ## Feature Flags
 
 Managed via `FeatureFlags.swift` backed by `UserDefaults`. Currently includes:
-- iCloud sync toggle (exposed in Settings; requires CloudKit container setup in Signing & Capabilities)
+- iCloud sync (planejado; requer configuração de CloudKit no Signing & Capabilities)
 
 ## Widgets & Intents
 
@@ -127,10 +127,7 @@ Managed via `FeatureFlags.swift` backed by `UserDefaults`. Currently includes:
 
 ## iCloud Configuration
 
-The "Sincronizar com iCloud" feature flag in Settings prepares for CloudKit sync. To enable:
-1. Enable iCloud Documents in Signing & Capabilities
-2. Configure CloudKit container identifier
-3. Implement sync logic when flag is activated
+A sincronização via iCloud ainda não está disponível na interface. Para experimentar a integração, habilite iCloud Documents em Signing & Capabilities, configure o container CloudKit e conecte a sincronização diretamente no ambiente.
 
 ## Development Workflow
 

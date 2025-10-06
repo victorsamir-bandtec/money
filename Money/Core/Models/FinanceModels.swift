@@ -154,6 +154,7 @@ enum PaymentMethod: String, Codable, CaseIterable, Sendable {
     var category: String?
     var dueDay: Int
     var active: Bool
+    var note: String?
 
     init(
         id: UUID = UUID(),
@@ -161,7 +162,8 @@ enum PaymentMethod: String, Codable, CaseIterable, Sendable {
         amount: Decimal,
         category: String? = nil,
         dueDay: Int,
-        active: Bool = true
+        active: Bool = true,
+        note: String? = nil
     ) {
         precondition(!name.trimmingCharacters(in: .whitespaces).isEmpty)
         precondition(amount >= 0)
@@ -172,6 +174,30 @@ enum PaymentMethod: String, Codable, CaseIterable, Sendable {
         self.category = category
         self.dueDay = dueDay
         self.active = active
+        self.note = note
+    }
+}
+
+extension FixedExpense {
+    /// Returns the next calendar date matching the stored `dueDay`, rolling over to the following month when needed.
+    func nextDueDate(reference: Date = .now, calendar: Calendar = .current) -> Date? {
+        var components = calendar.dateComponents([.year, .month], from: reference)
+        components.day = min(dueDay, calendar.range(of: .day, in: .month, for: reference)?.count ?? dueDay)
+        guard let candidate = calendar.date(from: components) else { return nil }
+
+        if candidate >= calendar.startOfDay(for: reference) {
+            return candidate
+        }
+
+        guard let nextMonth = calendar.date(byAdding: DateComponents(month: 1), to: candidate) else { return candidate }
+        var nextComponents = calendar.dateComponents([.year, .month], from: nextMonth)
+        nextComponents.day = min(dueDay, calendar.range(of: .day, in: .month, for: nextMonth)?.count ?? dueDay)
+        return calendar.date(from: nextComponents)
+    }
+
+    var normalizedCategory: String? {
+        guard let category, !category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return category
     }
 }
 

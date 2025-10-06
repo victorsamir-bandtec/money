@@ -108,3 +108,116 @@ struct DebtorDetailViewModelTests {
         #expect(storedRate == Decimal(string: "0.02"), "storedRate=\(storedRate as Any)")
     }
 }
+
+struct ExpensesViewModelTests {
+    @Test("Aplica filtros por texto, status e categoria") @MainActor
+    func filtersExpenses() throws {
+        let schema = Schema([
+            FixedExpense.self,
+            SalarySnapshot.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = container.mainContext
+
+        let internet = FixedExpense(name: "Internet", amount: 120, category: "Casa", dueDay: 10)
+        let gym = FixedExpense(name: "Academia", amount: 90, category: "Saúde", dueDay: 5)
+        let archived = FixedExpense(name: "Curso", amount: 200, category: "Educação", dueDay: 20, active: false)
+
+        context.insert(internet)
+        context.insert(gym)
+        context.insert(archived)
+        try context.save()
+
+        let viewModel = ExpensesViewModel(context: context)
+        try viewModel.load()
+
+        #expect(viewModel.filteredExpenses.count == 2)
+
+        viewModel.searchText = "net"
+        #expect(viewModel.filteredExpenses.count == 1)
+        #expect(viewModel.filteredExpenses.first?.id == internet.id)
+
+        viewModel.searchText = ""
+        viewModel.statusFilter = .archived
+        #expect(viewModel.filteredExpenses.count == 1)
+        #expect(viewModel.filteredExpenses.first?.id == archived.id)
+
+        viewModel.statusFilter = .all
+        viewModel.selectedCategory = "Saúde"
+        #expect(viewModel.filteredExpenses.count == 1)
+        #expect(viewModel.filteredExpenses.first?.id == gym.id)
+    }
+
+    @Test("Calcula métricas e cobertura a partir do salário") @MainActor
+    func calculatesMetrics() throws {
+        let schema = Schema([
+            FixedExpense.self,
+            SalarySnapshot.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = container.mainContext
+
+        context.insert(FixedExpense(name: "Aluguel", amount: 1500, category: "Casa", dueDay: 1))
+        context.insert(FixedExpense(name: "Internet", amount: 120, category: "Casa", dueDay: 10))
+
+        let calendar = Calendar.current
+        let referenceMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: Date())) ?? Date()
+        context.insert(SalarySnapshot(referenceMonth: referenceMonth, amount: 4000))
+        try context.save()
+
+        let viewModel = ExpensesViewModel(context: context)
+        try viewModel.load(currentMonth: referenceMonth)
+
+        #expect(viewModel.metrics.totalExpenses == Decimal(1620))
+        #expect(viewModel.metrics.salaryAmount == Decimal(4000))
+        #expect(viewModel.metrics.remaining == Decimal(2380))
+
+        let coverage = try #require(viewModel.metrics.coverage)
+        #expect(abs(coverage - 0.405) < 0.0001)
+
+        #expect(viewModel.availableCategories.contains("Casa"))
+        #expect(viewModel.availableCategories.count == 1)
+    }
+}
+
+struct SettingsViewModelTests {
+    @Test("Atualiza salário e histórico a partir de Ajustes") @MainActor
+    func updatesSalary() throws {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let environment = AppEnvironment(configuration: configuration)
+        let viewModel = SettingsViewModel(environment: environment)
+
+        let calendar = Calendar.current
+        let referenceMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: Date())) ?? Date()
+
+        viewModel.load(referenceDate: referenceMonth)
+        #expect(viewModel.salary == nil)
+
+        viewModel.updateSalary(amount: 4200, month: referenceMonth, note: "Remoto")
+        let currentSalary = try #require(viewModel.salary)
+        #expect(currentSalary.amount == Decimal(4200))
+        #expect(viewModel.salaryHistory.first?.amount == Decimal(4200))
+
+        viewModel.updateSalary(amount: 4500, month: referenceMonth, note: nil)
+        let updatedSalary = try #require(viewModel.salary)
+        #expect(updatedSalary.amount == Decimal(4500))
+        #expect(updatedSalary.note == nil)
+        #expect(viewModel.salaryHistory.first?.amount == Decimal(4500))
+    }
+
+    @Test("Alterna alertas de vencimento sincronizando ambiente") @MainActor
+    func togglesNotifications() {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let environment = AppEnvironment(featureFlags: FeatureFlags(enableNotifications: false), configuration: configuration)
+        let viewModel = SettingsViewModel(environment: environment)
+
+        #expect(!viewModel.notificationsEnabled)
+
+        viewModel.toggleNotifications(true)
+
+        #expect(viewModel.notificationsEnabled)
+        #expect(environment.featureFlags.enableNotifications)
+    }
+}

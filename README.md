@@ -1,6 +1,6 @@
 # Money (iOS)
 
-Money é um aplicativo SwiftUI (Swift 6) que ajuda a acompanhar devedores, acordos parcelados, pagamentos, despesas fixas e salário. O projeto segue arquitetura MVVM, usa SwiftData para persistência local e prepara sincronização via iCloud através dos _feature flags_, entregando visual "Liquid Glass" do iOS 26 com degradê controlado para iOS 17+.
+Money é um aplicativo SwiftUI (Swift 6) que ajuda a acompanhar devedores, acordos parcelados, pagamentos, despesas fixas e salário. O projeto segue arquitetura MVVM, usa SwiftData para persistência local e entrega visual "Liquid Glass" do iOS 26 com degradê controlado para iOS 17+.
 
 ## Requisitos
 - Xcode 16 beta ou superior com SDK iOS 26 (fallback automático para iOS 17+).
@@ -13,10 +13,10 @@ Money é um aplicativo SwiftUI (Swift 6) que ajuda a acompanhar devedores, acord
    ```sh
    xcodebuild -scheme Money -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 15' clean test
    ```
-4. A primeira execução populará dados de exemplo (devedor “Marlon”) caso o banco esteja vazio. Essa ação também pode ser disparada manualmente na aba Ajustes.
+4. A primeira execução populará dados de exemplo (devedor “Marlon”) caso o banco esteja vazio.
 
 ## Estrutura de pastas
-- `Money/App` – ambiente global, erros, _feature flags_.
+- `Money/App` – ambiente global e erros compartilhados.
 - `Money/Core` – modelos SwiftData, serviços (cálculos financeiros, exportação CSV, notificações, formatação).
 - `Money/Presentation` – telas organizadas em features (Dashboard, Devedores, Despesas, Ajustes) com seus ViewModels.
 - `MoneyWidgets` – widget de resumo mensal.
@@ -31,7 +31,7 @@ Money é um aplicativo SwiftUI (Swift 6) que ajuda a acompanhar devedores, acord
 - **Localização** pronta em pt-BR (padrão) e en-US.
 
 ## Configuração de iCloud
-O app expõe o _feature flag_ `Sincronizar com iCloud` em Ajustes. Ao habilitar, a lógica de sincronização deve ser conectada a um container CloudKit; para testes, habilite iCloud Documents no Signing & Capabilities e ajuste o identificador conforme necessário.
+A sincronização via iCloud ainda está em planejamento. O projeto mantém os modelos compatíveis com CloudKit, mas não há opção disponível na interface no momento.
 
 ## Estilo de código
 - Indentação de 4 espaços, nomes `UpperCamelCase` para tipos e `lowerCamelCase` para valores.
