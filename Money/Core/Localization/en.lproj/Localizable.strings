@@ -22,7 +22,6 @@
 
 "tab.dashboard" = "Overview";
 "tab.debtors" = "Debtors";
-"tab.expenses" = "Expenses";
 "tab.transactions" = "Transactions";
 "tab.settings" = "Settings";
 
@@ -204,6 +203,10 @@
 "transactions.metric.expenses.caption" = "Total of manually logged expenses";
 "transactions.metric.income" = "Extra income";
 "transactions.metric.income.caption" = "Total of manually logged income";
+"transactions.mode.switcher.title" = "Entry type";
+"transactions.mode.variable" = "Variable";
+"transactions.mode.fixed" = "Fixed";
+"transactions.fixed.balance" = "Balance";
 "transactions.filter.type" = "Type";
 "transactions.filter.all" = "All";
 "transactions.filter.expense" = "Expenses";

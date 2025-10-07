@@ -22,7 +22,6 @@
 
 "tab.dashboard" = "Resumo";
 "tab.debtors" = "Devedores";
-"tab.expenses" = "Despesas";
 "tab.transactions" = "Lançamentos";
 "tab.settings" = "Ajustes";
 
@@ -205,6 +204,10 @@
 "transactions.metric.expenses.caption" = "Total de gastos registrados manualmente";
 "transactions.metric.income" = "Receitas extras";
 "transactions.metric.income.caption" = "Entradas registradas manualmente";
+"transactions.mode.switcher.title" = "Tipo de lançamento";
+"transactions.mode.variable" = "Variáveis";
+"transactions.mode.fixed" = "Fixas";
+"transactions.fixed.balance" = "Saldo";
 "transactions.filter.type" = "Tipo";
 "transactions.filter.all" = "Todos";
 "transactions.filter.expense" = "Gastos";

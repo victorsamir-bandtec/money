@@ -29,13 +29,17 @@ final class MoneyUITests: XCTestCase {
     }
 
     @MainActor
-    func testExpenseFiltersFlow() throws {
+    func testFixedExpenseFiltersFlow() throws {
         let app = XCUIApplication()
         app.launch()
 
-        let expensesTab = app.tabBars.buttons[LocalizedKey("tab.expenses").stringValue]
-        XCTAssertTrue(expensesTab.waitForExistence(timeout: 5))
-        expensesTab.tap()
+        let transactionsTab = app.tabBars.buttons[LocalizedKey("tab.transactions").stringValue]
+        XCTAssertTrue(transactionsTab.waitForExistence(timeout: 5))
+        transactionsTab.tap()
+
+        let fixedModeButton = app.buttons[LocalizedKey("transactions.mode.fixed").stringValue]
+        XCTAssertTrue(fixedModeButton.waitForExistence(timeout: 3))
+        fixedModeButton.tap()
 
         addExpense(in: app, name: "Internet", amount: "120", category: "Casa")
         addExpense(in: app, name: "Academia", amount: "90", category: "Saúde")

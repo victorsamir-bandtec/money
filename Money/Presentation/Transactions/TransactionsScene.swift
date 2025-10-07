@@ -2,74 +2,162 @@ import SwiftUI
 import SwiftData
 
 struct TransactionsScene: View {
-    @StateObject private var viewModel: TransactionsViewModel
+    enum Mode: Hashable, CaseIterable {
+        case variableFlow
+        case fixedExpenses
+
+        var pickerTitleKey: String {
+            switch self {
+            case .variableFlow:
+                return "transactions.mode.variable"
+            case .fixedExpenses:
+                return "transactions.mode.fixed"
+            }
+        }
+
+        var searchPromptKey: String {
+            switch self {
+            case .variableFlow:
+                return "transactions.search"
+            case .fixedExpenses:
+                return "expenses.search"
+            }
+        }
+
+        var addAccessibilityKey: String {
+            switch self {
+            case .variableFlow:
+                return "transactions.add"
+            case .fixedExpenses:
+                return "expenses.add"
+            }
+        }
+
+        var pickerTitle: LocalizedStringKey { LocalizedStringKey(pickerTitleKey) }
+        var searchPrompt: LocalizedStringKey { LocalizedStringKey(searchPromptKey) }
+    }
+
+    @StateObject private var transactionsViewModel: TransactionsViewModel
+    @StateObject private var expensesViewModel: ExpensesViewModel
     private let formatter: CurrencyFormatter
 
-    @State private var draft = TransactionDraft()
-    @State private var formMode: TransactionFormMode = .create
-    @State private var showingForm = false
+    @State private var mode: Mode = .variableFlow
+
+    @State private var transactionDraft = TransactionDraft()
+    @State private var transactionFormMode: TransactionFormMode = .create
+    @State private var showingTransactionForm = false
+
+    @State private var expenseDraft = ExpenseDraft()
+    @State private var expenseFormMode: ExpenseFormMode = .create
+    @State private var showingExpenseForm = false
+    @State private var expenseDetailContext: ExpenseDetailContext?
 
     init(environment: AppEnvironment, context: ModelContext) {
-        _viewModel = StateObject(wrappedValue: TransactionsViewModel(context: context))
+        _transactionsViewModel = StateObject(wrappedValue: TransactionsViewModel(context: context))
+        _expensesViewModel = StateObject(wrappedValue: ExpensesViewModel(context: context))
         self.formatter = environment.currencyFormatter
     }
 
     var body: some View {
         NavigationStack {
             List {
-                summarySection
-                transactionsSection
+                modeSection
+                if mode == .variableFlow {
+                    transactionsSummarySection
+                    transactionsListSection
+                } else {
+                    expensesSummarySection
+                    expensesListSection
+                }
             }
             .listStyle(.plain)
             .scrollIndicators(.hidden)
             .scrollContentBackground(.hidden)
-            .background(Color(.systemGroupedBackground))
+            .background(TransactionsBackground())
             .navigationTitle(String(localized: "transactions.title"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: presentCreateForm) {
+                    Button(action: addAction) {
                         Image(systemName: "plus")
                     }
-                    .accessibilityLabel(String(localized: "transactions.add"))
+                    .accessibilityLabel(NSLocalizedString(mode.addAccessibilityKey, comment: ""))
                 }
             }
         }
-        .searchable(text: $viewModel.searchText, prompt: String(localized: "transactions.search"))
-        .task { try? viewModel.load() }
-        .refreshable { try? viewModel.load() }
-        .sheet(isPresented: $showingForm) {
+        .searchable(text: searchBinding, prompt: Text(mode.searchPrompt))
+        .task { loadData() }
+        .refreshable { loadData() }
+        .sheet(isPresented: $showingTransactionForm) {
             TransactionForm(
-                draft: $draft,
-                mode: formMode,
-                categories: viewModel.availableCategories,
-                completion: handleFormResult
+                draft: $transactionDraft,
+                mode: transactionFormMode,
+                categories: transactionsViewModel.availableCategories,
+                completion: handleTransactionFormResult
             )
+        }
+        .sheet(isPresented: $showingExpenseForm) {
+            ExpenseForm(
+                draft: $expenseDraft,
+                mode: expenseFormMode,
+                suggestedCategories: expensesViewModel.availableCategories,
+                completion: handleExpenseFormResult
+            )
+        }
+        .sheet(item: $expenseDetailContext) { context in
+            ExpenseDetailView(
+                expense: context.expense,
+                formatter: formatter,
+                dueDate: expensesViewModel.dueDate(for: context.expense),
+                isOverdue: expensesViewModel.isOverdue(context.expense),
+                onEdit: { presentEditExpenseForm(for: context.expense) },
+                onDuplicate: { expensesViewModel.duplicate(context.expense) },
+                onArchiveToggle: { expensesViewModel.toggleArchive(context.expense) },
+                onDelete: { expensesViewModel.removeExpense(context.expense) }
+            )
+            .presentationDetents([.medium, .large])
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .financialDataDidChange)) { _ in
+            try? expensesViewModel.load()
         }
         .appErrorAlert(errorBinding)
     }
 
-    private var summarySection: some View {
+    private var modeSection: some View {
+        Section {
+            TransactionsHeader(
+                mode: $mode,
+                formatter: formatter,
+                cashMetrics: transactionsViewModel.metrics,
+                fixedMetrics: expensesViewModel.metrics,
+                coverageText: expensesViewModel.formattedCoveragePercentage(),
+                coverageValue: expensesViewModel.metrics.coverage
+            )
+        }
+        .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 20, trailing: 20))
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+    }
+
+    private var transactionsSummarySection: some View {
         Section {
             TransactionsSummaryCard(
-                metrics: viewModel.metrics,
-                formatter: formatter,
-                typeFilter: Binding(get: { viewModel.typeFilter }, set: { viewModel.typeFilter = $0 }),
-                sortOrder: Binding(get: { viewModel.sortOrder }, set: { viewModel.sortOrder = $0 }),
-                categoryFilter: Binding(get: { viewModel.categoryFilter }, set: { viewModel.categoryFilter = $0 }),
-                categories: viewModel.availableCategories,
-                hasActiveFilters: hasActiveFilters,
-                clearFilters: clearFilters,
-                toggleCategory: toggleCategory
+                typeFilter: Binding(get: { transactionsViewModel.typeFilter }, set: { transactionsViewModel.typeFilter = $0 }),
+                sortOrder: Binding(get: { transactionsViewModel.sortOrder }, set: { transactionsViewModel.sortOrder = $0 }),
+                categoryFilter: Binding(get: { transactionsViewModel.categoryFilter }, set: { transactionsViewModel.categoryFilter = $0 }),
+                categories: transactionsViewModel.availableCategories,
+                hasActiveFilters: transactionsHasActiveFilters,
+                clearFilters: clearTransactionFilters,
+                toggleCategory: toggleTransactionCategory
             )
-            .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 32, trailing: 20))
+            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 24, trailing: 20))
             .listRowSeparator(.hidden)
             .listRowBackground(Color.clear)
         }
     }
 
-    private var transactionsSection: some View {
+    private var transactionsListSection: some View {
         Group {
-            if viewModel.sections.isEmpty {
+            if transactionsViewModel.sections.isEmpty {
                 ContentUnavailableView(
                     String(localized: "transactions.empty.title"),
                     systemImage: "tray",
@@ -80,7 +168,7 @@ struct TransactionsScene: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             } else {
-                ForEach(viewModel.sections) { section in
+                ForEach(transactionsViewModel.sections) { section in
                     Section {
                         ForEach(section.transactions, id: \.id) { transaction in
                             TransactionRow(
@@ -89,17 +177,17 @@ struct TransactionsScene: View {
                             )
                             .contentShape(Rectangle())
                             .onTapGesture {
-                                presentEditForm(for: transaction)
+                                presentEditTransactionForm(for: transaction)
                             }
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
-                                    viewModel.removeTransaction(transaction)
+                                    transactionsViewModel.removeTransaction(transaction)
                                 } label: {
                                     Label(String(localized: "common.remove"), systemImage: "trash")
                                 }
 
                                 Button {
-                                    presentEditForm(for: transaction)
+                                    presentEditTransactionForm(for: transaction)
                                 } label: {
                                     Label(String(localized: "common.edit"), systemImage: "pencil")
                                 }
@@ -116,31 +204,162 @@ struct TransactionsScene: View {
         }
     }
 
-    private var errorBinding: Binding<AppError?> {
-        Binding(
-            get: { viewModel.error },
-            set: { viewModel.error = $0 }
-        )
+    private var expensesSummarySection: some View {
+        Section {
+            ExpensesSummaryCard(
+                searchText: Binding(get: { expensesViewModel.searchText }, set: { expensesViewModel.searchText = $0 }),
+                statusFilter: Binding(get: { expensesViewModel.statusFilter }, set: { expensesViewModel.statusFilter = $0 }),
+                selectedCategory: Binding(get: { expensesViewModel.selectedCategory }, set: { expensesViewModel.selectedCategory = $0 }),
+                sortOption: Binding(get: { expensesViewModel.sortOption }, set: { expensesViewModel.sortOption = $0 }),
+                categories: expensesViewModel.availableCategories,
+                onToggleCategory: toggleExpenseCategory,
+                onClearFilters: clearExpenseFilters
+            )
+            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 24, trailing: 20))
+            .listRowSeparator(.hidden)
+            .listRowBackground(Color.clear)
+        }
     }
 
-    private func presentCreateForm() {
-        formMode = .create
-        draft = TransactionDraft()
-        showingForm = true
+    private var expensesListSection: some View {
+        Section {
+            if expensesViewModel.filteredExpenses.isEmpty {
+                ExpensesEmptyState(
+                    hasActiveFilters: expensesHasActiveFilters,
+                    onAdd: presentCreateExpenseForm
+                )
+                .listRowInsets(EdgeInsets(top: 16, leading: 20, bottom: 40, trailing: 20))
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            } else {
+                ForEach(expensesViewModel.filteredExpenses, id: \.id) { expense in
+                    let dueDate = expensesViewModel.dueDate(for: expense)
+                    let isOverdue = expensesViewModel.isOverdue(expense)
+                    ExpenseCard(
+                        expense: expense,
+                        formatter: formatter,
+                        dueDate: dueDate,
+                        isOverdue: isOverdue
+                    )
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        presentExpenseDetail(for: expense)
+                    }
+                    .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            expensesViewModel.removeExpense(expense)
+                        } label: {
+                            Label(String(localized: "common.remove"), systemImage: "trash")
+                        }
+
+                        Button {
+                            expensesViewModel.duplicate(expense)
+                        } label: {
+                            Label(String(localized: "expenses.duplicate"), systemImage: "doc.on.doc")
+                        }
+                        .tint(.blue)
+
+                        Button {
+                            presentEditExpenseForm(for: expense)
+                        } label: {
+                            Label(String(localized: "common.edit"), systemImage: "pencil")
+                        }
+                        .tint(.indigo)
+
+                        Button {
+                            expensesViewModel.toggleArchive(expense)
+                        } label: {
+                            Label(
+                                expense.active ? String(localized: "expenses.archive") : String(localized: "expenses.unarchive"),
+                                systemImage: expense.active ? "archivebox" : "tray.and.arrow.up"
+                            )
+                        }
+                        .tint(.orange)
+                    }
+                }
+            }
+        } header: {
+            Text(String(localized: "expenses.section.list"))
+                .font(.headline)
+        }
+        .headerProminence(.increased)
+        .textCase(nil)
     }
 
-    private func presentEditForm(for transaction: CashTransaction) {
-        formMode = .edit(transaction)
-        draft = TransactionDraft(transaction: transaction)
-        showingForm = true
+    private var transactionsHasActiveFilters: Bool {
+        transactionsViewModel.categoryFilter != nil ||
+        !transactionsViewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        transactionsViewModel.typeFilter != .all ||
+        transactionsViewModel.sortOrder != .dateDescending
     }
 
-    private func handleFormResult(_ result: TransactionForm.ResultAction) {
+    private var expensesHasActiveFilters: Bool {
+        !expensesViewModel.searchText.isEmpty ||
+        expensesViewModel.selectedCategory != nil ||
+        expensesViewModel.statusFilter != .active ||
+        expensesViewModel.sortOption != .dueDate
+    }
+
+    private func toggleTransactionCategory(_ category: String) {
+        if transactionsViewModel.categoryFilter?.localizedCaseInsensitiveCompare(category) == .orderedSame {
+            transactionsViewModel.categoryFilter = nil
+        } else {
+            transactionsViewModel.categoryFilter = category
+        }
+    }
+
+    private func clearTransactionFilters() {
+        transactionsViewModel.categoryFilter = nil
+        transactionsViewModel.searchText = ""
+        transactionsViewModel.typeFilter = .all
+        transactionsViewModel.sortOrder = .dateDescending
+    }
+
+    private func toggleExpenseCategory(_ category: String) {
+        if expensesViewModel.selectedCategory?.localizedCaseInsensitiveCompare(category) == .orderedSame {
+            expensesViewModel.selectedCategory = nil
+        } else {
+            expensesViewModel.selectedCategory = category
+        }
+    }
+
+    private func clearExpenseFilters() {
+        expensesViewModel.searchText = ""
+        expensesViewModel.selectedCategory = nil
+        expensesViewModel.sortOption = .dueDate
+        expensesViewModel.statusFilter = .active
+    }
+
+    private func addAction() {
+        switch mode {
+        case .variableFlow:
+            presentCreateTransactionForm()
+        case .fixedExpenses:
+            presentCreateExpenseForm()
+        }
+    }
+
+    private func presentCreateTransactionForm() {
+        transactionFormMode = .create
+        transactionDraft = TransactionDraft()
+        showingTransactionForm = true
+    }
+
+    private func presentEditTransactionForm(for transaction: CashTransaction) {
+        transactionFormMode = .edit(transaction)
+        transactionDraft = TransactionDraft(transaction: transaction)
+        showingTransactionForm = true
+    }
+
+    private func handleTransactionFormResult(_ result: TransactionForm.ResultAction) {
         switch result {
         case .save(let draft):
-            switch formMode {
+            switch transactionFormMode {
             case .create:
-                viewModel.addTransaction(
+                transactionsViewModel.addTransaction(
                     date: draft.date,
                     amount: draft.amount,
                     type: draft.type,
@@ -148,7 +367,7 @@ struct TransactionsScene: View {
                     note: draft.note
                 )
             case .edit(let transaction):
-                viewModel.updateTransaction(
+                transactionsViewModel.updateTransaction(
                     transaction,
                     date: draft.date,
                     amount: draft.amount,
@@ -157,46 +376,362 @@ struct TransactionsScene: View {
                     note: draft.note
                 )
             }
-            showingForm = false
+            showingTransactionForm = false
         case .cancel:
-            showingForm = false
+            showingTransactionForm = false
         }
     }
 
-    private func toggleCategory(_ category: String) {
-        if viewModel.categoryFilter?.localizedCaseInsensitiveCompare(category) == .orderedSame {
-            viewModel.categoryFilter = nil
-        } else {
-            viewModel.categoryFilter = category
+    private func presentCreateExpenseForm() {
+        expenseFormMode = .create
+        expenseDraft = ExpenseDraft()
+        showingExpenseForm = true
+    }
+
+    private func presentEditExpenseForm(for expense: FixedExpense) {
+        expenseFormMode = .edit(expense)
+        expenseDraft = ExpenseDraft(expense: expense)
+        showingExpenseForm = true
+    }
+
+    private func presentExpenseDetail(for expense: FixedExpense) {
+        expenseDetailContext = ExpenseDetailContext(expense: expense)
+    }
+
+    private func handleExpenseFormResult(_ result: ExpenseForm.ResultAction) {
+        switch result {
+        case .save(let draft):
+            switch expenseFormMode {
+            case .create:
+                expensesViewModel.addExpense(
+                    name: draft.name,
+                    amount: draft.amount,
+                    category: draft.category,
+                    dueDay: draft.dueDay,
+                    note: draft.note
+                )
+            case .edit(let expense):
+                expensesViewModel.updateExpense(
+                    expense,
+                    name: draft.name,
+                    amount: draft.amount,
+                    category: draft.category,
+                    dueDay: draft.dueDay,
+                    note: draft.note
+                )
+            }
+            showingExpenseForm = false
+        case .cancel:
+            showingExpenseForm = false
         }
     }
 
-    private func clearFilters() {
-        viewModel.categoryFilter = nil
-        viewModel.searchText = ""
-        viewModel.typeFilter = .all
-        viewModel.sortOrder = .dateDescending
+    private func loadData() {
+        let referenceDate = Date()
+        try? transactionsViewModel.load(for: referenceDate)
+        try? expensesViewModel.load(currentMonth: referenceDate)
     }
 
-    private var hasActiveFilters: Bool {
-        viewModel.categoryFilter != nil ||
-        !viewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-        viewModel.typeFilter != .all ||
-        viewModel.sortOrder != .dateDescending
+    private var errorBinding: Binding<AppError?> {
+        Binding(
+            get: { expensesViewModel.error ?? transactionsViewModel.error },
+            set: { newValue in
+                expensesViewModel.error = newValue
+                transactionsViewModel.error = newValue
+            }
+        )
+    }
+
+    private var searchBinding: Binding<String> {
+        Binding(
+            get: {
+                switch mode {
+                case .variableFlow:
+                    return transactionsViewModel.searchText
+                case .fixedExpenses:
+                    return expensesViewModel.searchText
+                }
+            },
+            set: { newValue in
+                switch mode {
+                case .variableFlow:
+                    transactionsViewModel.searchText = newValue
+                case .fixedExpenses:
+                    expensesViewModel.searchText = newValue
+                }
+            }
+        )
     }
 }
 
-private enum TransactionFormMode {
-    case create
-    case edit(CashTransaction)
+private struct TransactionsHeader: View {
+    @Binding var mode: TransactionsScene.Mode
+    let formatter: CurrencyFormatter
+    let cashMetrics: TransactionsViewModel.TransactionsMetrics
+    let fixedMetrics: ExpensesViewModel.ExpensesMetrics
+    let coverageText: String?
+    let coverageValue: Double?
 
-    var titleKey: LocalizedStringKey {
-        switch self {
-        case .create:
-            return "transactions.form.title"
-        case .edit:
-            return "transactions.form.edit"
+    var body: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            Picker(String(localized: "transactions.mode.switcher.title"), selection: $mode) {
+                ForEach(TransactionsScene.Mode.allCases, id: \.self) { option in
+                    Text(option.pickerTitle)
+                        .tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+
+            switch mode {
+            case .variableFlow:
+                VariableHeroCard(metrics: cashMetrics, formatter: formatter)
+            case .fixedExpenses:
+                FixedExpensesHeroCard(
+                    metrics: fixedMetrics,
+                    formatter: formatter,
+                    coverageText: coverageText,
+                    coverageValue: coverageValue
+                )
+            }
         }
+        .padding(.horizontal, 4)
+    }
+}
+
+private struct VariableHeroCard: View {
+    let metrics: TransactionsViewModel.TransactionsMetrics
+    let formatter: CurrencyFormatter
+
+    private var tint: Color { metrics.netBalance >= .zero ? .appThemeColor : .red }
+    private var icon: String { metrics.netBalance >= .zero ? "arrow.up.right" : "arrow.down.left" }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HeroHeader(
+                tint: tint,
+                icon: icon,
+                title: "transactions.metric.balance",
+                subtitle: "transactions.metric.balance.caption"
+            )
+
+            Text(formatter.string(from: metrics.netBalance))
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            Divider()
+                .background(Color.primary.opacity(0.06))
+
+            HStack(alignment: .top, spacing: 24) {
+                InlineMetric(
+                    title: "transactions.metric.expenses",
+                    value: formatter.string(from: metrics.totalExpenses),
+                    icon: "arrow.up.circle",
+                    tint: .pink
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                InlineMetric(
+                    title: "transactions.metric.income",
+                    value: formatter.string(from: metrics.totalIncome),
+                    icon: "arrow.down.circle",
+                    tint: .appThemeColor
+                )
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(HeroBackground(tint: tint))
+    }
+
+}
+
+private struct FixedExpensesHeroCard: View {
+    let metrics: ExpensesViewModel.ExpensesMetrics
+    let formatter: CurrencyFormatter
+    let coverageText: String?
+    let coverageValue: Double?
+
+    private var progressValue: Double? {
+        guard let value = coverageValue else { return nil }
+        return min(max(value, 0), 1)
+    }
+
+    private var remainingTint: Color {
+        guard let remaining = metrics.remaining else { return .gray }
+        if remaining > 0 { return .appThemeColor }
+        if remaining < 0 { return .red }
+        return .gray
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            HeroHeader(
+                tint: .pink,
+                icon: "creditcard",
+                title: "expenses.metric.total",
+                subtitle: "expenses.metric.total.caption"
+            )
+
+            Text(formatter.string(from: metrics.totalExpenses))
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            if let progressValue, let coverageText {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("expenses.metric.coverage")
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(coverageText)
+                            .font(.footnote.weight(.semibold))
+                            .foregroundStyle(.primary)
+                    }
+                    ProgressView(value: progressValue)
+                        .tint(Color.pink)
+                        .progressViewStyle(LinearProgressViewStyle())
+                }
+            }
+
+            if let remaining = metrics.remaining {
+                HStack(alignment: .top, spacing: 24) {
+                    InlineMetric(
+                        title: "transactions.fixed.balance",
+                        value: formatter.string(from: remaining),
+                        icon: remaining >= 0 ? "arrowtriangle.up.circle" : "arrowtriangle.down.circle",
+                        tint: remainingTint
+                    )
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                }
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(HeroBackground(tint: .pink))
+    }
+
+}
+
+private struct HeroBackground: View {
+    let tint: Color
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .fill(Color(.secondarySystemBackground))
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: gradientColors,
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .opacity(colorScheme == .dark ? 0.85 : 0.75)
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .strokeBorder(tint.opacity(colorScheme == .dark ? 0.45 : 0.25), lineWidth: 1.2)
+            }
+            .shadow(color: tint.opacity(colorScheme == .dark ? 0.22 : 0.18), radius: 18, x: 0, y: 12)
+    }
+
+    private var gradientColors: [Color] {
+        [
+            tint.opacity(colorScheme == .dark ? 0.4 : 0.3),
+            tint.opacity(colorScheme == .dark ? 0.18 : 0.1)
+        ]
+    }
+}
+
+private struct InlineMetric: View {
+    let title: LocalizedStringKey
+    let value: String
+    let icon: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label {
+                Text(title)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(tint)
+            } icon: {
+                Image(systemName: icon)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(tint)
+            }
+            Text(value)
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+        }
+    }
+}
+
+private struct HeroHeader: View {
+    let tint: Color
+    let icon: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(tint.opacity(0.18))
+                    .frame(width: 40, height: 40)
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(tint)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(tint)
+                Text(subtitle)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+private struct TransactionsBackground: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        ZStack {
+            Color(.systemBackground)
+            LinearGradient(
+                colors: gradientColors,
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .opacity(colorScheme == .dark ? 1 : 0.6)
+            RadialGradient(
+                colors: [Color.accentColor.opacity(colorScheme == .dark ? 0.25 : 0.12), Color.clear],
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 420
+            )
+        }
+        .ignoresSafeArea()
+    }
+
+    private var gradientColors: [Color] {
+        if colorScheme == .dark {
+            return [
+                Color(red: 0.07, green: 0.09, blue: 0.16),
+                Color(red: 0.02, green: 0.03, blue: 0.07)
+            ]
+        }
+        return [
+            Color(.systemGroupedBackground),
+            Color(.secondarySystemGroupedBackground)
+        ]
     }
 }
 
@@ -251,8 +786,6 @@ private struct TransactionRow: View {
 }
 
 private struct TransactionsSummaryCard: View {
-    let metrics: TransactionsViewModel.TransactionsMetrics
-    let formatter: CurrencyFormatter
     @Binding var typeFilter: TransactionsViewModel.TypeFilter
     @Binding var sortOrder: TransactionsViewModel.SortOrder
     @Binding var categoryFilter: String?
@@ -261,37 +794,8 @@ private struct TransactionsSummaryCard: View {
     let clearFilters: () -> Void
     let toggleCategory: (String) -> Void
 
-    private let columns = [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
-
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            MetricCard(
-                title: "transactions.metric.balance",
-                value: formatter.string(from: metrics.netBalance),
-                caption: "transactions.metric.balance.caption",
-                icon: metrics.netBalance >= .zero ? "chart.line.uptrend.xyaxis" : "chart.line.downtrend.xyaxis",
-                tint: metrics.netBalance >= .zero ? .blue : .red,
-                style: .prominent
-            )
-
-            LazyVGrid(columns: columns, alignment: .leading, spacing: 16) {
-                MetricCard(
-                    title: "transactions.metric.expenses",
-                    value: formatter.string(from: metrics.totalExpenses),
-                    caption: "transactions.metric.expenses.caption",
-                    icon: "arrow.up.circle.fill",
-                    tint: .pink
-                )
-
-                MetricCard(
-                    title: "transactions.metric.income",
-                    value: formatter.string(from: metrics.totalIncome),
-                    caption: "transactions.metric.income.caption",
-                    icon: "arrow.down.circle.fill",
-                    tint: .green
-                )
-            }
-
+        VStack(alignment: .leading, spacing: 20) {
             Picker("transactions.filter.type", selection: $typeFilter) {
                 Text(String(localized: "transactions.filter.all")).tag(TransactionsViewModel.TypeFilter.all)
                 Text(String(localized: "transactions.filter.expense")).tag(TransactionsViewModel.TypeFilter.expenses)
@@ -361,6 +865,20 @@ private struct FilterChip: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+    }
+}
+
+private enum TransactionFormMode {
+    case create
+    case edit(CashTransaction)
+
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .create:
+            return "transactions.form.title"
+        case .edit:
+            return "transactions.form.edit"
+        }
     }
 }
 
@@ -449,4 +967,520 @@ private struct TransactionDraft: Equatable {
     }
 
     var isValid: Bool { amount > 0 }
+}
+
+private enum ExpenseFormMode {
+    case create
+    case edit(FixedExpense)
+
+    var navigationTitle: LocalizedStringKey {
+        switch self {
+        case .create:
+            return "expenses.form.title"
+        case .edit:
+            return "expenses.form.edit.title"
+        }
+    }
+}
+
+private struct ExpenseDetailContext: Identifiable {
+    let expense: FixedExpense
+    var id: UUID { expense.id }
+}
+
+private struct ExpensesSummaryCard: View {
+    @Binding var searchText: String
+    @Binding var statusFilter: ExpensesViewModel.StatusFilter
+    @Binding var selectedCategory: String?
+    @Binding var sortOption: ExpensesViewModel.SortOption
+    let categories: [String]
+    var onToggleCategory: (String) -> Void
+    var onClearFilters: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            SearchField(text: $searchText)
+            filterControls
+        }
+        .padding(.horizontal, 4)
+    }
+
+    private var filterControls: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Picker("expenses.filter.status", selection: $statusFilter) {
+                Text(String(localized: "expenses.filter.active")).tag(ExpensesViewModel.StatusFilter.active)
+                Text(String(localized: "expenses.filter.all")).tag(ExpensesViewModel.StatusFilter.all)
+                Text(String(localized: "expenses.filter.archived")).tag(ExpensesViewModel.StatusFilter.archived)
+            }
+            .pickerStyle(.segmented)
+
+            HStack {
+                Menu {
+                    Picker("expenses.filter.sort", selection: $sortOption) {
+                        ForEach(ExpensesViewModel.SortOption.allCases, id: \.self) { option in
+                            Label(option.localizedTitle, systemImage: option.systemImage)
+                                .tag(option)
+                        }
+                    }
+                } label: {
+                    Label(sortOption.localizedTitle, systemImage: "arrow.up.arrow.down")
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Color.accentColor.opacity(0.15), in: Capsule())
+                }
+
+                Spacer()
+
+                if hasActiveFilters {
+                    Button(String(localized: "common.clear.filters"), action: onClearFilters)
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(String(localized: "common.clear.filters"))
+                }
+            }
+
+            if categories.isEmpty {
+                EmptyView()
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(categories, id: \.self) { category in
+                            CategoryChip(
+                                text: category,
+                                isSelected: selectedCategory?.localizedCaseInsensitiveCompare(category) == .orderedSame,
+                                action: { onToggleCategory(category) }
+                            )
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+    }
+
+    private var hasActiveFilters: Bool {
+        !searchText.isEmpty || selectedCategory != nil || statusFilter != .active || sortOption != .dueDate
+    }
+}
+
+private struct ExpenseCard: View {
+    let expense: FixedExpense
+    let formatter: CurrencyFormatter
+    let dueDate: Date?
+    let isOverdue: Bool
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var categoryText: String? {
+        expense.category?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(expense.name)
+                        .font(.headline.weight(.semibold))
+                    if let note = expense.note, !note.isEmpty {
+                        Text(note)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+                }
+                Spacer()
+                Text(formatter.string(from: expense.amount))
+                    .font(.title3.bold())
+            }
+
+            HStack(spacing: 12) {
+                if let dueDate {
+                    Label {
+                        Text(dueDate, format: .dateTime.day(.twoDigits).month(.abbreviated))
+                    } icon: {
+                        Image(systemName: "calendar")
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                } else {
+                    Label(localizedFormat("expenses.due", expense.dueDay), systemImage: "calendar")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let categoryText {
+                    StatusChip(
+                        text: categoryText,
+                        systemImage: "tag",
+                        tint: .cyan
+                    )
+                }
+
+                if !expense.active {
+                    StatusChip(text: String(localized: "expenses.status.archived"), systemImage: "archivebox", tint: .orange)
+                } else if isOverdue {
+                    StatusChip(text: String(localized: "expenses.status.overdue"), systemImage: "exclamationmark.triangle.fill", tint: .red)
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 18)
+        .background(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(cardFill)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.12))
+        )
+    }
+
+    private var cardFill: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.05)
+            : Color.black.opacity(0.04)
+    }
+}
+
+private struct StatusChip: View {
+    let text: String
+    let systemImage: String
+    let tint: Color
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Label(text, systemImage: systemImage)
+            .font(.footnote.weight(.semibold))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 8)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(tint.opacity(colorScheme == .dark ? 0.18 : 0.12))
+            )
+            .foregroundStyle(foregroundColor)
+    }
+
+    private var foregroundColor: Color {
+        colorScheme == .dark
+            ? Color.white.opacity(0.9)
+            : tint
+    }
+}
+
+private struct CategoryChip: View {
+    let text: String
+    let isSelected: Bool
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(text)
+                .font(.footnote.weight(.semibold))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .background(
+                    Capsule(style: .continuous)
+                        .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.primary.opacity(0.08))
+                )
+                .foregroundStyle(isSelected ? Color.accentColor : .primary)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+private struct ExpensesEmptyState: View {
+    var hasActiveFilters: Bool
+    var onAdd: () -> Void
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: hasActiveFilters ? "line.3.horizontal.decrease.circle" : "creditcard" )
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+
+            Text(hasActiveFilters ? String(localized: "expenses.empty.filtered") : String(localized: "expenses.empty"))
+                .font(.headline)
+                .multilineTextAlignment(.center)
+
+            Text(String(localized: "expenses.empty.message"))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button(action: onAdd) {
+                Text(String(localized: "expenses.add"))
+                    .fontWeight(.semibold)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.accentColor)
+                    )
+                    .foregroundStyle(Color.white)
+            }
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity, alignment: .center)
+        .background(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
+private struct ExpenseDraft: Equatable {
+    var name: String = ""
+    var amount: Decimal = .zero
+    var category: String = ""
+    var dueDay: Int = 5
+    var note: String = ""
+
+    init() {}
+
+    init(expense: FixedExpense) {
+        name = expense.name
+        amount = expense.amount
+        category = expense.category ?? ""
+        dueDay = expense.dueDay
+        note = expense.note ?? ""
+    }
+
+    var isValid: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && amount > 0 && (1...31).contains(dueDay)
+    }
+}
+
+private struct ExpenseForm: View {
+    @Binding var draft: ExpenseDraft
+    let mode: ExpenseFormMode
+    let suggestedCategories: [String]
+    var completion: (ResultAction) -> Void
+    @FocusState private var focusedField: Field?
+
+    private enum Field {
+        case name
+        case amount
+        case category
+        case note
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section(String(localized: "expenses.form.details")) {
+                    TextField(String(localized: "expenses.form.name"), text: $draft.name)
+                        .focused($focusedField, equals: .name)
+                    TextField(String(localized: "expenses.form.amount"), value: $draft.amount, format: .currency(code: Locale.current.currency?.identifier ?? "BRL"))
+                        .keyboardType(.decimalPad)
+                        .focused($focusedField, equals: .amount)
+                    Stepper(value: $draft.dueDay, in: 1...31) {
+                        Text(localizedFormat("expenses.form.dueDay", draft.dueDay))
+                    }
+                }
+
+                Section(String(localized: "expenses.form.category")) {
+                    TextField(String(localized: "expenses.form.category.placeholder"), text: $draft.category)
+                        .focused($focusedField, equals: .category)
+                    if !suggestedCategories.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 10) {
+                                ForEach(suggestedCategories, id: \.self) { category in
+                                    CategoryChip(
+                                        text: category,
+                                        isSelected: draft.category.localizedCaseInsensitiveCompare(category) == .orderedSame
+                                    ) {
+                                        draft.category = category
+                                    }
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+
+                Section(String(localized: "expenses.form.note")) {
+                    TextField(String(localized: "expenses.form.note.placeholder"), text: $draft.note, axis: .vertical)
+                        .focused($focusedField, equals: .note)
+                        .lineLimit(3, reservesSpace: true)
+                }
+            }
+            .navigationTitle(mode.navigationTitle)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(String(localized: "common.cancel")) { completion(.cancel) }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(String(localized: "common.save")) { completion(.save(draft)) }
+                        .disabled(!draft.isValid)
+                }
+            }
+        }
+    }
+
+    enum ResultAction {
+        case save(ExpenseDraft)
+        case cancel
+    }
+}
+
+private struct SearchField: View {
+    @Binding var text: String
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+
+            TextField(String(localized: "expenses.search"), text: $text)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+                .focused($isFocused)
+
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                    isFocused = false
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(Color.secondary)
+                        .accessibilityLabel(String(localized: "expenses.search.clear"))
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
+private struct ExpenseDetailView: View {
+    let expense: FixedExpense
+    let formatter: CurrencyFormatter
+    let dueDate: Date?
+    let isOverdue: Bool
+    var onEdit: () -> Void
+    var onDuplicate: () -> Void
+    var onArchiveToggle: () -> Void
+    var onDelete: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Capsule()
+                .fill(Color.secondary.opacity(0.4))
+                .frame(width: 42, height: 5)
+                .padding(.top, 8)
+
+            VStack(spacing: 12) {
+                Text(expense.name)
+                    .font(.title3.bold())
+                Text(formatter.string(from: expense.amount))
+                    .font(.title2.weight(.semibold))
+                    .foregroundStyle(.primary)
+            }
+
+            VStack(alignment: .leading, spacing: 12) {
+                if let dueDate {
+                    DetailRow(icon: "calendar", title: dueDate.formatted(date: .abbreviated, time: .omitted))
+                } else {
+                    DetailRow(icon: "calendar", title: localizedFormat("expenses.due", expense.dueDay))
+                }
+
+                if let category = expense.category, !category.isEmpty {
+                    DetailRow(icon: "tag", title: category)
+                }
+
+                if let note = expense.note, !note.isEmpty {
+                    DetailRow(icon: "note.text", title: note)
+                }
+
+                if !expense.active {
+                    DetailRow(icon: "archivebox", title: String(localized: "expenses.status.archived"))
+                } else if isOverdue {
+                    DetailRow(icon: "exclamationmark.triangle", title: String(localized: "expenses.status.overdue"))
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(spacing: 12) {
+                Button(action: onEdit) {
+                    Label(String(localized: "common.edit"), systemImage: "pencil")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+
+                Button(action: onDuplicate) {
+                    Label(String(localized: "expenses.duplicate"), systemImage: "doc.on.doc")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+
+                Button(action: onArchiveToggle) {
+                    Label(expense.active ? String(localized: "expenses.archive") : String(localized: "expenses.unarchive"), systemImage: expense.active ? "archivebox" : "tray.and.arrow.up")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .tint(.orange)
+
+                Button(role: .destructive, action: onDelete) {
+                    Label(String(localized: "common.remove"), systemImage: "trash")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .padding(24)
+        .presentationDragIndicator(.hidden)
+    }
+}
+
+private struct DetailRow: View {
+    let icon: String
+    let title: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.primary)
+            Spacer()
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
+private extension ExpensesViewModel.SortOption {
+    var localizedTitle: String {
+        switch self {
+        case .dueDate:
+            return String(localized: "expenses.sort.dueDate")
+        case .amountDescending:
+            return String(localized: "expenses.sort.amount")
+        case .name:
+            return String(localized: "expenses.sort.name")
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .dueDate:
+            return "calendar"
+        case .amountDescending:
+            return "arrow.down.circle"
+        case .name:
+            return "textformat"
+        }
+    }
 }
