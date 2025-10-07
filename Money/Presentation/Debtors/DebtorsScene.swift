@@ -195,7 +195,14 @@ private struct DebtorsSummaryCard: View {
                 .pickerStyle(.segmented)
             }
         }
-        .padding(.vertical, 8)
+        .padding(24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: .appThemeColor,
+            cornerRadius: 28,
+            shadow: .standard,
+            intensity: .subtle
+        )
     }
 }
 
@@ -292,7 +299,6 @@ private struct DebtorsEmptyState: View {
 
 private struct DebtorRow: View {
     let debtor: Debtor
-    @Environment(\.colorScheme) private var colorScheme
 
     private var agreementText: String {
         switch debtor.agreements.count {
@@ -314,10 +320,10 @@ private struct DebtorRow: View {
         return debtor.agreements.isEmpty ? .orange : .green
     }
 
-    private var baseFill: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.05)
-            : Color.black.opacity(0.04)
+    private var cardTint: Color {
+        if debtor.archived { return .gray }
+        if debtor.agreements.isEmpty { return .orange }
+        return .appThemeColor
     }
 
     var body: some View {
@@ -352,13 +358,12 @@ private struct DebtorRow: View {
         }
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(baseFill)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.12))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: cardTint,
+            cornerRadius: 24,
+            shadow: .compact,
+            intensity: .subtle
         )
     }
 }

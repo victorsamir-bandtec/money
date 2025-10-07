@@ -87,7 +87,23 @@ struct DashboardScene: View {
     }
 
     private func installmentRow(_ installment: Installment) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        let tint: Color
+        let intensity: MoneyCardIntensity
+        if installment.status == .paid {
+            tint = .green
+            intensity = .subtle
+        } else if installment.isOverdue {
+            tint = .orange
+            intensity = .standard
+        } else if installment.status == .partial {
+            tint = .yellow
+            intensity = .standard
+        } else {
+            tint = .cyan
+            intensity = .subtle
+        }
+
+        return VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(installment.agreement.title ?? installment.agreement.debtor.name)
                     .font(.headline)
@@ -116,7 +132,13 @@ struct DashboardScene: View {
             }
         }
         .padding(16)
-        .glassBackground()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: tint,
+            cornerRadius: 22,
+            shadow: .compact,
+            intensity: intensity
+        )
         .accessibilityElement(children: .combine)
     }
 
@@ -229,7 +251,12 @@ private struct QuickMetricTile: View {
         .padding(.horizontal, 18)
         .padding(.vertical, 20)
         .frame(width: tileSize.width, height: tileSize.height, alignment: .topLeading)
-        .dashboardCard(tint: metric.tint, cornerRadius: 24, shadowStrength: .compact)
+        .moneyCard(
+            tint: metric.tint,
+            cornerRadius: 24,
+            shadow: .compact,
+            intensity: .standard
+        )
     }
 }
 
@@ -289,7 +316,12 @@ private struct BalanceOverviewCard: View {
             }
         }
         .padding(24)
-        .dashboardCard(tint: tint, cornerRadius: 28)
+        .moneyCard(
+            tint: tint,
+            cornerRadius: 28,
+            shadow: .standard,
+            intensity: .prominent
+        )
     }
 
     @ViewBuilder
@@ -410,7 +442,12 @@ private struct SpendingBreakdownCard: View {
         }
         .padding(.horizontal, 22)
         .padding(.vertical, 24)
-        .dashboardCard(tint: .pink, cornerRadius: 26, shadowStrength: .compact)
+        .moneyCard(
+            tint: .pink,
+            cornerRadius: 26,
+            shadow: .compact,
+            intensity: .prominent
+        )
     }
 
     private func breakdownRow(color: Color, title: LocalizedStringKey, value: String) -> some View {
@@ -437,150 +474,5 @@ private struct SpendingBreakdownCard: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(tint)
         }
-    }
-}
-
-private enum DashboardCardShadow {
-    case standard
-    case compact
-
-    func radius(for size: CGSize?) -> CGFloat {
-        let base: CGFloat
-        switch self {
-        case .standard: base = 28
-        case .compact: base = 18
-        }
-        guard let size else { return base }
-        let scale = max(min(size.width, size.height) / 200, 0.7)
-        return base * scale
-    }
-
-    func offset(for size: CGSize?) -> CGFloat {
-        let base: CGFloat
-        switch self {
-        case .standard: base = 20
-        case .compact: base = 12
-        }
-        guard let size else { return base }
-        let scale = max(min(size.width, size.height) / 200, 0.7)
-        return base * scale
-    }
-
-    func tintOpacity(for size: CGSize?) -> Double {
-        let base: Double
-        switch self {
-        case .standard: base = 0.22
-        case .compact: base = 0.16
-        }
-        guard let size else { return base }
-        let scale = max(min(Double(min(size.width, size.height) / 200), 1.1), 0.7)
-        return base * scale
-    }
-
-    func softRadius(for size: CGSize?) -> CGFloat {
-        radius(for: size) * 0.55
-    }
-
-    func softOffset(for size: CGSize?) -> CGFloat {
-        offset(for: size) * 0.6
-    }
-}
-
-private struct DashboardCardModifier: ViewModifier {
-    let tint: Color
-    let cornerRadius: CGFloat
-    let shadowStrength: DashboardCardShadow
-
-    func body(content: Content) -> some View {
-        content
-            .background(
-                GeometryReader { proxy in
-                    let rounded = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    ZStack {
-                        rounded.fill(.clear)
-                            .background(
-                                rounded
-                                    .fill(baseGradient)
-                                    .overlay(rounded.fill(tintGradient).blendMode(.plusLighter))
-                            )
-                        rounded.strokeBorder(borderGradient, lineWidth: 1)
-                        shadowOverlay(size: proxy.size)
-                            .mask(rounded.fill(Color.white))
-                    }
-                }
-            )
-    }
-
-    private func shadowOverlay(size: CGSize?) -> some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .stroke(Color.clear, lineWidth: 0)
-            .shadow(
-                color: Color.black.opacity(0.08),
-                radius: shadowStrength.softRadius(for: size),
-                x: 0,
-                y: shadowStrength.softOffset(for: size)
-            )
-            .shadow(
-                color: tint.opacity(shadowStrength.tintOpacity(for: size)),
-                radius: shadowStrength.radius(for: size),
-                x: 0,
-                y: shadowStrength.offset(for: size)
-            )
-            .blendMode(.plusLighter)
-            .allowsHitTesting(false)
-    }
-
-    private var backgroundShape: some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(baseGradient)
-            .overlay(
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(tintGradient)
-                    .blendMode(.plusLighter)
-            )
-    }
-
-    private var borderOverlay: some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .strokeBorder(borderGradient, lineWidth: 1)
-    }
-
-    private var baseGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color(.systemBackground).opacity(0.96),
-                Color(.secondarySystemBackground).opacity(0.92)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
-    private var tintGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                tint.opacity(0.18),
-                tint.opacity(0.05)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
-    private var borderGradient: LinearGradient {
-        LinearGradient(
-            colors: [
-                Color.white.opacity(0.55),
-                tint.opacity(0.2)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-}
-
-private extension View {
-    func dashboardCard(tint: Color, cornerRadius: CGFloat = 24, shadowStrength: DashboardCardShadow = .standard) -> some View {
-        modifier(DashboardCardModifier(tint: tint, cornerRadius: cornerRadius, shadowStrength: shadowStrength))
     }
 }

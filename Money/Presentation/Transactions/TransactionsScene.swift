@@ -541,7 +541,12 @@ private struct VariableHeroCard: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(HeroBackground(tint: tint))
+        .moneyCard(
+            tint: tint,
+            cornerRadius: 28,
+            shadow: .standard,
+            intensity: .prominent
+        )
     }
 
 }
@@ -608,42 +613,14 @@ private struct FixedExpensesHeroCard: View {
         }
         .padding(24)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(HeroBackground(tint: .pink))
+        .moneyCard(
+            tint: .pink,
+            cornerRadius: 28,
+            shadow: .standard,
+            intensity: .prominent
+        )
     }
 
-}
-
-private struct HeroBackground: View {
-    let tint: Color
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(Color(.secondarySystemBackground))
-            .overlay {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: gradientColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .opacity(colorScheme == .dark ? 0.85 : 0.75)
-            }
-            .overlay {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .strokeBorder(tint.opacity(colorScheme == .dark ? 0.45 : 0.25), lineWidth: 1.2)
-            }
-            .shadow(color: tint.opacity(colorScheme == .dark ? 0.22 : 0.18), radius: 18, x: 0, y: 12)
-    }
-
-    private var gradientColors: [Color] {
-        [
-            tint.opacity(colorScheme == .dark ? 0.4 : 0.3),
-            tint.opacity(colorScheme == .dark ? 0.18 : 0.1)
-        ]
-    }
 }
 
 private struct InlineMetric: View {
@@ -781,7 +758,13 @@ private struct TransactionRow: View {
             }
         }
         .padding(16)
-        .glassBackground()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: amountColor,
+            cornerRadius: 22,
+            shadow: .compact,
+            intensity: .subtle
+        )
     }
 }
 
@@ -842,7 +825,14 @@ private struct TransactionsSummaryCard: View {
                 }
             }
         }
-        .padding(.horizontal, 4)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: .appThemeColor,
+            cornerRadius: 26,
+            shadow: .compact,
+            intensity: .subtle
+        )
     }
 }
 
@@ -1002,7 +992,14 @@ private struct ExpensesSummaryCard: View {
             SearchField(text: $searchText)
             filterControls
         }
-        .padding(.horizontal, 4)
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: .pink,
+            cornerRadius: 26,
+            shadow: .compact,
+            intensity: .subtle
+        )
     }
 
     private var filterControls: some View {
@@ -1069,10 +1066,19 @@ private struct ExpenseCard: View {
     let formatter: CurrencyFormatter
     let dueDate: Date?
     let isOverdue: Bool
-    @Environment(\.colorScheme) private var colorScheme
 
     private var categoryText: String? {
         expense.category?.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var cardTint: Color {
+        if !expense.active { return .gray }
+        if isOverdue { return .orange }
+        return .appThemeColor
+    }
+
+    private var cardIntensity: MoneyCardIntensity {
+        isOverdue ? .standard : .subtle
     }
 
     var body: some View {
@@ -1125,21 +1131,15 @@ private struct ExpenseCard: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 18)
-        .background(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(cardFill)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.08 : 0.12))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: cardTint,
+            cornerRadius: 26,
+            shadow: .compact,
+            intensity: cardIntensity
         )
     }
 
-    private var cardFill: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.05)
-            : Color.black.opacity(0.04)
-    }
 }
 
 private struct StatusChip: View {

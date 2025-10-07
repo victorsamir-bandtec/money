@@ -133,13 +133,11 @@ struct DebtorDetailScene: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.08))
+            .moneyCard(
+                tint: .appThemeColor,
+                cornerRadius: 24,
+                shadow: .compact,
+                intensity: .subtle
             )
         }
     }
@@ -231,6 +229,14 @@ private struct AgreementCard: View {
     let formatter: CurrencyFormatter
     var action: (Installment, InstallmentStatus) -> Void
 
+    private var cardTint: Color {
+        agreement.closed ? .green : .appThemeColor
+    }
+
+    private var cardIntensity: MoneyCardIntensity {
+        agreement.closed ? .subtle : .standard
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
@@ -275,11 +281,23 @@ private struct AgreementCard: View {
                     .foregroundStyle(.secondary)
                 }
                 .padding(12)
-                .glassBackground()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .moneyCard(
+                    tint: tint(for: installment.status),
+                    cornerRadius: 18,
+                    shadow: .compact,
+                    intensity: .subtle
+                )
             }
         }
         .padding(16)
-        .glassBackground()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: cardTint,
+            cornerRadius: 24,
+            shadow: .standard,
+            intensity: cardIntensity
+        )
     }
 
     private var summary: String {
@@ -303,6 +321,16 @@ private struct AgreementCard: View {
         case .partial: return "status.partial"
         case .paid: return "status.paid"
         case .overdue: return "status.overdue"
+        }
+    }
+
+    private func tint(for status: InstallmentStatus) -> Color {
+        switch status {
+        case .paid: return .green
+        case .partial: return .yellow
+        case .overdue: return .orange
+        case .pending:
+            return agreement.closed ? .green : .appThemeColor
         }
     }
 }

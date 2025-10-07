@@ -215,15 +215,12 @@ struct AgreementDetailScene: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
+            .moneyCard(
+                tint: .purple,
+                cornerRadius: 24,
+                shadow: .compact,
+                intensity: .standard
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(Color.purple.opacity(0.25), lineWidth: 1)
-            )
-            .shadow(color: Color.purple.opacity(0.15), radius: 12, x: 0, y: 8)
         }
     }
 
@@ -295,13 +292,11 @@ struct AgreementDetailScene: View {
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(Color.primary.opacity(0.08))
+            .moneyCard(
+                tint: .appThemeColor,
+                cornerRadius: 24,
+                shadow: .compact,
+                intensity: .subtle
             )
         }
     }
@@ -423,135 +418,131 @@ private struct InstallmentCard: View {
         }
     }
 
-    var body: some View {
-        // Card content
+    private var highlightOverlay: some View {
         ZStack {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(highlightFill)
+                .blendMode(.plusLighter)
+                .animation(.easeOut(duration: 0.25), value: animationPhase)
+                .allowsHitTesting(false)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(highlightBorderColor, lineWidth: animationPhase == .confirming ? 2 : 1)
+                .animation(.easeOut(duration: 0.25), value: animationPhase)
+        }
+        .allowsHitTesting(false)
+    }
+
+    var body: some View {
+        MoneyCard(
+            tint: statusColor,
+            cornerRadius: 24,
+            shadow: .compact,
+            intensity: .standard
+        ) {
             VStack(alignment: .leading, spacing: 14) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(localizedFormat("debtor.installment.number", installment.number))
-                        .font(.headline)
-                    Text(installment.dueDate, format: .dateTime.day().month().year())
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text(formatter.string(from: installment.amount))
-                        .font(.title3.bold())
-                    HStack(spacing: 4) {
-                        Image(systemName: statusIcon)
-                            .font(.caption)
-                        Text(statusLabel)
-                            .font(.caption.weight(.semibold))
-                    }
-                    .foregroundStyle(statusColor)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(statusColor.opacity(0.15), in: Capsule())
-                }
-            }
-
-            // Progress
-            if installment.paidAmount > 0 {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(String(localized: "payment.paid"))
-                            .font(.caption)
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(localizedFormat("debtor.installment.number", installment.number))
+                            .font(.headline)
+                        Text(installment.dueDate, format: .dateTime.day().month().year())
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(formatter.string(from: installment.paidAmount))
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
                     }
-                    ProgressView(
-                        value: Double(truncating: installment.paidAmount as NSNumber),
-                        total: Double(truncating: installment.amount as NSNumber)
-                    )
-                    .tint(.green)
-                }
-            }
-
-            // Payments list (DisclosureGroup melhora gesto de swipe do row)
-            if !installment.payments.isEmpty {
-                DisclosureGroup(isExpanded: $showPayments) {
-                    VStack(spacing: 8) {
-                        ForEach(installment.payments.sorted(by: { $0.date > $1.date }), id: \.id) { payment in
-                            PaymentRow(payment: payment, formatter: formatter)
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text(formatter.string(from: installment.amount))
+                            .font(.title3.bold())
+                        HStack(spacing: 4) {
+                            Image(systemName: statusIcon)
+                                .font(.caption)
+                            Text(statusLabel)
+                                .font(.caption.weight(.semibold))
                         }
+                        .foregroundStyle(statusColor)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(statusColor.opacity(0.15), in: Capsule())
                     }
-                    .padding(.top, 6)
-                } label: {
-                    HStack {
-                        Image(systemName: "doc.text.fill")
-                            .font(.caption)
-                        Text(String(localized: "payment.history"))
-                            .font(.caption.weight(.semibold))
-                        Spacer()
-                    }
-                    .foregroundStyle(.blue)
-                    .padding(10)
-                    .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
                 }
-                .animation(UIAnim.disclosure, value: showPayments)
-            }
 
-            // Action area
-            if installment.status == .paid {
-                // Paid status with undo option
-                HStack(spacing: 12) {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                        Text(String(localized: "payment.paid.full"))
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.green)
+                if installment.paidAmount > 0 {
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(String(localized: "payment.paid"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(formatter.string(from: installment.paidAmount))
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.green)
+                        }
+                        ProgressView(
+                            value: Double(truncating: installment.paidAmount as NSNumber),
+                            total: Double(truncating: installment.amount as NSNumber)
+                        )
+                        .tint(.green)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.green.opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+                }
 
-                    if !installment.payments.isEmpty {
-                        Button(action: onUndo) {
-                            Image(systemName: "arrow.uturn.backward")
+                if !installment.payments.isEmpty {
+                    DisclosureGroup(isExpanded: $showPayments) {
+                        VStack(spacing: 8) {
+                            ForEach(installment.payments.sorted(by: { $0.date > $1.date }), id: \.id) { payment in
+                                PaymentRow(payment: payment, formatter: formatter)
+                            }
+                        }
+                        .padding(.top, 6)
+                    } label: {
+                        HStack {
+                            Image(systemName: "doc.text.fill")
+                                .font(.caption)
+                            Text(String(localized: "payment.history"))
+                                .font(.caption.weight(.semibold))
+                            Spacer()
+                        }
+                        .foregroundStyle(.blue)
+                        .padding(10)
+                        .background(Color.blue.opacity(0.1), in: RoundedRectangle(cornerRadius: 12))
+                    }
+                    .animation(UIAnim.disclosure, value: showPayments)
+                }
+
+                if installment.status == .paid {
+                    HStack(spacing: 12) {
+                        HStack {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Text(String(localized: "payment.paid.full"))
                                 .fontWeight(.semibold)
-                                .foregroundStyle(.orange)
-                                .frame(width: 44, height: 44)
-                                .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+                                .foregroundStyle(.green)
                         }
-                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(Color.green.opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+
+                        if !installment.payments.isEmpty {
+                            Button(action: onUndo) {
+                                Image(systemName: "arrow.uturn.backward")
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.orange)
+                                    .frame(width: 44, height: 44)
+                                    .background(Color.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: 14))
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
-            }
-            // Fecha VStack do conteúdo antes dos modificadores do cartão
             }
             .padding(18)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.secondarySystemBackground))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 24, style: .continuous)
-                            .fill(highlightFill)
-                            .animation(.easeOut(duration: 0.25), value: animationPhase)
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .strokeBorder(highlightBorderColor, lineWidth: animationPhase == .confirming ? 2 : 1)
-                    .animation(.easeOut(duration: 0.25), value: animationPhase)
-            )
-            .shadow(color: Color.black.opacity(0.06), radius: 4, x: 0, y: 2)
-            .overlay {
-                if animationPhase == .confirming {
-                    CheckmarkAnimation()
-                        .transition(.scale.combined(with: .opacity))
-                        .allowsHitTesting(false)
-                }
-            }
-            // Movimento visual do cartão
         }
-        // Clip para manter o cartão com cantos arredondados
+        .overlay(highlightOverlay)
+        .overlay {
+            if animationPhase == .confirming {
+                CheckmarkAnimation()
+                    .transition(.scale.combined(with: .opacity))
+                    .allowsHitTesting(false)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .contentShape(Rectangle())
         // Swipe right-to-left (trailing) → Mark as paid

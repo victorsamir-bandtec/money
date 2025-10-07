@@ -18,6 +18,8 @@ struct MetricCard: View {
     private var spacing: CGFloat { style == .prominent ? 18 : 14 }
     private var iconSize: CGFloat { style == .prominent ? 42 : 36 }
     private var iconFont: Font { .system(size: style == .prominent ? 19 : 17, weight: .semibold) }
+    private var shadow: MoneyCardShadow { style == .prominent ? .standard : .compact }
+    private var intensity: MoneyCardIntensity { style == .prominent ? .prominent : .standard }
     private var valueFont: Font {
         style == .prominent
             ? .system(size: 32, weight: .bold, design: .rounded)
@@ -47,9 +49,12 @@ struct MetricCard: View {
         }
         .padding(padding)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground)
-        .overlay(cardStroke)
-        .shadow(color: tint.opacity(style == .prominent ? 0.22 : 0.15), radius: style == .prominent ? 16 : 12, x: 0, y: style == .prominent ? 12 : 8)
+        .moneyCard(
+            tint: tint,
+            cornerRadius: cornerRadius,
+            shadow: shadow,
+            intensity: intensity
+        )
     }
 
     private var iconBadge: some View {
@@ -65,34 +70,6 @@ struct MetricCard: View {
                     .foregroundStyle(tint)
             }
             .frame(width: iconSize, height: iconSize)
-    }
-
-    private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .fill(Color(.secondarySystemBackground))
-            .overlay {
-                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: gradientColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .opacity(style == .prominent ? 0.8 : 0.6)
-            }
-    }
-
-    private var cardStroke: some View {
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .strokeBorder(tint.opacity(0.25), lineWidth: style == .prominent ? 1.2 : 1)
-    }
-
-    private var gradientColors: [Color] {
-        [
-            tint.opacity(style == .prominent ? 0.35 : 0.25),
-            tint.opacity(0.08)
-        ]
     }
 }
 
