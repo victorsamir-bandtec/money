@@ -30,8 +30,7 @@
 "dashboard.summary" = "Visão geral";
 "dashboard.summary.subtitle" = "Panorama financeiro do mês";
 "dashboard.metric.available" = "Saldo disponível";
-"dashboard.metric.available.caption" = "Salário + recebido + previsto - despesas";
-"dashboard.metric.planned" = "Previsto a receber";
+"dashboard.metric.planned" = "Previsto";
 "dashboard.metric.planned.caption" = "Parcelas deste mês ainda pendentes";
 "dashboard.metric.received" = "Recebido";
 "dashboard.metric.received.caption" = "Baixas registradas";
@@ -42,10 +41,12 @@
 "dashboard.metric.expenses.fixed" = "Fixas";
 "dashboard.metric.expenses.variable" = "Variáveis";
 "dashboard.metric.expenses.income" = "Receitas extras";
+"dashboard.metric.spent.total" = "Gasto no mês";
+"dashboard.metric.inflow.total" = "Entradas do mês";
+"dashboard.metric.spent.caption" = "Percentual gasto em relação às entradas do mês";
 "dashboard.metric.salary" = "Salário";
 "dashboard.metric.salary.caption" = "Referente ao mês";
-"dashboard.metric.remaining" = "Total a receber";
-"dashboard.metric.remaining.caption" = "Atrasos + previsto deste mês";
+"dashboard.metric.remaining" = "A receber";
 "dashboard.upcoming" = "Próximas parcelas";
 "dashboard.upcoming.empty" = "Sem cobranças nos próximos 14 dias.";
 

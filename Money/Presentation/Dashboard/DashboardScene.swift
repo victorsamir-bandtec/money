@@ -33,10 +33,6 @@ struct DashboardScene: View {
         .refreshable { try? await load() }
     }
 
-    private var summaryColumns: [GridItem] {
-        [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)]
-    }
-
     private var summarySection: some View {
         VStack(alignment: .leading, spacing: 24) {
             VStack(alignment: .leading, spacing: 4) {
@@ -48,56 +44,30 @@ struct DashboardScene: View {
                     .foregroundStyle(.secondary)
             }
 
-            MetricCard(
-                title: "dashboard.metric.available",
-                value: viewModel.formatted(viewModel.summary.availableToSpend),
-                caption: "dashboard.metric.available.caption",
+            BalanceOverviewCard(
+                summary: viewModel.summary,
+                formatter: viewModel.formatted,
                 icon: availableIcon,
-                tint: availableTint,
-                style: .prominent
+                tint: availableTint
             )
 
-            LazyVGrid(columns: summaryColumns, alignment: .leading, spacing: 16) {
-                MetricCard(
-                    title: "dashboard.metric.planned",
-                    value: viewModel.formatted(viewModel.summary.planned),
-                    caption: "dashboard.metric.planned.caption",
-                    icon: "tray.and.arrow.down.fill",
-                    tint: .green
-                )
-                MetricCard(
-                    title: "dashboard.metric.received",
-                    value: viewModel.formatted(viewModel.summary.received),
-                    caption: "dashboard.metric.received.caption",
-                    icon: "checkmark.seal.fill",
-                    tint: .teal
-                )
-                MetricCard(
-                    title: "dashboard.metric.overdue",
-                    value: viewModel.formatted(viewModel.summary.overdue),
-                    caption: "dashboard.metric.overdue.caption",
-                    icon: "exclamationmark.triangle.fill",
-                    tint: .orange
-                )
-                SpendingBreakdownCard(
-                    summary: viewModel.summary,
-                    formatter: viewModel.formatted
-                )
-                MetricCard(
-                    title: "dashboard.metric.remaining",
-                    value: viewModel.formatted(viewModel.summary.remainingToReceive),
-                    caption: "dashboard.metric.remaining.caption",
-                    icon: "calendar.badge.clock",
-                    tint: .indigo
-                )
-                MetricCard(
-                    title: "dashboard.metric.salary",
-                    value: viewModel.formatted(viewModel.summary.salary),
-                    caption: "dashboard.metric.salary.caption",
-                    icon: "dollarsign.arrow.circlepath",
-                    tint: .purple
-                )
+            if !highlightMetrics.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(spacing: 16) {
+                        ForEach(highlightMetrics) { metric in
+                            QuickMetricTile(metric: metric)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, 2)
+                    .padding(.trailing, 4)
+                }
             }
+
+            SpendingBreakdownCard(
+                summary: viewModel.summary,
+                formatter: viewModel.formatted
+            )
         }
     }
 
@@ -174,13 +144,178 @@ struct DashboardScene: View {
     private var availableIcon: String {
         viewModel.summary.availableToSpend >= .zero ? "chart.line.uptrend.xyaxis" : "chart.line.downtrend.xyaxis"
     }
+
+    private var highlightMetrics: [HighlightMetric] {
+        [
+            HighlightMetric(
+                id: "overdue",
+                title: "dashboard.metric.overdue",
+                value: viewModel.formatted(viewModel.summary.overdue),
+                caption: "dashboard.metric.overdue.caption",
+                icon: "exclamationmark.triangle.fill",
+                tint: .orange
+            ),
+            HighlightMetric(
+                id: "fixedExpenses",
+                title: "dashboard.metric.expenses.fixed",
+                value: viewModel.formatted(viewModel.summary.fixedExpenses),
+                caption: nil,
+                icon: "doc.text.fill",
+                tint: .pink
+            ),
+            HighlightMetric(
+                id: "variableExpenses",
+                title: "dashboard.metric.expenses.variable",
+                value: viewModel.formatted(viewModel.summary.variableExpenses),
+                caption: nil,
+                icon: "arrow.uturn.down.circle.fill",
+                tint: .orange
+            ),
+            HighlightMetric(
+                id: "variableIncome",
+                title: "dashboard.metric.expenses.income",
+                value: viewModel.formatted(viewModel.summary.variableIncome),
+                caption: nil,
+                icon: "tray.full.fill",
+                tint: .green
+            )
+        ]
+    }
+}
+
+private struct HighlightMetric: Identifiable {
+    let id: String
+    let title: LocalizedStringKey
+    let value: String
+    let caption: LocalizedStringKey?
+    let icon: String
+    let tint: Color
+}
+
+private struct QuickMetricTile: View {
+    let metric: HighlightMetric
+
+    private var tileSize: CGSize {
+        CGSize(width: 192, height: 164)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Circle()
+                .fill(metric.tint.opacity(0.18))
+                .overlay {
+                    Image(systemName: metric.icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(metric.tint)
+                }
+                .frame(width: 42, height: 42)
+
+            Text(metric.title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(metric.tint)
+                .lineLimit(2)
+
+            Text(metric.value)
+                .font(.system(size: 22, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            if let caption = metric.caption {
+                Text(caption)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.horizontal, 18)
+        .padding(.vertical, 20)
+        .frame(width: tileSize.width, height: tileSize.height, alignment: .topLeading)
+        .dashboardCard(tint: metric.tint, cornerRadius: 24, shadowStrength: .compact)
+    }
+}
+
+private struct BalanceOverviewCard: View {
+    let summary: DashboardSummary
+    let formatter: (Decimal) -> String
+    let icon: String
+    let tint: Color
+
+    private var detailColumns: [GridItem] {
+        [
+            GridItem(.flexible(minimum: 120), spacing: 24),
+            GridItem(.flexible(minimum: 120), spacing: 24)
+        ]
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 22) {
+            HStack(spacing: 14) {
+                Circle()
+                    .fill(tint.opacity(0.2))
+                    .overlay {
+                        Image(systemName: icon)
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(tint)
+                    }
+                    .frame(width: 48, height: 48)
+                Text("dashboard.metric.available")
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(tint)
+                Spacer(minLength: 0)
+            }
+
+            Text(formatter(summary.availableToSpend))
+                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            Divider()
+
+            LazyVGrid(columns: detailColumns, spacing: 24) {
+                detail(
+                    title: "dashboard.metric.received",
+                    value: formatter(summary.received)
+                )
+                detail(
+                    title: "dashboard.metric.planned",
+                    value: formatter(summary.planned)
+                )
+                detail(
+                    title: "dashboard.metric.remaining",
+                    value: formatter(summary.remainingToReceive)
+                )
+                detail(
+                    title: "dashboard.metric.salary",
+                    value: formatter(summary.salary)
+                )
+            }
+        }
+        .padding(24)
+        .dashboardCard(tint: tint, cornerRadius: 28)
+    }
+
+    @ViewBuilder
+    private func detail(
+        title: LocalizedStringKey,
+        value: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .textCase(.none)
+
+            Text(value)
+                .font(.system(size: 24, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
 }
 
 private struct SpendingBreakdownCard: View {
     let summary: DashboardSummary
     let formatter: (Decimal) -> String
 
-    private var totalText: String {
+    private var spentText: String {
         formatter(summary.totalExpenses)
     }
 
@@ -196,8 +331,33 @@ private struct SpendingBreakdownCard: View {
         formatter(summary.variableIncome)
     }
 
+    private var inflowTotal: Decimal {
+        summary.salary + summary.received + summary.variableIncome
+    }
+
+    private var inflowText: String {
+        formatter(inflowTotal)
+    }
+
+    private var spendingRatio: Double {
+        guard inflowTotal > .zero else { return .zero }
+        let ratio = summary.totalExpenses / inflowTotal
+        return Double(truncating: NSDecimalNumber(decimal: ratio))
+    }
+
+    private var progressValue: Double {
+        min(max(spendingRatio, .zero), 1)
+    }
+
+    private var percentText: String {
+        guard inflowTotal > .zero else {
+            return (0.0).formatted(.percent.precision(.fractionLength(0)))
+        }
+        return spendingRatio.formatted(.percent.precision(.fractionLength(0)))
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 20) {
             HStack(spacing: 12) {
                 Image(systemName: "creditcard.fill")
                     .font(.system(size: 18, weight: .semibold))
@@ -210,9 +370,36 @@ private struct SpendingBreakdownCard: View {
                 Spacer(minLength: 0)
             }
 
-            Text(totalText)
+            Text(spentText)
                 .font(.system(size: 22, weight: .semibold, design: .rounded))
                 .foregroundStyle(.primary)
+
+            if inflowTotal > .zero {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        Text(percentText)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.pink)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 4)
+                            .background(Color.pink.opacity(0.16), in: Capsule())
+                        Text("dashboard.metric.spent.caption")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    ProgressView(value: progressValue)
+                        .progressViewStyle(.linear)
+                        .tint(.pink)
+                }
+            }
+
+            HStack(alignment: .center, spacing: 16) {
+                totalRow(title: "dashboard.metric.spent.total", value: spentText, tint: .pink)
+                Divider()
+                totalRow(title: "dashboard.metric.inflow.total", value: inflowText, tint: .green)
+            }
+
+            Divider()
 
             VStack(alignment: .leading, spacing: 10) {
                 breakdownRow(color: .pink, title: "dashboard.metric.expenses.fixed", value: fixedText)
@@ -221,8 +408,9 @@ private struct SpendingBreakdownCard: View {
                 breakdownRow(color: .green, title: "dashboard.metric.expenses.income", value: extraIncomeText)
             }
         }
-        .padding(20)
-        .glassBackground()
+        .padding(.horizontal, 22)
+        .padding(.vertical, 24)
+        .dashboardCard(tint: .pink, cornerRadius: 26, shadowStrength: .compact)
     }
 
     private func breakdownRow(color: Color, title: LocalizedStringKey, value: String) -> some View {
@@ -238,5 +426,161 @@ private struct SpendingBreakdownCard: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(color)
         }
+    }
+
+    private func totalRow(title: LocalizedStringKey, value: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(tint)
+        }
+    }
+}
+
+private enum DashboardCardShadow {
+    case standard
+    case compact
+
+    func radius(for size: CGSize?) -> CGFloat {
+        let base: CGFloat
+        switch self {
+        case .standard: base = 28
+        case .compact: base = 18
+        }
+        guard let size else { return base }
+        let scale = max(min(size.width, size.height) / 200, 0.7)
+        return base * scale
+    }
+
+    func offset(for size: CGSize?) -> CGFloat {
+        let base: CGFloat
+        switch self {
+        case .standard: base = 20
+        case .compact: base = 12
+        }
+        guard let size else { return base }
+        let scale = max(min(size.width, size.height) / 200, 0.7)
+        return base * scale
+    }
+
+    func tintOpacity(for size: CGSize?) -> Double {
+        let base: Double
+        switch self {
+        case .standard: base = 0.22
+        case .compact: base = 0.16
+        }
+        guard let size else { return base }
+        let scale = max(min(Double(min(size.width, size.height) / 200), 1.1), 0.7)
+        return base * scale
+    }
+
+    func softRadius(for size: CGSize?) -> CGFloat {
+        radius(for: size) * 0.55
+    }
+
+    func softOffset(for size: CGSize?) -> CGFloat {
+        offset(for: size) * 0.6
+    }
+}
+
+private struct DashboardCardModifier: ViewModifier {
+    let tint: Color
+    let cornerRadius: CGFloat
+    let shadowStrength: DashboardCardShadow
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                GeometryReader { proxy in
+                    let rounded = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    ZStack {
+                        rounded.fill(.clear)
+                            .background(
+                                rounded
+                                    .fill(baseGradient)
+                                    .overlay(rounded.fill(tintGradient).blendMode(.plusLighter))
+                            )
+                        rounded.strokeBorder(borderGradient, lineWidth: 1)
+                        shadowOverlay(size: proxy.size)
+                            .mask(rounded.fill(Color.white))
+                    }
+                }
+            )
+    }
+
+    private func shadowOverlay(size: CGSize?) -> some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .stroke(Color.clear, lineWidth: 0)
+            .shadow(
+                color: Color.black.opacity(0.08),
+                radius: shadowStrength.softRadius(for: size),
+                x: 0,
+                y: shadowStrength.softOffset(for: size)
+            )
+            .shadow(
+                color: tint.opacity(shadowStrength.tintOpacity(for: size)),
+                radius: shadowStrength.radius(for: size),
+                x: 0,
+                y: shadowStrength.offset(for: size)
+            )
+            .blendMode(.plusLighter)
+            .allowsHitTesting(false)
+    }
+
+    private var backgroundShape: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .fill(baseGradient)
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                    .fill(tintGradient)
+                    .blendMode(.plusLighter)
+            )
+    }
+
+    private var borderOverlay: some View {
+        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            .strokeBorder(borderGradient, lineWidth: 1)
+    }
+
+    private var baseGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(.systemBackground).opacity(0.96),
+                Color(.secondarySystemBackground).opacity(0.92)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var tintGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                tint.opacity(0.18),
+                tint.opacity(0.05)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+
+    private var borderGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color.white.opacity(0.55),
+                tint.opacity(0.2)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+}
+
+private extension View {
+    func dashboardCard(tint: Color, cornerRadius: CGFloat = 24, shadowStrength: DashboardCardShadow = .standard) -> some View {
+        modifier(DashboardCardModifier(tint: tint, cornerRadius: cornerRadius, shadowStrength: shadowStrength))
     }
 }

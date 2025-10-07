@@ -29,8 +29,7 @@
 "dashboard.refresh" = "Reload";
 "dashboard.summary" = "Snapshot";
 "dashboard.metric.available" = "Available";
-"dashboard.metric.available.caption" = "Salary + received + forecast - expenses";
-"dashboard.metric.planned" = "Expected";
+"dashboard.metric.planned" = "Planned";
 "dashboard.metric.planned.caption" = "Installments due later this month";
 "dashboard.metric.received" = "Received";
 "dashboard.metric.received.caption" = "Posted payments";
@@ -41,10 +40,12 @@
 "dashboard.metric.expenses.fixed" = "Fixed";
 "dashboard.metric.expenses.variable" = "Variable";
 "dashboard.metric.expenses.income" = "Extra income";
+"dashboard.metric.spent.total" = "Spent this month";
+"dashboard.metric.inflow.total" = "Monthly inflow";
+"dashboard.metric.spent.caption" = "Share of expenses over this month’s inflow";
 "dashboard.metric.salary" = "Salary";
 "dashboard.metric.salary.caption" = "For current month";
-"dashboard.metric.remaining" = "To receive";
-"dashboard.metric.remaining.caption" = "Overdue + expected this month";
+"dashboard.metric.remaining" = "Incoming";
 "dashboard.upcoming" = "Upcoming installments";
 "dashboard.upcoming.empty" = "No payments due in the next 14 days.";
 
