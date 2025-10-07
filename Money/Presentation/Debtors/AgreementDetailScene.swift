@@ -153,75 +153,90 @@ struct AgreementDetailScene: View {
 
     private var metricsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
+            remainingMetricCard
+            overviewMetricsGrid
+            progressOverviewCard
+        }
+    }
+
+    private var remainingMetricCard: some View {
+        MetricCard(
+            title: "agreement.metric.remaining",
+            value: environment.currencyFormatter.string(from: viewModel.remainingAmount),
+            caption: "agreement.metric.remaining.caption",
+            icon: "exclamationmark.triangle.fill",
+            tint: viewModel.remainingAmount > 0 ? .orange : .green,
+            style: .prominent
+        )
+    }
+
+    private var overviewMetricsGrid: some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ],
+            alignment: .leading,
+            spacing: 16
+        ) {
             MetricCard(
-                title: "agreement.metric.remaining",
-                value: environment.currencyFormatter.string(from: viewModel.remainingAmount),
-                caption: "agreement.metric.remaining.caption",
-                icon: "exclamationmark.triangle.fill",
-                tint: viewModel.remainingAmount > 0 ? .orange : .green,
-                style: .prominent
+                title: "agreement.metric.total",
+                value: environment.currencyFormatter.string(from: viewModel.totalAmount),
+                caption: "agreement.metric.total.caption",
+                icon: "banknote.fill",
+                tint: .blue
             )
-
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], alignment: .leading, spacing: 16) {
-                MetricCard(
-                    title: "agreement.metric.total",
-                    value: environment.currencyFormatter.string(from: viewModel.totalAmount),
-                    caption: "agreement.metric.total.caption",
-                    icon: "banknote.fill",
-                    tint: .blue
-                )
-                MetricCard(
-                    title: "agreement.metric.paid",
-                    value: environment.currencyFormatter.string(from: viewModel.totalPaid),
-                    caption: "agreement.metric.paid.caption",
-                    icon: "checkmark.seal.fill",
-                    tint: .green
-                )
-                MetricCard(
-                    title: "agreement.metric.installments.paid",
-                    value: "\(viewModel.paidInstallmentsCount)/\(viewModel.agreement.installmentCount)",
-                    caption: "agreement.metric.installments.paid.caption",
-                    icon: "checklist",
-                    tint: .teal
-                )
-                MetricCard(
-                    title: "agreement.metric.installments.overdue",
-                    value: "\(viewModel.overdueInstallmentsCount)",
-                    caption: "agreement.metric.installments.overdue.caption",
-                    icon: "clock.badge.exclamationmark.fill",
-                    tint: .red
-                )
-            }
-
-            // Progress Card
-            // Conteúdo do cartão que se move com o gesto
-            VStack(alignment: .leading, spacing: 14) {
-                HStack {
-                    Image(systemName: "chart.bar.fill")
-                        .font(.title3)
-                        .foregroundStyle(.purple)
-                    Text(String(localized: "agreement.progress"))
-                        .font(.headline)
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Text("\(Int(viewModel.progressPercentage))%")
-                        .font(.title3.bold())
-                        .foregroundStyle(.purple)
-                }
-
-                ProgressView(value: viewModel.progressPercentage, total: 100)
-                    .tint(.purple)
-                    .scaleEffect(x: 1, y: 2, anchor: .center)
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .moneyCard(
-                tint: .purple,
-                cornerRadius: 24,
-                shadow: .compact,
-                intensity: .standard
+            MetricCard(
+                title: "agreement.metric.paid",
+                value: environment.currencyFormatter.string(from: viewModel.totalPaid),
+                caption: "agreement.metric.paid.caption",
+                icon: "checkmark.seal.fill",
+                tint: .green
+            )
+            MetricCard(
+                title: "agreement.metric.installments.paid",
+                value: "\(viewModel.paidInstallmentsCount)/\(viewModel.agreement.installmentCount)",
+                caption: "agreement.metric.installments.paid.caption",
+                icon: "checklist",
+                tint: .teal
+            )
+            MetricCard(
+                title: "agreement.metric.installments.overdue",
+                value: "\(viewModel.overdueInstallmentsCount)",
+                caption: "agreement.metric.installments.overdue.caption",
+                icon: "clock.badge.exclamationmark.fill",
+                tint: .red
             )
         }
+    }
+
+    private var progressOverviewCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Image(systemName: "chart.bar.fill")
+                    .font(.title3)
+                    .foregroundStyle(.purple)
+                Text(String(localized: "agreement.progress"))
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Text("\(Int(viewModel.progressPercentage))%")
+                    .font(.title3.bold())
+                    .foregroundStyle(.purple)
+            }
+
+            ProgressView(value: viewModel.progressPercentage, total: 100)
+                .tint(.purple)
+                .scaleEffect(x: 1, y: 2, anchor: .center)
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: .purple,
+            cornerRadius: 24,
+            shadow: .compact,
+            intensity: .standard
+        )
     }
 
     private var agreementInfoSection: some View {

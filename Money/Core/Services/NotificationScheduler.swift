@@ -53,7 +53,13 @@ final class LocalNotificationScheduler: NotificationScheduling {
             try await center.add(request)
         }
         if let warnTrigger {
-            let warnContent = content.copy() as! UNMutableNotificationContent
+            let warnContent = (content.mutableCopy() as? UNMutableNotificationContent) ?? {
+                let fallback = UNMutableNotificationContent()
+                fallback.title = content.title
+                fallback.body = content.body
+                fallback.sound = content.sound
+                return fallback
+            }()
             warnContent.subtitle = String(localized: "notification.installment.subtitle", bundle: .appModule)
             let request = UNNotificationRequest(identifier: identifiers[1], content: warnContent, trigger: warnTrigger)
             try await center.add(request)

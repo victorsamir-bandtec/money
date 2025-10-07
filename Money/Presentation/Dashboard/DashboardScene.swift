@@ -79,14 +79,14 @@ struct DashboardScene: View {
             if viewModel.upcoming.isEmpty {
                 ContentUnavailableView(String(localized: "dashboard.upcoming.empty"), systemImage: "calendar.badge.clock")
             } else {
-                ForEach(viewModel.upcoming, id: \.id) { installment in
+                ForEach(viewModel.upcoming) { installment in
                     installmentRow(installment)
                 }
             }
         }
     }
 
-    private func installmentRow(_ installment: Installment) -> some View {
+    private func installmentRow(_ installment: InstallmentOverview) -> some View {
         let tint: Color
         let intensity: MoneyCardIntensity
         if installment.status == .paid {
@@ -105,7 +105,7 @@ struct DashboardScene: View {
 
         return VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(installment.agreement.title ?? installment.agreement.debtor.name)
+                Text(installment.displayTitle)
                     .font(.headline)
                 Spacer()
                 Text(viewModel.formatted(installment.amount))

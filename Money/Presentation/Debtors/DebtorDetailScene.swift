@@ -7,6 +7,7 @@ struct DebtorDetailScene: View {
     private let context: ModelContext
     @State private var showingAgreementForm = false
     @State private var draft = AgreementDraft()
+    @State private var expandedAgreements: Set<UUID> = []
 
     init(debtor: Debtor, environment: AppEnvironment, context: ModelContext) {
         self.environment = environment
@@ -177,41 +178,80 @@ struct DebtorDetailScene: View {
                     .foregroundStyle(.secondary)
             }
 
-            if viewModel.agreements.isEmpty {
-                VStack(spacing: 16) {
-                    Image(systemName: "doc.text.fill")
-                        .font(.system(size: 44, weight: .semibold))
-                        .foregroundStyle(Color.accentColor)
+            agreementsContent
+        }
+    }
 
-                    Text(String(localized: "debtor.agreements.empty"))
-                        .font(.headline)
+    @ViewBuilder
+    private var agreementsContent: some View {
+        if viewModel.agreements.isEmpty {
+            agreementsEmptyContent
+        } else {
+            agreementsListContent
+        }
+    }
 
-                    Text(String(localized: "debtor.agreements.empty.message"))
-                        .font(.subheadline)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
+    private var agreementsEmptyContent: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "doc.text.fill")
+                .font(.system(size: 44, weight: .semibold))
+                .foregroundStyle(Color.accentColor)
+
+            Text(String(localized: "debtor.agreements.empty"))
+                .font(.headline)
+
+            Text(String(localized: "debtor.agreements.empty.message"))
+                .font(.subheadline)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
+        }
+        .padding(32)
+        .frame(maxWidth: .infinity)
+        .background(
+            GlassBackgroundStyle.current.material,
+            in: RoundedRectangle(cornerRadius: 28, style: .continuous)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.08))
+        )
+    }
+
+    private var agreementsListContent: some View {
+        VStack(spacing: 16) {
+            ForEach(viewModel.agreements, id: \.id) { agreement in
+                let overview = viewModel.overview(for: agreement)
+                let installments = viewModel.installments(for: agreement)
+                let isExpanded = expandedAgreements.contains(agreement.id)
+
+                AgreementCard(
+                    agreement: agreement,
+                    overview: overview,
+                    installments: installments,
+                    formatter: environment.currencyFormatter,
+                    isExpanded: isExpanded,
+                    onToggle: { toggleAgreementExpansion(agreement.id) },
+                    detailDestination: AnyView(AgreementDetailScene(agreement: agreement, environment: environment, context: context))
+                ) { installment, status in
+                    viewModel.mark(installment: installment, as: status)
                 }
-                .padding(32)
-                .frame(maxWidth: .infinity)
-                .background(
-                    GlassBackgroundStyle.current.material,
-                    in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .strokeBorder(Color.primary.opacity(0.08))
-                )
-            } else {
-                VStack(spacing: 16) {
-                    ForEach(viewModel.agreements, id: \.id) { agreement in
-                        NavigationLink(destination: AgreementDetailScene(agreement: agreement, environment: environment, context: context)) {
-                            AgreementCard(agreement: agreement, formatter: environment.currencyFormatter) { installment, status in
-                                viewModel.mark(installment: installment, as: status)
-                            }
-                        }
-                        .buttonStyle(.plain)
+                .contextMenu {
+                    Button(role: .destructive) {
+                        viewModel.deleteAgreement(agreement)
+                    } label: {
+                        Label("debtor.agreement.delete", systemImage: "trash")
                     }
                 }
+            }
+        }
+    }
+
+    private func toggleAgreementExpansion(_ id: UUID) {
+        withAnimation(.easeInOut(duration: 0.2)) {
+            if expandedAgreements.contains(id) {
+                expandedAgreements.remove(id)
+            } else {
+                expandedAgreements.insert(id)
             }
         }
     }
@@ -222,24 +262,30 @@ struct DebtorDetailScene: View {
             set: { viewModel.error = $0 }
         )
     }
+
 }
 
 private struct AgreementCard: View {
     let agreement: DebtAgreement
+    let overview: DebtorDetailViewModel.AgreementOverview
+    let installments: [Installment]
     let formatter: CurrencyFormatter
+    let isExpanded: Bool
+    var onToggle: () -> Void
+    let detailDestination: AnyView
     var action: (Installment, InstallmentStatus) -> Void
 
     private var cardTint: Color {
-        agreement.closed ? .green : .appThemeColor
+        overview.isClosed ? .green : .appThemeColor
     }
 
     private var cardIntensity: MoneyCardIntensity {
-        agreement.closed ? .subtle : .standard
+        overview.isClosed ? .subtle : .standard
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
+            HStack(alignment: .top, spacing: 12) {
                 VStack(alignment: .leading) {
                     Text(agreement.title ?? String(localized: "debtor.agreement.untitled"))
                         .font(.headline)
@@ -249,45 +295,66 @@ private struct AgreementCard: View {
                 }
                 Spacer()
                 statusBadge
+                NavigationLink(destination: detailDestination) {
+                    Image(systemName: "arrow.forward.circle.fill")
+                        .font(.title3)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("debtor.agreement.open.detail")
+                }
+                .buttonStyle(.plain)
+                Button(action: onToggle) {
+                    Image(systemName: isExpanded ? "chevron.up.circle.fill" : "chevron.down.circle.fill")
+                        .font(.title3)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(isExpanded ? "common.collapse" : "common.expand")
+                }
+                .buttonStyle(.plain)
             }
-            ForEach(agreement.installments.sorted(by: { $0.number < $1.number }), id: \.id) { installment in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(localizedFormat("debtor.installment.number", installment.number))
-                        Spacer()
-                        Text(formatter.string(from: installment.amount))
-                    }
-                    HStack {
-                        Label {
-                            Text(installment.dueDate, format: .dateTime.day().month().year())
-                        } icon: {
-                            Image(systemName: "calendar")
+
+            if isExpanded {
+                ForEach(installments, id: \.id) { installment in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            Text(localizedFormat("debtor.installment.number", installment.number))
+                            Spacer()
+                            Text(formatter.string(from: installment.amount))
                         }
-                        Spacer()
-                        Menu {
-                            Button(String(localized: "status.pending")) { action(installment, .pending) }
-                            Button(String(localized: "status.partial")) { action(installment, .partial) }
-                            Button(String(localized: "status.paid")) { action(installment, .paid) }
-                            Button(String(localized: "status.overdue")) { action(installment, .overdue) }
-                        } label: {
+                        HStack {
                             Label {
-                                Text(statusLabel(for: installment.status))
+                                Text(installment.dueDate, format: .dateTime.day().month().year())
                             } icon: {
-                                Image(systemName: "ellipsis")
+                                Image(systemName: "calendar")
+                            }
+                            Spacer()
+                            Menu {
+                                Button(String(localized: "status.pending")) { action(installment, .pending) }
+                                Button(String(localized: "status.partial")) { action(installment, .partial) }
+                                Button(String(localized: "status.paid")) { action(installment, .paid) }
+                                Button(String(localized: "status.overdue")) { action(installment, .overdue) }
+                            } label: {
+                                Label {
+                                    Text(statusLabel(for: installment.status))
+                                } icon: {
+                                    Image(systemName: "ellipsis")
+                                }
                             }
                         }
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
                     }
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .moneyCard(
+                        tint: tint(for: installment.status),
+                        cornerRadius: 18,
+                        shadow: .compact,
+                        intensity: .subtle
+                    )
                 }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .moneyCard(
-                    tint: tint(for: installment.status),
-                    cornerRadius: 18,
-                    shadow: .compact,
-                    intensity: .subtle
-                )
+            } else {
+                collapsedOverview
             }
         }
         .padding(16)
@@ -301,12 +368,11 @@ private struct AgreementCard: View {
     }
 
     private var summary: String {
-        let open = agreement.installments.filter { $0.status != .paid }.count
-        return localizedFormat("debtor.agreement.summary", agreement.installmentCount, open)
+        localizedFormat("debtor.agreement.summary", overview.totalInstallments, overview.openInstallments)
     }
 
     private var statusBadge: some View {
-        let closed = agreement.closed
+        let closed = overview.isClosed
         return Text(String(localized: closed ? "debtor.agreement.closed" : "debtor.agreement.open"))
             .font(.caption).bold()
             .padding(.horizontal, 10)
@@ -324,13 +390,44 @@ private struct AgreementCard: View {
         }
     }
 
+    private var collapsedOverview: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(localizedFormat("debtor.agreement.paid.progress", overview.paidInstallments, overview.totalInstallments))
+                        .font(.subheadline.weight(.semibold))
+                    Text(localizedFormat("debtor.agreement.remaining.amount", formatter.string(from: overview.remainingAmount)))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            ProgressView(
+                value: Double(overview.paidInstallments),
+                total: Double(max(overview.totalInstallments, 1))
+            )
+            .tint(overview.isClosed ? .green : .appThemeColor)
+            .scaleEffect(x: 1, y: 2, anchor: .center)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            Color.primary.opacity(0.04),
+            in: RoundedRectangle(cornerRadius: 18, style: .continuous)
+        )
+    }
+
     private func tint(for status: InstallmentStatus) -> Color {
         switch status {
         case .paid: return .green
         case .partial: return .yellow
         case .overdue: return .orange
         case .pending:
-            return agreement.closed ? .green : .appThemeColor
+            return overview.isClosed ? .green : .appThemeColor
         }
     }
 }

@@ -70,4 +70,17 @@ final class DebtorsListViewModel: ObservableObject {
             self.error = .persistence("error.generic")
         }
     }
+
+    func deleteDebtor(_ debtor: Debtor) {
+        context.delete(debtor)
+        do {
+            try context.save()
+            try load()
+            NotificationCenter.default.post(name: .debtorDataDidChange, object: nil)
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
+        } catch {
+            context.rollback()
+            self.error = .persistence("error.generic")
+        }
+    }
 }

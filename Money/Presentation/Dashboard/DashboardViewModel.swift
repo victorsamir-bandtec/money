@@ -44,6 +44,34 @@ struct DashboardSummary: Sendable, Equatable {
     static let empty = DashboardSummary(salary: .zero, received: .zero, overdue: .zero, fixedExpenses: .zero, planned: .zero)
 }
 
+struct InstallmentOverview: Identifiable, Equatable, Sendable {
+    let id: UUID
+    let agreementID: UUID
+    let debtorName: String
+    let agreementTitle: String?
+    let dueDate: Date
+    let amount: Decimal
+    let status: InstallmentStatus
+    let number: Int
+    let isOverdue: Bool
+
+    init(installment: Installment, agreement: DebtAgreement) {
+        self.id = installment.id
+        self.agreementID = agreement.id
+        self.debtorName = agreement.debtor.name
+        self.agreementTitle = agreement.title
+        self.dueDate = installment.dueDate
+        self.amount = installment.amount
+        self.status = installment.status
+        self.number = installment.number
+        self.isOverdue = installment.isOverdue
+    }
+
+    var displayTitle: String {
+        agreementTitle ?? debtorName
+    }
+}
+
 @MainActor
 final class DashboardViewModel: ObservableObject {
     private let context: ModelContext
@@ -51,8 +79,8 @@ final class DashboardViewModel: ObservableObject {
     private var notificationObservers: [Any] = []
 
     @Published var summary: DashboardSummary = .empty
-    @Published var upcoming: [Installment] = []
-    @Published var alerts: [Installment] = []
+    @Published var upcoming: [InstallmentOverview] = []
+    @Published var alerts: [InstallmentOverview] = []
 
     init(context: ModelContext, currencyFormatter: CurrencyFormatter) {
         self.context = context
@@ -168,43 +196,49 @@ final class DashboardViewModel: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         let windowEnd = calendar.date(byAdding: .day, value: 14, to: startOfDay) ?? startOfDay
 
-        let paidStatusRawValue = InstallmentStatus.paid.rawValue
-        let overdueDescriptor = FetchDescriptor<Installment>(
-            predicate: #Predicate { installment in
-                installment.dueDate < startOfDay && installment.statusRaw != paidStatusRawValue
-            },
-            sortBy: [SortDescriptor(\.dueDate)]
-        )
-        var overdueInstallments = try context.fetch(overdueDescriptor)
-        overdueInstallments.forEach { _ = $0.paidAmount }
-        overdueInstallments = overdueInstallments.filter { $0.remainingAmount > .zero }
+        let agreementDescriptor = FetchDescriptor<DebtAgreement>()
+        let agreements = try context.fetch(agreementDescriptor)
+        var overdueSnapshots: [InstallmentOverview] = []
+        var upcomingSnapshots: [InstallmentOverview] = []
 
-        let upcomingDescriptor = FetchDescriptor<Installment>(
-            predicate: #Predicate { installment in
-                installment.dueDate >= startOfDay && installment.dueDate <= windowEnd && installment.statusRaw != paidStatusRawValue
-            },
-            sortBy: [SortDescriptor(\.dueDate)]
-        )
-        var upcomingInstallments = try context.fetch(upcomingDescriptor)
-        upcomingInstallments.forEach { _ = $0.paidAmount }
-        upcomingInstallments = upcomingInstallments.filter { $0.remainingAmount > .zero }
+        for agreement in agreements {
+            for installment in agreement.installments {
+                let remaining = installment.remainingAmount
+                guard remaining > .zero else { continue }
 
-        var combined = overdueInstallments
-        let existingIds = Set(combined.map(\.id))
-        let filteredUpcoming = upcomingInstallments.filter { !existingIds.contains($0.id) }
-        combined.append(contentsOf: filteredUpcoming)
-        combined.sort { lhs, rhs in
-            if lhs.dueDate == rhs.dueDate {
-                return lhs.number < rhs.number
+                if installment.status == .paid { continue }
+
+                let snapshot = InstallmentOverview(installment: installment, agreement: agreement)
+
+                if installment.dueDate < startOfDay {
+                    overdueSnapshots.append(snapshot)
+                } else if installment.dueDate <= windowEnd {
+                    upcomingSnapshots.append(snapshot)
+                }
             }
-            return lhs.dueDate < rhs.dueDate
         }
 
-        upcoming = combined
-        alerts = combined
+        overdueSnapshots.sort(by: Self.installmentSorter)
+        upcomingSnapshots.sort(by: Self.installmentSorter)
+
+        let existingIds = Set(overdueSnapshots.map(\.id))
+        let filteredUpcoming = upcomingSnapshots.filter { !existingIds.contains($0.id) }
+        var combined = overdueSnapshots + filteredUpcoming
+        combined.sort(by: Self.installmentSorter)
+
+        let snapshots = combined
+        upcoming = snapshots
+        alerts = snapshots
     }
 
     func formatted(_ value: Decimal) -> String {
         currencyFormatter.string(from: value)
+    }
+
+    private static func installmentSorter(_ lhs: InstallmentOverview, _ rhs: InstallmentOverview) -> Bool {
+        if lhs.dueDate == rhs.dueDate {
+            return lhs.number < rhs.number
+        }
+        return lhs.dueDate < rhs.dueDate
     }
 }

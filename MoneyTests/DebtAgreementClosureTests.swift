@@ -166,6 +166,61 @@ struct InstallmentReminderSchedulingTests {
     }
 }
 
+struct DebtorDeletionTests {
+    @Test("Exclui devedor e acordos associados") @MainActor
+    func deletesDebtorAndCascadeAgreements() async throws {
+        let environment = try makeEnvironment()
+        let viewModel = DebtorsListViewModel(context: environment.context)
+
+        try viewModel.load()
+        #expect(viewModel.debtors.count == 1)
+
+        viewModel.deleteDebtor(environment.debtor)
+        try viewModel.load()
+
+        let remainingDebtors = try environment.context.fetch(FetchDescriptor<Debtor>())
+        let remainingAgreements = try environment.context.fetch(FetchDescriptor<DebtAgreement>())
+        let remainingInstallments = try environment.context.fetch(FetchDescriptor<Installment>())
+
+        #expect(viewModel.debtors.isEmpty)
+        #expect(remainingDebtors.isEmpty)
+        #expect(remainingAgreements.isEmpty)
+        #expect(remainingInstallments.isEmpty)
+    }
+}
+
+struct AgreementDeletionTests {
+    @Test("Exclui acordo e cancela lembretes pendentes") @MainActor
+    func deletesAgreementAndCancelsReminders() async throws {
+        let environment = try makeEnvironment()
+        let scheduler = NotificationSchedulerSpy()
+        let viewModel = DebtorDetailViewModel(
+            debtor: environment.debtor,
+            context: environment.context,
+            calculator: FinanceCalculator(),
+            notificationScheduler: scheduler
+        )
+
+        try viewModel.load()
+
+        let agreement = try #require(viewModel.agreements.first)
+        let agreementID = agreement.id
+
+        viewModel.deleteAgreement(agreement)
+#if DEBUG
+        await viewModel.reminderSyncTaskForTesting?.value
+#endif
+
+        let remainingAgreements = try environment.context.fetch(FetchDescriptor<DebtAgreement>())
+        let remainingInstallments = try environment.context.fetch(FetchDescriptor<Installment>())
+
+        #expect(viewModel.agreements.isEmpty)
+        #expect(remainingAgreements.isEmpty)
+        #expect(remainingInstallments.isEmpty)
+        #expect(scheduler.actions.contains(.cancelAgreement(agreementID: agreementID)))
+    }
+}
+
 @MainActor
 private func makeEnvironment() throws -> (context: ModelContext, debtor: Debtor, agreement: DebtAgreement) {
     let schema = Schema([

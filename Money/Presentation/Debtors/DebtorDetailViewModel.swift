@@ -79,13 +79,36 @@ final class DebtorDetailViewModel: ObservableObject {
 
     var totalInstallmentsCount: Int { installments.count }
 
+    struct AgreementOverview {
+        let agreementID: UUID
+        let totalInstallments: Int
+        let paidInstallments: Int
+        let openInstallments: Int
+        let totalAmount: Decimal
+        let paidAmount: Decimal
+
+        var remainingAmount: Decimal {
+            (totalAmount - paidAmount).clamped(to: .zero...totalAmount)
+        }
+
+        var isClosed: Bool { openInstallments == 0 && totalInstallments > 0 }
+    }
+
     func load() throws {
         let targetID = debtor.id
         // Fetch agreements for the debtor for the list section
         let agreementsDescriptor = FetchDescriptor<DebtAgreement>(predicate: #Predicate { agreement in
             agreement.debtor.id == targetID
         }, sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
-        agreements = try context.fetch(agreementsDescriptor)
+        let fetchedAgreements = try context.fetch(agreementsDescriptor)
+        var refreshedAgreements: [DebtAgreement] = []
+        for agreement in fetchedAgreements {
+            if agreement.updateClosedStatus() {
+                try context.save()
+            }
+            refreshedAgreements.append(agreement)
+        }
+        agreements = refreshedAgreements
 
         // Fetch all installments for the debtor to compute metrics using fresh values
         let installmentsDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
@@ -99,6 +122,32 @@ final class DebtorDetailViewModel: ObservableObject {
         // Force access to refresh values from context
         fetchedInstallments.forEach { _ = $0.paidAmount }
         installments = fetchedInstallments.sorted(by: { $0.number < $1.number })
+    }
+
+    func overview(for agreement: DebtAgreement) -> AgreementOverview {
+        let related = installments(for: agreement)
+        let totalInstallments = related.count
+        let paidInstallments = related.filter { $0.status == .paid }.count
+        let openInstallments = max(totalInstallments - paidInstallments, 0)
+        let totalAmount = related.reduce(into: Decimal.zero) { $0 += $1.amount }
+        let paidAmount = related.reduce(into: Decimal.zero) { $0 += $1.paidAmount }
+
+        return AgreementOverview(
+            agreementID: agreement.id,
+            totalInstallments: totalInstallments,
+            paidInstallments: paidInstallments,
+            openInstallments: openInstallments,
+            totalAmount: totalAmount,
+            paidAmount: paidAmount
+        )
+    }
+
+    func installments(for agreement: DebtAgreement) -> [Installment] {
+        let cached = installments.filter { $0.agreement.id == agreement.id }
+        if cached.isEmpty {
+            return agreement.installments.sorted(by: { $0.number < $1.number })
+        }
+        return cached.sorted(by: { $0.number < $1.number })
     }
 
     func createAgreement(from draft: AgreementDraft) {
@@ -144,6 +193,29 @@ final class DebtorDetailViewModel: ObservableObject {
         } catch let error as AppError {
             context.rollback()
             self.error = error
+        } catch {
+            context.rollback()
+            self.error = .persistence("error.generic")
+        }
+    }
+
+    func deleteAgreement(_ agreement: DebtAgreement) {
+        if let scheduler = notificationScheduler {
+            reminderSyncTask?.cancel()
+            reminderSyncTask = Task { @MainActor in
+                await scheduler.cancelReminders(for: agreement.id)
+            }
+        }
+
+        let targetID = agreement.id
+        agreements.removeAll { $0.id == targetID }
+        installments.removeAll { $0.agreement.id == targetID }
+        context.delete(agreement)
+
+        do {
+            try context.save()
+            try load()
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")

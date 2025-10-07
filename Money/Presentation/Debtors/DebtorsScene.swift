@@ -5,6 +5,8 @@ struct DebtorsScene: View {
     @StateObject private var viewModel: DebtorsListViewModel
     @State private var showingCreateSheet = false
     @State private var draft = DebtorDraft()
+    @State private var debtorPendingDeletion: Debtor?
+    @State private var showingDeleteDebtorDialog = false
     private let environment: AppEnvironment
     private let context: ModelContext
 
@@ -45,12 +47,20 @@ struct DebtorsScene: View {
                             .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
+                                    debtorPendingDeletion = debtor
+                                    showingDeleteDebtorDialog = true
+                                } label: {
+                                    Label("debtors.row.delete", systemImage: "trash")
+                                }
+                                .tint(.red)
+                                Button {
                                     viewModel.toggleArchive(debtor)
                                 } label: {
                                     Label(debtor.archived ? "debtors.row.unarchive" : "debtors.row.archive", systemImage: debtor.archived ? "tray.and.arrow.up" : "archivebox")
                                 }
+                                .tint(debtor.archived ? .blue : .orange)
                             }
                         }
                         .transition(.opacity)
@@ -77,6 +87,11 @@ struct DebtorsScene: View {
             .onChange(of: viewModel.showArchived) { _ in
                 reload()
             }
+            .onChange(of: showingDeleteDebtorDialog) { isPresented in
+                if !isPresented {
+                    debtorPendingDeletion = nil
+                }
+            }
             .task {
                 reload()
             }
@@ -94,6 +109,22 @@ struct DebtorsScene: View {
                 }
             }
             .appErrorAlert(errorBinding)
+            .confirmationDialog(
+                String(localized: "debtors.delete.confirmation.title"),
+                isPresented: $showingDeleteDebtorDialog,
+                titleVisibility: .visible,
+                presenting: debtorPendingDeletion
+            ) { debtor in
+                Button(String(localized: "debtors.delete.confirmation.confirm"), role: .destructive) {
+                    viewModel.deleteDebtor(debtor)
+                    debtorPendingDeletion = nil
+                }
+                Button(String(localized: "common.cancel"), role: .cancel) {
+                    debtorPendingDeletion = nil
+                }
+            } message: { debtor in
+                Text(localizedFormat("debtors.delete.confirmation.message", debtor.name))
+            }
         }
     }
 

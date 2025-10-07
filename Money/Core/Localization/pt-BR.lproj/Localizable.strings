@@ -19,6 +19,8 @@
 "common.edit" = "Editar";
 "common.close" = "Fechar";
 "common.clear.filters" = "Limpar filtros";
+"common.expand" = "Expandir";
+"common.collapse" = "Recolher";
 
 "tab.dashboard" = "Resumo";
 "tab.debtors" = "Devedores";
@@ -81,6 +83,10 @@
 "debtors.row.agreements.single" = "%1$lld acordo ativo";
 "debtors.row.agreements.multiple" = "%1$lld acordos ativos";
 "debtors.row.phone" = "Telefone: %1$@";
+"debtors.row.delete" = "Excluir";
+"debtors.delete.confirmation.title" = "Excluir devedor";
+"debtors.delete.confirmation.message" = "Tem certeza de que deseja excluir %1$@? Todos os acordos e parcelas vinculados serão removidos.";
+"debtors.delete.confirmation.confirm" = "Excluir definitivamente";
 "debtors.form.title" = "Adicionar devedor";
 "debtors.form.info" = "Informações";
 "debtors.form.name" = "Nome";
@@ -97,7 +103,12 @@
 "debtor.agreement.summary" = "%1$lld parcelas • %2$lld abertas";
 "debtor.agreement.closed" = "Encerrado";
 "debtor.agreement.open" = "Ativo";
+"debtor.agreement.delete" = "Excluir acordo";
 "debtor.installment.number" = "Parcela %1$lld";
+"debtor.agreement.open.detail" = "Abrir detalhes do acordo";
+"debtor.agreement.paid.count" = "%1$lld de %2$lld";
+"debtor.agreement.paid.progress" = "%1$lld de %2$lld parcelas pagas";
+"debtor.agreement.remaining.amount" = "Restante: %1$@";
 
 "agreement.form.details" = "Detalhes";
 "agreement.form.title" = "Nome do acordo";
