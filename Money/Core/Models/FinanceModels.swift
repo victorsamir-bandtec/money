@@ -159,6 +159,54 @@ enum PaymentMethod: String, Codable, CaseIterable, Sendable {
     case pix, cash, transfer, other
 }
 
+enum CashTransactionType: String, Codable, CaseIterable, Sendable {
+    case expense
+    case income
+
+    var titleKey: String.LocalizationValue {
+        switch self {
+        case .expense:
+            return "transactions.type.expense"
+        case .income:
+            return "transactions.type.income"
+        }
+    }
+}
+
+@Model final class CashTransaction {
+    @Attribute(.unique) var id: UUID
+    var date: Date
+    var amount: Decimal
+    var typeRaw: String
+    var category: String?
+    var note: String?
+    var createdAt: Date
+
+    var type: CashTransactionType {
+        get { CashTransactionType(rawValue: typeRaw) ?? .expense }
+        set { typeRaw = newValue.rawValue }
+    }
+
+    init(
+        id: UUID = UUID(),
+        date: Date,
+        amount: Decimal,
+        type: CashTransactionType,
+        category: String? = nil,
+        note: String? = nil,
+        createdAt: Date = .now
+    ) {
+        precondition(amount > 0)
+        self.id = id
+        self.date = date
+        self.amount = amount
+        self.typeRaw = type.rawValue
+        self.category = category
+        self.note = note
+        self.createdAt = createdAt
+    }
+}
+
 @Model final class FixedExpense {
     @Attribute(.unique) var id: UUID
     var name: String
@@ -210,6 +258,17 @@ extension FixedExpense {
     var normalizedCategory: String? {
         guard let category, !category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         return category
+    }
+}
+
+extension CashTransaction {
+    var normalizedCategory: String? {
+        guard let category, !category.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
+        return category
+    }
+
+    var signedAmount: Decimal {
+        type == .expense ? -amount : amount
     }
 }
 

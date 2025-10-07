@@ -140,13 +140,7 @@ struct AgreementDetailScene: View {
             .presentationDetents([.medium, .large])
         }
         .task { try? viewModel.load() }
-        .alert(item: errorBinding) { wrapper in
-            Alert(
-                title: Text(String(localized: "error.title")),
-                message: Text(wrapper.localizedDescription),
-                dismissButton: .default(Text(String(localized: "common.ok")))
-            )
-        }
+        .appErrorAlert(errorBinding)
         .overlay(alignment: .top) {
             if showingSuccessToast {
                 SuccessToast(message: successMessage)
@@ -314,10 +308,10 @@ struct AgreementDetailScene: View {
 
     // Removed "installmentsSection" (substituído por List + Section no body)
 
-    private var errorBinding: Binding<LocalizedErrorWrapper?> {
+    private var errorBinding: Binding<AppError?> {
         Binding(
-            get: { viewModel.error.map { LocalizedErrorWrapper(error: $0) } },
-            set: { _ in viewModel.error = nil }
+            get: { viewModel.error },
+            set: { viewModel.error = $0 }
         )
     }
 }
@@ -681,15 +675,6 @@ private struct AgreementDetailBackground: View {
             Color(.systemGroupedBackground),
             Color(.secondarySystemGroupedBackground)
         ]
-    }
-}
-
-private struct LocalizedErrorWrapper: Identifiable {
-    let id = UUID()
-    let error: AppError
-
-    var localizedDescription: String {
-        error.errorDescription ?? ""
     }
 }
 

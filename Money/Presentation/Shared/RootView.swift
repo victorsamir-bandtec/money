@@ -19,6 +19,10 @@ struct RootView: View {
                 .tabItem {
                     Label(String(localized: "tab.expenses"), systemImage: "creditcard")
                 }
+            TransactionsScene(environment: environment, context: modelContext)
+                .tabItem {
+                    Label(String(localized: "tab.transactions"), systemImage: "list.bullet.rectangle")
+                }
             SettingsScene(environment: environment)
                 .tabItem {
                     Label(String(localized: "tab.settings"), systemImage: "gear")

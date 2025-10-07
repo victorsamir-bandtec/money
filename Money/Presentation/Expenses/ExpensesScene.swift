@@ -70,15 +70,14 @@ struct ExpensesScene: View {
             )
             .presentationDetents([.medium, .large])
         }
-        .alert(item: Binding(get: {
-            viewModel.error.map { LocalizedErrorWrapper(error: $0) }
-        }, set: { _ in viewModel.error = nil })) { wrapper in
-            Alert(
-                title: Text(String(localized: "error.title")),
-                message: Text(wrapper.localizedDescription),
-                dismissButton: .default(Text(String(localized: "common.ok")))
-            )
-        }
+        .appErrorAlert(errorBinding)
+    }
+
+    private var errorBinding: Binding<AppError?> {
+        Binding(
+            get: { viewModel.error },
+            set: { viewModel.error = $0 }
+        )
     }
 
     private var summarySection: some View {
@@ -795,15 +794,6 @@ private struct ExpenseForm: View {
     enum ResultAction {
         case save(ExpenseDraft)
         case cancel
-    }
-}
-
-private struct LocalizedErrorWrapper: Identifiable {
-    let id = UUID()
-    let error: AppError
-
-    var localizedDescription: String {
-        error.errorDescription ?? ""
     }
 }
 

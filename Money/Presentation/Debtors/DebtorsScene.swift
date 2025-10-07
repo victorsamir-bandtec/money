@@ -93,12 +93,15 @@ struct DebtorsScene: View {
                     }
                 }
             }
-            .alert(item: Binding(get: {
-                viewModel.error.map { LocalizedErrorWrapper(error: $0) }
-            }, set: { _ in viewModel.error = nil })) { wrapper in
-                Alert(title: Text("error.title"), message: Text(wrapper.localizedDescription))
-            }
+            .appErrorAlert(errorBinding)
         }
+    }
+
+    private var errorBinding: Binding<AppError?> {
+        Binding(
+            get: { viewModel.error },
+            set: { viewModel.error = $0 }
+        )
     }
 
     private var archiveFilterBinding: Binding<ArchiveFilter> {
@@ -426,15 +429,6 @@ private struct DebtorDraft: Equatable {
     var name: String = ""
     var phone: String = ""
     var note: String = ""
-}
-
-private struct LocalizedErrorWrapper: Identifiable {
-    let id = UUID()
-    let error: AppError
-
-    var localizedDescription: String {
-        error.errorDescription ?? ""
-    }
 }
 
 private struct DebtorForm: View {

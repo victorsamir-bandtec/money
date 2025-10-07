@@ -1,17 +1,38 @@
 import WidgetKit
 import SwiftUI
-import SwiftData
 
 struct WidgetSummary {
-    var monthIncome: Decimal
+    var salary: Decimal
     var received: Decimal
     var overdue: Decimal
     var fixedExpenses: Decimal
-    var salary: Decimal
+    var planned: Decimal
+    var variableExpenses: Decimal
+    var variableIncome: Decimal
+    var remainingToReceive: Decimal
+    var availableToSpend: Decimal
 
-    var netBalance: Decimal { salary + received - fixedExpenses }
+    init(
+        salary: Decimal,
+        received: Decimal,
+        overdue: Decimal,
+        fixedExpenses: Decimal,
+        planned: Decimal,
+        variableExpenses: Decimal = .zero,
+        variableIncome: Decimal = .zero
+    ) {
+        self.salary = salary
+        self.received = received
+        self.overdue = overdue
+        self.fixedExpenses = fixedExpenses
+        self.planned = planned
+        self.variableExpenses = variableExpenses
+        self.variableIncome = variableIncome
+        self.remainingToReceive = planned + overdue
+        self.availableToSpend = salary + received + planned + variableIncome - (fixedExpenses + overdue + variableExpenses)
+    }
 
-    static let empty = WidgetSummary(monthIncome: .zero, received: .zero, overdue: .zero, fixedExpenses: .zero, salary: .zero)
+    static let empty = WidgetSummary(salary: .zero, received: .zero, overdue: .zero, fixedExpenses: .zero, planned: .zero)
 }
 
 struct MoneyWidgetEntry: TimelineEntry {
@@ -35,7 +56,7 @@ struct MoneyWidgetProvider: TimelineProvider {
     }
 
     private var sampleSummary: WidgetSummary {
-        WidgetSummary(monthIncome: 1500, received: 320, overdue: 450, fixedExpenses: 820, salary: 4200)
+        WidgetSummary(salary: 4200, received: 320, overdue: 450, fixedExpenses: 820, planned: 1500, variableExpenses: 200, variableIncome: 150)
     }
 }
 
@@ -46,17 +67,14 @@ struct MoneyWidgetEntryView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Money")
                 .font(.headline)
-            HStack {
-                VStack(alignment: .leading) {
-                    Text("Receber: \(entry.summary.monthIncome, format: .currency(code: \"BRL\"))")
-                        .font(.caption)
-                    Text("Saldo: \(entry.summary.netBalance, format: .currency(code: \"BRL\"))")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Image(systemName: "chart.bar.xaxis")
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Saldo: \(entry.summary.availableToSpend, format: .currency(code: \"BRL\"))")
+                    .font(.caption)
+                Text("Previsto: \(entry.summary.planned, format: .currency(code: \"BRL\"))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding()
         .containerBackground(for: .widget) {

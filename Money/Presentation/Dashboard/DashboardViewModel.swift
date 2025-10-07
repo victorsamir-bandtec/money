@@ -3,17 +3,45 @@ import SwiftData
 import Combine
 
 struct DashboardSummary: Sendable, Equatable {
-    var monthIncome: Decimal
+    var salary: Decimal
     var received: Decimal
     var overdue: Decimal
     var fixedExpenses: Decimal
-    var salary: Decimal
+    var planned: Decimal
+    var variableExpenses: Decimal
+    var variableIncome: Decimal
+    var remainingToReceive: Decimal
+    var availableToSpend: Decimal
 
-    var netBalance: Decimal {
-        salary + received - fixedExpenses
+    init(
+        salary: Decimal,
+        received: Decimal,
+        overdue: Decimal,
+        fixedExpenses: Decimal,
+        planned: Decimal,
+        variableExpenses: Decimal = .zero,
+        variableIncome: Decimal = .zero
+    ) {
+        self.salary = salary
+        self.received = received
+        self.overdue = overdue
+        self.fixedExpenses = fixedExpenses
+        self.planned = planned
+        self.variableExpenses = variableExpenses
+        self.variableIncome = variableIncome
+        self.remainingToReceive = planned + overdue
+        self.availableToSpend = salary + received + planned + variableIncome - (fixedExpenses + overdue + variableExpenses)
     }
 
-    static let empty = DashboardSummary(monthIncome: .zero, received: .zero, overdue: .zero, fixedExpenses: .zero, salary: .zero)
+    var totalExpenses: Decimal {
+        fixedExpenses + variableExpenses
+    }
+
+    var variableBalance: Decimal {
+        variableIncome - variableExpenses
+    }
+
+    static let empty = DashboardSummary(salary: .zero, received: .zero, overdue: .zero, fixedExpenses: .zero, planned: .zero)
 }
 
 @MainActor
@@ -72,13 +100,16 @@ final class DashboardViewModel: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: startOfDay, end: startOfDay)
 
-        // Income previsto no mês corrente
+        // Parcelas previstas para o restante do mês (a receber)
         let monthlyDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
             installment.dueDate >= monthInterval.start && installment.dueDate < monthInterval.end
         })
         var monthInstallments = try context.fetch(monthlyDescriptor)
         monthInstallments.forEach { _ = $0.paidAmount }
-        let monthIncome = monthInstallments.reduce(into: Decimal.zero) { $0 += $1.amount }
+        let plannedInstallments = monthInstallments.filter { installment in
+            installment.dueDate >= startOfDay && installment.status != .paid && installment.remainingAmount > .zero
+        }
+        let planned = plannedInstallments.reduce(into: Decimal.zero) { $0 += $1.remainingAmount }
 
         // Total em atraso acumulado (qualquer parcela vencida com valor restante)
         let paidStatusRawValue = InstallmentStatus.paid.rawValue
@@ -110,12 +141,25 @@ final class DashboardViewModel: ObservableObject {
         })
         let salary = try context.fetch(salaryDescriptor).map(\.amount).reduce(.zero, +)
 
+        let transactionsDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
+            transaction.date >= monthInterval.start && transaction.date < monthInterval.end
+        })
+        let transactions = try context.fetch(transactionsDescriptor)
+        let variableExpenses = transactions
+            .filter { $0.type == .expense }
+            .reduce(into: Decimal.zero) { $0 += $1.amount }
+        let variableIncome = transactions
+            .filter { $0.type == .income }
+            .reduce(into: Decimal.zero) { $0 += $1.amount }
+
         summary = DashboardSummary(
-            monthIncome: monthIncome,
+            salary: salary,
             received: received,
             overdue: overdueTotal,
             fixedExpenses: fixedExpenses,
-            salary: salary
+            planned: planned,
+            variableExpenses: variableExpenses,
+            variableIncome: variableIncome
         )
     }
 

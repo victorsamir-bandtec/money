@@ -60,5 +60,37 @@ final class SampleDataService {
 
         let salary = SalarySnapshot(referenceMonth: Date(), amount: Decimal(4200))
         context.insert(salary)
+
+        let calendar = Calendar.current
+        let groceriesDate = calendar.date(byAdding: .day, value: -3, to: .now) ?? .now
+        let transportDate = calendar.date(byAdding: .day, value: -1, to: .now) ?? .now
+        let freelanceDate = calendar.date(byAdding: .day, value: -6, to: .now) ?? .now
+
+        let groceries = CashTransaction(
+            date: groceriesDate,
+            amount: Decimal(120.50),
+            type: .expense,
+            category: "Mercado",
+            note: String(localized: "sample.transaction.groceries")
+        )
+        context.insert(groceries)
+
+        let transport = CashTransaction(
+            date: transportDate,
+            amount: Decimal(35),
+            type: .expense,
+            category: "Transporte",
+            note: String(localized: "sample.transaction.transport")
+        )
+        context.insert(transport)
+
+        let freelance = CashTransaction(
+            date: freelanceDate,
+            amount: Decimal(750),
+            type: .income,
+            category: "Freelancer",
+            note: String(localized: "sample.transaction.freelance")
+        )
+        context.insert(freelance)
     }
 }

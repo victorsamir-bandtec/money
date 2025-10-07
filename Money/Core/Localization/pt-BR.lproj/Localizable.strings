@@ -4,6 +4,7 @@
 "error.expense.name" = "Informe um nome para a despesa.";
 "error.expense.amount" = "Informe um valor maior que zero.";
 "error.expense.dueDay" = "Escolha um dia de vencimento entre 1 e 31.";
+"error.transaction.amount" = "Informe um valor maior que zero.";
 "error.salary.invalid" = "Informe um valor válido para o salário.";
 "error.notifications.denied" = "Ative as notificações em Ajustes para receber alertas de parcelas.";
 "error.principal.invalid" = "Valor principal inválido.";
@@ -22,24 +23,30 @@
 "tab.dashboard" = "Resumo";
 "tab.debtors" = "Devedores";
 "tab.expenses" = "Despesas";
+"tab.transactions" = "Lançamentos";
 "tab.settings" = "Ajustes";
 
 "dashboard.title" = "Resumo";
 "dashboard.refresh" = "Recarregar";
 "dashboard.summary" = "Visão geral";
 "dashboard.summary.subtitle" = "Panorama financeiro do mês";
-"dashboard.metric.income" = "A receber";
-"dashboard.metric.income.caption" = "Total previsto no mês";
+"dashboard.metric.available" = "Saldo disponível";
+"dashboard.metric.available.caption" = "Salário + recebido + previsto - despesas";
+"dashboard.metric.planned" = "Previsto a receber";
+"dashboard.metric.planned.caption" = "Parcelas deste mês ainda pendentes";
 "dashboard.metric.received" = "Recebido";
 "dashboard.metric.received.caption" = "Baixas registradas";
 "dashboard.metric.overdue" = "Em atraso";
 "dashboard.metric.overdue.caption" = "Soma das parcelas atrasadas";
 "dashboard.metric.expenses" = "Despesas";
-"dashboard.metric.expenses.caption" = "Fixas ativas";
+"dashboard.metric.expenses.caption" = "Total do mês";
+"dashboard.metric.expenses.fixed" = "Fixas";
+"dashboard.metric.expenses.variable" = "Variáveis";
+"dashboard.metric.expenses.income" = "Receitas extras";
 "dashboard.metric.salary" = "Salário";
 "dashboard.metric.salary.caption" = "Referente ao mês";
-"dashboard.metric.balance" = "Saldo";
-"dashboard.metric.balance.caption" = "Salário + recebidos - despesas";
+"dashboard.metric.remaining" = "Total a receber";
+"dashboard.metric.remaining.caption" = "Atrasos + previsto deste mês";
 "dashboard.upcoming" = "Próximas parcelas";
 "dashboard.upcoming.empty" = "Sem cobranças nos próximos 14 dias.";
 
@@ -183,6 +190,39 @@
 "settings.developer" = "Equipe Money";
 
 "sample.marlon.title" = "Empréstimo Janeiro";
+"sample.transaction.groceries" = "Compras da semana";
+"sample.transaction.transport" = "Corrida de app";
+"sample.transaction.freelance" = "Projeto freelancer";
+
+"transactions.title" = "Lançamentos";
+"transactions.add" = "Nova transação";
+"transactions.search" = "Buscar transações";
+"transactions.empty.title" = "Sem lançamentos neste mês";
+"transactions.empty.description" = "Registre gastos pontuais e receitas extras para acompanhar seu caixa.";
+"transactions.metric.balance" = "Saldo variável";
+"transactions.metric.balance.caption" = "Receitas extras - despesas variáveis";
+"transactions.metric.expenses" = "Gastos variáveis";
+"transactions.metric.expenses.caption" = "Total de gastos registrados manualmente";
+"transactions.metric.income" = "Receitas extras";
+"transactions.metric.income.caption" = "Entradas registradas manualmente";
+"transactions.filter.type" = "Tipo";
+"transactions.filter.all" = "Todos";
+"transactions.filter.expense" = "Gastos";
+"transactions.filter.income" = "Receitas";
+"transactions.sort.title" = "Ordenação";
+"transactions.sort.date" = "Data mais recente";
+"transactions.sort.amount" = "Maior valor";
+"transactions.type.expense" = "Despesa";
+"transactions.type.income" = "Receita";
+"transactions.form.title" = "Adicionar transação";
+"transactions.form.edit" = "Editar transação";
+"transactions.form.section.basic" = "Informações básicas";
+"transactions.form.date" = "Data";
+"transactions.form.type" = "Tipo";
+"transactions.form.amount" = "Valor";
+"transactions.form.details" = "Detalhes";
+"transactions.form.category" = "Categoria";
+"transactions.form.note" = "Observações";
 
 "debtor.metric.remaining" = "Saldo devedor";
 "debtor.metric.remaining.caption" = "Total ainda não pago";

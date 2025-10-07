@@ -122,7 +122,7 @@ final class DebtorDetailViewModel: ObservableObject {
                 monthlyInterest: normalizedRate,
                 firstDueDate: draft.startDate
             )
-            var payloads: [InstallmentReminderPayload] = []
+            var createdInstallments: [Installment] = []
             for spec in schedule {
                 let installment = Installment(
                     agreement: agreement,
@@ -131,16 +131,13 @@ final class DebtorDetailViewModel: ObservableObject {
                     amount: spec.amount
                 )
                 context.insert(installment)
-                payloads.append(InstallmentReminderPayload(
-                    agreementID: agreement.id,
-                    installmentNumber: spec.number,
-                    dueDate: spec.dueDate
-                ))
+                createdInstallments.append(installment)
             }
             try context.save()
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
             if let scheduler = notificationScheduler {
-                for payload in payloads {
-                    Task { try? await scheduler.scheduleReminder(for: payload) }
+                for installment in createdInstallments {
+                    Task { await scheduler.syncReminders(for: installment) }
                 }
             }
             try load()
@@ -171,14 +168,7 @@ final class DebtorDetailViewModel: ObservableObject {
             try context.save()
             syncReminders(for: agreement)
             try load()
-            // Notify other views that financial/payment data changed so dashboards and
-            // lists can refresh immediately after a manual status change performed
-            // from DebtorDetailScene.
-            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
-            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
-            if closedChanged {
-                NotificationCenter.default.post(name: .agreementDataDidChange, object: nil)
-            }
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
@@ -202,12 +192,7 @@ final class DebtorDetailViewModel: ObservableObject {
             }
 
             for installment in upcoming {
-                let payload = InstallmentReminderPayload(
-                    agreementID: agreementID,
-                    installmentNumber: installment.number,
-                    dueDate: installment.dueDate
-                )
-                try? await scheduler.scheduleReminder(for: payload)
+                await scheduler.syncReminders(for: installment)
             }
         }
     }

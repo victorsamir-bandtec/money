@@ -7,7 +7,8 @@ import SwiftData
 final class NotificationSchedulerSpy: NotificationScheduling {
     enum Action: Equatable {
         case schedule(agreementID: UUID, installment: Int)
-        case cancel(agreementID: UUID)
+        case cancelAgreement(agreementID: UUID)
+        case cancelInstallment(agreementID: UUID, installment: Int)
     }
 
     private(set) var actions: [Action] = []
@@ -19,7 +20,11 @@ final class NotificationSchedulerSpy: NotificationScheduling {
     }
 
     func cancelReminders(for agreementID: UUID) async {
-        actions.append(.cancel(agreementID: agreementID))
+        actions.append(.cancelAgreement(agreementID: agreementID))
+    }
+
+    func cancelReminders(for agreementID: UUID, installmentNumber: Int) async {
+        actions.append(.cancelInstallment(agreementID: agreementID, installment: installmentNumber))
     }
 
     func reset() {
@@ -52,7 +57,7 @@ struct DebtAgreementClosureTests {
         await viewModel.reminderSyncTaskForTesting?.value
 
         #expect(environment.agreement.closed)
-        #expect(scheduler.actions.contains(.cancel(agreementID: environment.agreement.id)))
+        #expect(scheduler.actions.contains(.cancelAgreement(agreementID: environment.agreement.id)))
     }
 
     @Test("Reabre acordo ao marcar parcela como pendente") @MainActor
@@ -84,8 +89,80 @@ struct DebtAgreementClosureTests {
         await viewModel.reminderSyncTaskForTesting?.value
 
         #expect(!environment.agreement.closed)
-        #expect(scheduler.actions.contains(.cancel(agreementID: environment.agreement.id)))
+        #expect(scheduler.actions.contains(.cancelAgreement(agreementID: environment.agreement.id)))
         #expect(scheduler.actions.contains(.schedule(agreementID: environment.agreement.id, installment: latestSecond.number)))
+    }
+}
+
+struct InstallmentReminderSchedulingTests {
+    @Test("Não reagenda lembretes para parcela quitada") @MainActor
+    func doesNotScheduleWhenInstallmentPaid() async throws {
+        let environment = try makeEnvironment()
+        let scheduler = NotificationSchedulerSpy()
+        let installment = try #require(environment.agreement.installments.first)
+
+        installment.paidAmount = installment.amount
+        installment.status = .paid
+
+        await scheduler.syncReminders(for: installment)
+
+        #expect(!scheduler.actions.contains(where: { action in
+            if case .schedule = action { return true }
+            return false
+        }))
+        #expect(scheduler.actions.contains(.cancelInstallment(agreementID: environment.agreement.id, installment: installment.number)))
+    }
+
+    @Test("Não reagenda lembretes para parcela sem saldo restante") @MainActor
+    func doesNotScheduleWhenRemainingAmountIsZero() async throws {
+        let environment = try makeEnvironment()
+        let scheduler = NotificationSchedulerSpy()
+        let installment = try #require(environment.agreement.installments.first)
+
+        installment.status = .partial
+        installment.paidAmount = installment.amount
+
+        await scheduler.syncReminders(for: installment)
+
+        #expect(!scheduler.actions.contains(where: { action in
+            if case .schedule = action { return true }
+            return false
+        }))
+        #expect(scheduler.actions.contains(.cancelInstallment(agreementID: environment.agreement.id, installment: installment.number)))
+    }
+
+    @Test("Não agenda lembretes para parcelas vencidas") @MainActor
+    func doesNotScheduleWhenDueDateIsInThePast() async throws {
+        let environment = try makeEnvironment()
+        let scheduler = NotificationSchedulerSpy()
+        let installment = try #require(environment.agreement.installments.first)
+
+        installment.status = .pending
+        installment.dueDate = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date().addingTimeInterval(-86_400)
+
+        await scheduler.syncReminders(for: installment)
+
+        #expect(!scheduler.actions.contains(where: { action in
+            if case .schedule = action { return true }
+            return false
+        }))
+        #expect(scheduler.actions.contains(.cancelInstallment(agreementID: environment.agreement.id, installment: installment.number)))
+    }
+
+    @Test("Agenda lembretes para parcelas pendentes futuras") @MainActor
+    func schedulesForPendingUpcomingInstallments() async throws {
+        let environment = try makeEnvironment()
+        let scheduler = NotificationSchedulerSpy()
+        let installment = try #require(environment.agreement.installments.first)
+
+        installment.status = .pending
+        installment.paidAmount = .zero
+        installment.dueDate = Calendar.current.date(byAdding: .day, value: 5, to: Date()) ?? Date().addingTimeInterval(5 * 86_400)
+
+        await scheduler.syncReminders(for: installment)
+
+        #expect(scheduler.actions.contains(.schedule(agreementID: environment.agreement.id, installment: installment.number)))
+        #expect(!scheduler.actions.contains(.cancelInstallment(agreementID: environment.agreement.id, installment: installment.number)))
     }
 }
 
@@ -96,6 +173,7 @@ private func makeEnvironment() throws -> (context: ModelContext, debtor: Debtor,
         DebtAgreement.self,
         Installment.self,
         Payment.self,
+        CashTransaction.self,
         FixedExpense.self,
         SalarySnapshot.self
     ])

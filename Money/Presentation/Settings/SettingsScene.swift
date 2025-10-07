@@ -25,15 +25,7 @@ struct SettingsScene: View {
         .sheet(isPresented: $showingSalaryForm) {
             SalaryForm(draft: $salaryDraft, completion: handleSalaryForm)
         }
-        .alert(item: Binding(get: {
-            viewModel.error.map { LocalizedErrorWrapper(error: $0) }
-        }, set: { _ in viewModel.error = nil })) { wrapper in
-            Alert(
-                title: Text(String(localized: "error.title")),
-                message: Text(wrapper.localizedDescription),
-                dismissButton: .default(Text(String(localized: "common.ok")))
-            )
-        }
+        .appErrorAlert(errorBinding)
     }
 
     private var salarySection: some View {
@@ -103,6 +95,13 @@ struct SettingsScene: View {
         case .cancel:
             break
         }
+    }
+
+    private var errorBinding: Binding<AppError?> {
+        Binding(
+            get: { viewModel.error },
+            set: { viewModel.error = $0 }
+        )
     }
 }
 
@@ -259,15 +258,6 @@ private struct SalaryForm: View {
     enum ResultAction {
         case save(SalaryDraft)
         case cancel
-    }
-}
-
-private struct LocalizedErrorWrapper: Identifiable {
-    let id = UUID()
-    let error: AppError
-
-    var localizedDescription: String {
-        error.errorDescription ?? ""
     }
 }
 

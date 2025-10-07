@@ -33,6 +33,7 @@ final class AppEnvironment {
             DebtAgreement.self,
             Installment.self,
             Payment.self,
+            CashTransaction.self,
             FixedExpense.self,
             SalarySnapshot.self
         ])

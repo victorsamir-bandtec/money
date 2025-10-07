@@ -13,4 +13,26 @@ extension Notification.Name {
 
     /// Posted when any financial data changes (catch-all for dashboard updates)
     static let financialDataDidChange = Notification.Name("com.money.financialDataDidChange")
+
+    /// Posted when cash transactions are modified (variable expenses/income)
+    static let cashTransactionDataDidChange = Notification.Name("com.money.cashTransactionDataDidChange")
+}
+
+extension NotificationCenter {
+    /// Posts standard data change notifications so other view models can refresh state.
+    @MainActor
+    func postFinanceDataUpdates(agreementChanged: Bool) {
+        post(name: .paymentDataDidChange, object: nil)
+        post(name: .financialDataDidChange, object: nil)
+        if agreementChanged {
+            post(name: .agreementDataDidChange, object: nil)
+        }
+    }
+
+    /// Convenience method for broadcasting updates when transactions change.
+    @MainActor
+    func postTransactionDataUpdates() {
+        post(name: .cashTransactionDataDidChange, object: nil)
+        post(name: .financialDataDidChange, object: nil)
+    }
 }

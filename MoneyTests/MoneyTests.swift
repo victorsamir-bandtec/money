@@ -47,6 +47,7 @@ struct CSVExporterTests {
             DebtAgreement.self,
             Installment.self,
             Payment.self,
+            CashTransaction.self,
             FixedExpense.self,
             SalarySnapshot.self
         ])
@@ -66,6 +67,7 @@ struct CSVExporterTests {
         let exporter = CSVExporter()
         let url = try exporter.export(from: context)
         #expect(FileManager.default.fileExists(atPath: url.appendingPathComponent("devedores.csv").path))
+        #expect(FileManager.default.fileExists(atPath: url.appendingPathComponent("transacoes.csv").path))
     }
 }
 
@@ -77,6 +79,7 @@ struct DebtorDetailViewModelTests {
             DebtAgreement.self,
             Installment.self,
             Payment.self,
+            CashTransaction.self,
             FixedExpense.self,
             SalarySnapshot.self
         ])
@@ -107,6 +110,58 @@ struct DebtorDetailViewModelTests {
         let storedRate = agreement.interestRateMonthly
         #expect(storedRate == Decimal(string: "0.02"), "storedRate=\(storedRate as Any)")
     }
+
+    @Test("Emite notificações ao criar acordo") @MainActor
+    func postsNotificationsAfterCreatingAgreement() throws {
+        let schema = Schema([
+            Debtor.self,
+            DebtAgreement.self,
+            Installment.self,
+            Payment.self,
+            CashTransaction.self,
+            FixedExpense.self,
+            SalarySnapshot.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = container.mainContext
+
+        let debtor = Debtor(name: "Ana")
+        context.insert(debtor)
+
+        let viewModel = DebtorDetailViewModel(
+            debtor: debtor,
+            context: context,
+            calculator: FinanceCalculator(),
+            notificationScheduler: nil
+        )
+
+        var draft = AgreementDraft()
+        draft.title = "Teste"
+        draft.principal = 1000
+        draft.installmentCount = 12
+        draft.startDate = Date(timeIntervalSince1970: 0)
+
+        var recorded: [Notification.Name: Int] = [:]
+        let center = NotificationCenter.default
+        let names: [Notification.Name] = [
+            .agreementDataDidChange,
+            .paymentDataDidChange,
+            .financialDataDidChange
+        ]
+        let tokens = names.map { name in
+            center.addObserver(forName: name, object: nil, queue: nil) { _ in
+                recorded[name, default: 0] += 1
+            }
+        }
+        defer { tokens.forEach(center.removeObserver) }
+
+        viewModel.createAgreement(from: draft)
+
+        #expect(recorded[.agreementDataDidChange] == 1)
+        #expect(recorded[.paymentDataDidChange] == 1)
+        #expect(recorded[.financialDataDidChange] == 1)
+    }
 }
 
 struct DashboardViewModelTests {
@@ -117,6 +172,7 @@ struct DashboardViewModelTests {
             DebtAgreement.self,
             Installment.self,
             Payment.self,
+            CashTransaction.self,
             FixedExpense.self,
             SalarySnapshot.self
         ])
@@ -155,7 +211,10 @@ struct DashboardViewModelTests {
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
         try viewModel.load(currentDate: now)
 
+        #expect(viewModel.summary.planned == Decimal(150))
         #expect(viewModel.summary.overdue == Decimal(80))
+        #expect(viewModel.summary.remainingToReceive == Decimal(230))
+        #expect(viewModel.summary.availableToSpend == Decimal(70))
         #expect(viewModel.upcoming.count == 2)
 
         let upcomingIdentifiers = viewModel.upcoming.map(\.id)
@@ -163,6 +222,60 @@ struct DashboardViewModelTests {
         #expect(upcomingIdentifiers.contains(upcomingInstallment.id))
         #expect(viewModel.upcoming.first?.id == overdueInstallment.id)
         #expect(viewModel.alerts.map(\.id) == upcomingIdentifiers)
+    }
+
+    @Test("Considera transacoes variaveis no resumo") @MainActor
+    func includesVariableTransactionsInSummary() throws {
+        let schema = Schema([
+            Debtor.self,
+            DebtAgreement.self,
+            Installment.self,
+            Payment.self,
+            CashTransaction.self,
+            FixedExpense.self,
+            SalarySnapshot.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = container.mainContext
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let referenceDate = calendar.date(from: DateComponents(year: 2024, month: 6, day: 15, hour: 12))!
+
+        context.insert(CashTransaction(date: referenceDate, amount: 120, type: .expense, category: "Mercado"))
+        context.insert(CashTransaction(date: referenceDate, amount: 60, type: .income, category: "Freelancer"))
+        let previousMonth = calendar.date(byAdding: .month, value: -1, to: referenceDate)!
+        context.insert(CashTransaction(date: previousMonth, amount: 50, type: .expense, category: "Viagem"))
+        try context.save()
+
+        let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
+        try viewModel.load(currentDate: referenceDate)
+
+        #expect(viewModel.summary.variableExpenses == Decimal(120))
+        #expect(viewModel.summary.variableIncome == Decimal(60))
+        #expect(viewModel.summary.availableToSpend == Decimal(-60))
+        #expect(viewModel.summary.totalExpenses == Decimal(120))
+        #expect(viewModel.summary.variableBalance == Decimal(-60))
+    }
+}
+
+struct DashboardSummaryTests {
+    @Test("Calcula saldo disponível agregando entradas e saídas")
+    func computesAvailableBalance() {
+        let summary = DashboardSummary(
+            salary: 4000,
+            received: 850,
+            overdue: 300,
+            fixedExpenses: 1200,
+            planned: 700,
+            variableExpenses: 150
+        )
+
+        #expect(summary.remainingToReceive == Decimal(1000))
+        #expect(summary.availableToSpend == summary.salary + summary.received + summary.planned + summary.variableIncome - (summary.fixedExpenses + summary.overdue + summary.variableExpenses))
+        #expect(summary.totalExpenses == Decimal(1350))
+        #expect(summary.variableBalance == Decimal(-150))
     }
 }
 
@@ -236,6 +349,67 @@ struct ExpensesViewModelTests {
 
         #expect(viewModel.availableCategories.contains("Casa"))
         #expect(viewModel.availableCategories.count == 1)
+    }
+}
+
+struct TransactionsViewModelTests {
+    @Test("Carrega e filtra transacoes variaveis") @MainActor
+    func loadsAndFiltersTransactions() throws {
+        let schema = Schema([
+            CashTransaction.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = container.mainContext
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let referenceMonth = calendar.date(from: DateComponents(year: 2024, month: 6, day: 15, hour: 9))!
+
+        let groceriesDate = calendar.date(from: DateComponents(year: 2024, month: 6, day: 10, hour: 13))!
+        let taxiDate = calendar.date(from: DateComponents(year: 2024, month: 6, day: 3, hour: 8))!
+        let freelanceDate = calendar.date(from: DateComponents(year: 2024, month: 6, day: 5, hour: 20))!
+        let previousMonth = calendar.date(from: DateComponents(year: 2024, month: 5, day: 28, hour: 10))!
+
+        context.insert(CashTransaction(date: groceriesDate, amount: 80, type: .expense, category: "Mercado", note: "Compras semanais"))
+        context.insert(CashTransaction(date: taxiDate, amount: 45, type: .expense, category: "Transporte", note: "Táxi aeroporto"))
+        context.insert(CashTransaction(date: freelanceDate, amount: 200, type: .income, category: "Freelancer", note: "Site institucional"))
+        context.insert(CashTransaction(date: previousMonth, amount: 100, type: .income, category: "Bônus"))
+        try context.save()
+
+        let viewModel = TransactionsViewModel(context: context, calendar: calendar)
+        try viewModel.load(for: referenceMonth)
+
+        #expect(viewModel.metrics.totalExpenses == Decimal(125))
+        #expect(viewModel.metrics.totalIncome == Decimal(200))
+        #expect(viewModel.metrics.netBalance == Decimal(75))
+        #expect(viewModel.availableCategories == ["Mercado", "Transporte"])
+        #expect(viewModel.sections.count == 3)
+
+        viewModel.typeFilter = .income
+        let incomeTransactions = viewModel.sections.flatMap(\.transactions)
+        #expect(incomeTransactions.count == 1)
+        #expect(incomeTransactions.first?.type == .income)
+
+        viewModel.typeFilter = .expenses
+        viewModel.categoryFilter = "Mercado"
+        let categoryTransactions = viewModel.sections.flatMap(\.transactions)
+        #expect(categoryTransactions.count == 1)
+        #expect(categoryTransactions.first?.category == "Mercado")
+
+        viewModel.categoryFilter = nil
+        viewModel.searchText = "táxi"
+        let searchResults = viewModel.sections.flatMap(\.transactions)
+        #expect(searchResults.count == 1)
+        #expect(searchResults.first?.note?.contains("Táxi") == true)
+
+        viewModel.searchText = ""
+        viewModel.sortOrder = .amountDescending
+        viewModel.typeFilter = .all
+
+        let orderedSections = viewModel.sections
+        let firstSectionFirstAmount = orderedSections.first?.transactions.first?.amount
+        #expect(firstSectionFirstAmount == Decimal(200))
     }
 }
 

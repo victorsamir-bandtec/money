@@ -15,6 +15,7 @@ struct CSVExporter {
         try writeInstallments(to: directory.appendingPathComponent("parcelas.csv"), context: context)
         try writePayments(to: directory.appendingPathComponent("pagamentos.csv"), context: context)
         try writeExpenses(to: directory.appendingPathComponent("despesas.csv"), context: context)
+        try writeTransactions(to: directory.appendingPathComponent("transacoes.csv"), context: context)
 
         return directory
     }
@@ -60,6 +61,15 @@ struct CSVExporter {
         var csv = "id;name;amount;category;dueDay;active\n"
         for item in items {
             csv.append("\(item.id);\(item.name);\(item.amount);\(item.category ?? "");\(item.dueDay);\(item.active)\n")
+        }
+        try csv.write(to: url, atomically: true, encoding: .utf8)
+    }
+
+    private func writeTransactions(to url: URL, context: ModelContext) throws {
+        let items = try context.fetch(FetchDescriptor<CashTransaction>())
+        var csv = "id;date;amount;type;category;note;createdAt\n"
+        for item in items {
+            csv.append("\(item.id);\(iso8601String(item.date));\(item.amount);\(item.type.rawValue);\(item.category ?? "");\(item.note ?? "");\(iso8601String(item.createdAt))\n")
         }
         try csv.write(to: url, atomically: true, encoding: .utf8)
     }

@@ -6,6 +6,7 @@ protocol NotificationScheduling: AnyObject {
     func requestAuthorization() async throws
     func scheduleReminder(for payload: InstallmentReminderPayload) async throws
     func cancelReminders(for agreementID: UUID) async
+    func cancelReminders(for agreementID: UUID, installmentNumber: Int) async
 }
 
 struct InstallmentReminderPayload: Sendable {
@@ -68,6 +69,14 @@ final class LocalNotificationScheduler: NotificationScheduling {
         center.removePendingNotificationRequests(withIdentifiers: ids)
     }
 
+    func cancelReminders(for agreementID: UUID, installmentNumber: Int) async {
+        let identifiers = [
+            identifier(agreementID: agreementID, number: installmentNumber, type: "due"),
+            identifier(agreementID: agreementID, number: installmentNumber, type: "warn")
+        ]
+        center.removePendingNotificationRequests(withIdentifiers: identifiers)
+    }
+
     private func identifier(agreementID: UUID, number: Int, type: String) -> String {
         "money.installment.\(agreementID.uuidString).\(number).\(type)"
     }
@@ -82,6 +91,7 @@ final class LocalNotificationScheduler: NotificationScheduling {
         var components = calendar.dateComponents([.year, .month, .day, .hour, .minute], from: target)
         components.hour = 9
         components.minute = 0
+        guard let triggerDate = calendar.date(from: components), triggerDate >= Date() else { return nil }
         return UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
     }
 
@@ -91,5 +101,33 @@ final class LocalNotificationScheduler: NotificationScheduling {
                 continuation.resume(returning: requests)
             }
         }
+    }
+}
+
+@MainActor
+extension NotificationScheduling {
+    func cancelReminders(for agreementID: UUID, installmentNumber: Int) async {
+        await cancelReminders(for: agreementID)
+    }
+
+    func syncReminders(for installment: Installment) async {
+        let payload = InstallmentReminderPayload(
+            agreementID: installment.agreement.id,
+            installmentNumber: installment.number,
+            dueDate: installment.dueDate
+        )
+
+        if installment.status == .paid || installment.remainingAmount == .zero {
+            await cancelReminders(for: payload.agreementID, installmentNumber: payload.installmentNumber)
+            return
+        }
+
+        let startOfToday = Calendar.current.startOfDay(for: Date())
+        guard installment.dueDate >= startOfToday else {
+            await cancelReminders(for: payload.agreementID, installmentNumber: payload.installmentNumber)
+            return
+        }
+
+        try? await scheduleReminder(for: payload)
     }
 }

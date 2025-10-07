@@ -100,12 +100,7 @@ final class AgreementDetailViewModel: ObservableObject {
             publishInstallmentsChange()
             syncReminders(for: agreement)
 
-            // Notify other ViewModels that payment data changed
-            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
-            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
-            if closedChanged {
-                NotificationCenter.default.post(name: .agreementDataDidChange, object: nil)
-            }
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
         } catch let error as AppError {
             context.rollback()
             self.error = error
@@ -123,12 +118,7 @@ final class AgreementDetailViewModel: ObservableObject {
             try context.save()
             publishInstallmentsChange()
             syncReminders(for: agreement)
-            // Notify listeners to refresh any dependent summaries or lists
-            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
-            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
-            if closedChanged {
-                NotificationCenter.default.post(name: .agreementDataDidChange, object: nil)
-            }
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
@@ -163,12 +153,7 @@ final class AgreementDetailViewModel: ObservableObject {
             publishInstallmentsChange()
             syncReminders(for: agreement)
 
-            // Notify other ViewModels that payment data changed
-            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
-            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
-            if closedChanged {
-                NotificationCenter.default.post(name: .agreementDataDidChange, object: nil)
-            }
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
         } catch let error as AppError {
             context.rollback()
             self.error = error
@@ -207,12 +192,7 @@ final class AgreementDetailViewModel: ObservableObject {
             publishInstallmentsChange()
             syncReminders(for: agreement)
 
-            // Notify other ViewModels that payment data changed
-            NotificationCenter.default.post(name: .paymentDataDidChange, object: nil)
-            NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
-            if closedChanged {
-                NotificationCenter.default.post(name: .agreementDataDidChange, object: nil)
-            }
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
@@ -240,12 +220,7 @@ final class AgreementDetailViewModel: ObservableObject {
             }
 
             for installment in upcoming {
-                let payload = InstallmentReminderPayload(
-                    agreementID: agreementID,
-                    installmentNumber: installment.number,
-                    dueDate: installment.dueDate
-                )
-                try? await scheduler.scheduleReminder(for: payload)
+                await scheduler.syncReminders(for: installment)
             }
         }
     }

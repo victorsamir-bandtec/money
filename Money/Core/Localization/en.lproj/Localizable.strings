@@ -4,6 +4,7 @@
 "error.expense.name" = "Enter a name for the expense.";
 "error.expense.amount" = "Enter an amount greater than zero.";
 "error.expense.dueDay" = "Choose a due day between 1 and 31.";
+"error.transaction.amount" = "Enter an amount greater than zero.";
 "error.salary.invalid" = "Enter a valid salary amount.";
 "error.notifications.denied" = "Enable notifications in Settings to receive reminders.";
 "error.principal.invalid" = "Invalid principal amount.";
@@ -22,23 +23,29 @@
 "tab.dashboard" = "Overview";
 "tab.debtors" = "Debtors";
 "tab.expenses" = "Expenses";
+"tab.transactions" = "Transactions";
 "tab.settings" = "Settings";
 
 "dashboard.title" = "Overview";
 "dashboard.refresh" = "Reload";
 "dashboard.summary" = "Snapshot";
-"dashboard.metric.income" = "Incoming";
-"dashboard.metric.income.caption" = "Expected this month";
+"dashboard.metric.available" = "Available";
+"dashboard.metric.available.caption" = "Salary + received + forecast - expenses";
+"dashboard.metric.planned" = "Expected";
+"dashboard.metric.planned.caption" = "Installments due later this month";
 "dashboard.metric.received" = "Received";
 "dashboard.metric.received.caption" = "Posted payments";
 "dashboard.metric.overdue" = "Overdue";
 "dashboard.metric.overdue.caption" = "Sum of overdue installments";
 "dashboard.metric.expenses" = "Expenses";
-"dashboard.metric.expenses.caption" = "Active fixed costs";
+"dashboard.metric.expenses.caption" = "Monthly total";
+"dashboard.metric.expenses.fixed" = "Fixed";
+"dashboard.metric.expenses.variable" = "Variable";
+"dashboard.metric.expenses.income" = "Extra income";
 "dashboard.metric.salary" = "Salary";
 "dashboard.metric.salary.caption" = "For current month";
-"dashboard.metric.balance" = "Balance";
-"dashboard.metric.balance.caption" = "Salary + received - expenses";
+"dashboard.metric.remaining" = "To receive";
+"dashboard.metric.remaining.caption" = "Overdue + expected this month";
 "dashboard.upcoming" = "Upcoming installments";
 "dashboard.upcoming.empty" = "No payments due in the next 14 days.";
 
@@ -182,6 +189,39 @@
 "settings.developer" = "Money App Team";
 
 "sample.marlon.title" = "January Loan";
+"sample.transaction.groceries" = "Weekly groceries";
+"sample.transaction.transport" = "Ride-hailing trip";
+"sample.transaction.freelance" = "Freelance project";
+
+"transactions.title" = "Transactions";
+"transactions.add" = "New transaction";
+"transactions.search" = "Search transactions";
+"transactions.empty.title" = "No entries this month";
+"transactions.empty.description" = "Track one-off expenses and extra income to keep your cash flow up to date.";
+"transactions.metric.balance" = "Variable balance";
+"transactions.metric.balance.caption" = "Extra income - variable expenses";
+"transactions.metric.expenses" = "Variable expenses";
+"transactions.metric.expenses.caption" = "Total of manually logged expenses";
+"transactions.metric.income" = "Extra income";
+"transactions.metric.income.caption" = "Total of manually logged income";
+"transactions.filter.type" = "Type";
+"transactions.filter.all" = "All";
+"transactions.filter.expense" = "Expenses";
+"transactions.filter.income" = "Income";
+"transactions.sort.title" = "Sorting";
+"transactions.sort.date" = "Most recent";
+"transactions.sort.amount" = "Highest amount";
+"transactions.type.expense" = "Expense";
+"transactions.type.income" = "Income";
+"transactions.form.title" = "Add transaction";
+"transactions.form.edit" = "Edit transaction";
+"transactions.form.section.basic" = "Basic information";
+"transactions.form.date" = "Date";
+"transactions.form.type" = "Type";
+"transactions.form.amount" = "Amount";
+"transactions.form.details" = "Details";
+"transactions.form.category" = "Category";
+"transactions.form.note" = "Notes";
 
 "debtor.metric.remaining" = "Amount owed";
 "debtor.metric.remaining.caption" = "Total unpaid balance";
