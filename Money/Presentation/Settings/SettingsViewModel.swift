@@ -103,7 +103,7 @@ final class SettingsViewModel: ObservableObject {
     func clearAllData() {
         do {
             try environment.sampleDataService.clearAllData()
-            NotificationCenter.default.postTransactionDataUpdates()
+            NotificationCenter.default.postDataStoreCleared()
             load()
         } catch {
             self.error = .persistence("error.generic")

@@ -26,43 +26,23 @@ final class SampleDataService {
     }
 
     func clearAllData() throws {
-        // Delete all debtors (cascade deletes agreements, installments, and payments)
-        let debtorDescriptor = FetchDescriptor<Debtor>()
-        let debtors = try context.fetch(debtorDescriptor)
+        let agreements = try context.fetch(FetchDescriptor<DebtAgreement>())
         if let scheduler = notificationScheduler {
-            let agreementIDs = debtors
-                .flatMap { $0.agreements }
-                .map(\.id)
-            for agreementID in agreementIDs {
+            for agreement in agreements {
+                let agreementID = agreement.id
                 Task { @MainActor in
                     await scheduler.cancelReminders(for: agreementID)
                 }
             }
         }
-        for debtor in debtors {
-            context.delete(debtor)
-        }
 
-        // Delete all fixed expenses
-        let expenseDescriptor = FetchDescriptor<FixedExpense>()
-        let expenses = try context.fetch(expenseDescriptor)
-        for expense in expenses {
-            context.delete(expense)
-        }
-
-        // Delete all cash transactions
-        let transactionDescriptor = FetchDescriptor<CashTransaction>()
-        let transactions = try context.fetch(transactionDescriptor)
-        for transaction in transactions {
-            context.delete(transaction)
-        }
-
-        // Delete all salary snapshots
-        let salaryDescriptor = FetchDescriptor<SalarySnapshot>()
-        let salaries = try context.fetch(salaryDescriptor)
-        for salary in salaries {
-            context.delete(salary)
-        }
+        try deleteAll(Payment.self)
+        try deleteAll(Installment.self)
+        try deleteAll(DebtAgreement.self)
+        try deleteAll(Debtor.self)
+        try deleteAll(FixedExpense.self)
+        try deleteAll(CashTransaction.self)
+        try deleteAll(SalarySnapshot.self)
 
         try context.save()
     }
@@ -159,5 +139,13 @@ final class SampleDataService {
             note: String(localized: "sample.transaction.freelance")
         )
         context.insert(freelance)
+    }
+
+    private func deleteAll<Model: PersistentModel>(_ type: Model.Type) throws {
+        let descriptor = FetchDescriptor<Model>()
+        let items = try context.fetch(descriptor)
+        for item in items {
+            context.delete(item)
+        }
     }
 }

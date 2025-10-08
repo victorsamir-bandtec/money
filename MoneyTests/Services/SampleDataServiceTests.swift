@@ -237,4 +237,38 @@ struct SampleDataServiceTests {
         #expect(agreement.startDate < now)
         #expect(abs(agreement.startDate.timeIntervalSince(twoMonthsAgo)) < 86400) // Menos de 1 dia de diferença
     }
+
+    @Test("Limpar dados remove todas as entidades persistidas") @MainActor
+    func clearAllDataRemovesPersistedEntities() throws {
+        let schema = Schema([
+            Debtor.self,
+            DebtAgreement.self,
+            Installment.self,
+            Payment.self,
+            CashTransaction.self,
+            FixedExpense.self,
+            SalarySnapshot.self
+        ])
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: configuration)
+        let context = container.mainContext
+
+        let service = SampleDataService(context: context, financeCalculator: FinanceCalculator())
+
+        try service.createScenarioMarlon()
+        try context.save()
+
+        #expect(try context.fetch(FetchDescriptor<Debtor>()).isEmpty == false)
+        #expect(try context.fetch(FetchDescriptor<CashTransaction>()).isEmpty == false)
+
+        try service.clearAllData()
+
+        #expect(try context.fetch(FetchDescriptor<Debtor>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<DebtAgreement>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<Installment>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<Payment>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<CashTransaction>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<FixedExpense>()).isEmpty)
+        #expect(try context.fetch(FetchDescriptor<SalarySnapshot>()).isEmpty)
+    }
 }

@@ -16,6 +16,7 @@ final class AppEnvironment {
     init(
         featureFlags: FeatureFlags? = nil,
         featureFlagsStore: FeatureFlagsStoring? = nil,
+        notificationScheduler: NotificationScheduling? = nil,
         configuration: ModelConfiguration? = nil
     ) {
         let store = featureFlagsStore ?? FeatureFlagsStore()
@@ -46,11 +47,15 @@ final class AppEnvironment {
         modelContext = container.mainContext
         financeCalculator = FinanceCalculator()
         currencyFormatter = CurrencyFormatter()
-        notificationScheduler = LocalNotificationScheduler(center: UNUserNotificationCenter.current())
+        if let notificationScheduler {
+            self.notificationScheduler = notificationScheduler
+        } else {
+            self.notificationScheduler = LocalNotificationScheduler(center: UNUserNotificationCenter.current())
+        }
         sampleDataService = SampleDataService(
             context: modelContext,
             financeCalculator: financeCalculator,
-            notificationScheduler: notificationScheduler
+            notificationScheduler: self.notificationScheduler
         )
     }
 

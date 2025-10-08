@@ -35,4 +35,14 @@ extension NotificationCenter {
         post(name: .cashTransactionDataDidChange, object: nil)
         post(name: .financialDataDidChange, object: nil)
     }
+
+    /// Broadcasts a full data reset so all dashboards and lists can refresh immediately.
+    @MainActor
+    func postDataStoreCleared() {
+        post(name: .debtorDataDidChange, object: nil)
+        post(name: .agreementDataDidChange, object: nil)
+        post(name: .paymentDataDidChange, object: nil)
+        post(name: .cashTransactionDataDidChange, object: nil)
+        post(name: .financialDataDidChange, object: nil)
+    }
 }

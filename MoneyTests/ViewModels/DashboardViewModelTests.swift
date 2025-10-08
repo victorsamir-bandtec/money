@@ -153,6 +153,30 @@ struct DashboardViewModelTests {
         #expect(viewModel.summary.fixedExpenses == Decimal(1500))
         #expect(viewModel.summary.availableToSpend == Decimal(3500))
     }
+
+    @Test("Limpar dados zera resumo e parcelas futuras") @MainActor
+    func clearingDataResetsDashboardState() throws {
+        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
+        let environment = AppEnvironment(configuration: configuration)
+
+        try environment.sampleDataService.populateData()
+
+        let viewModel = DashboardViewModel(
+            context: environment.modelContext,
+            currencyFormatter: environment.currencyFormatter
+        )
+
+        try viewModel.load(currentDate: .now)
+        #expect(viewModel.summary != .empty)
+        #expect(!viewModel.upcoming.isEmpty)
+
+        try environment.sampleDataService.clearAllData()
+        try viewModel.load(currentDate: .now)
+
+        #expect(viewModel.summary == .empty)
+        #expect(viewModel.upcoming.isEmpty)
+        #expect(viewModel.alerts.isEmpty)
+    }
 }
 
 struct DashboardSummaryTests {
