@@ -199,8 +199,7 @@ private struct SalaryForm: View {
         NavigationStack {
             Form {
                 Section(String(localized: "salary.form.section")) {
-                    TextField(String(localized: "salary.form.amount"), value: $draft.amount, format: .currency(code: Locale.current.currency?.identifier ?? "BRL"))
-                        .keyboardType(.decimalPad)
+                    CurrencyField("salary.form.amount", value: $draft.amount)
                     DatePicker(String(localized: "salary.form.month"), selection: $draft.month, displayedComponents: [.date])
                         .datePickerStyle(.graphical)
                 }

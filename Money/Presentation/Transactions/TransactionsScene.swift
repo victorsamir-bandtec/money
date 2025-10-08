@@ -861,8 +861,7 @@ private struct TransactionForm: View {
                             Text(String(localized: type.titleKey)).tag(type)
                         }
                     }
-                    TextField(String(localized: "transactions.form.amount"), value: $draft.amount, format: .currency(code: Locale.current.currency?.identifier ?? "BRL"))
-                        .keyboardType(.decimalPad)
+                    CurrencyField("transactions.form.amount", value: $draft.amount)
                 }
 
                 Section(String(localized: "transactions.form.details")) {
@@ -1242,8 +1241,7 @@ private struct ExpenseForm: View {
                 Section(String(localized: "expenses.form.details")) {
                     TextField(String(localized: "expenses.form.name"), text: $draft.name)
                         .focused($focusedField, equals: .name)
-                    TextField(String(localized: "expenses.form.amount"), value: $draft.amount, format: .currency(code: Locale.current.currency?.identifier ?? "BRL"))
-                        .keyboardType(.decimalPad)
+                    CurrencyField("expenses.form.amount", value: $draft.amount)
                         .focused($focusedField, equals: .amount)
                     Stepper(value: $draft.dueDay, in: 1...31) {
                         Text(localizedFormat("expenses.form.dueDay", draft.dueDay))

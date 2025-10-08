@@ -374,8 +374,7 @@ private struct AgreementForm: View {
             Form {
                 Section(String(localized: "agreement.form.details")) {
                     TextField(String(localized: "agreement.form.title"), text: $draft.title)
-                    TextField(String(localized: "agreement.form.principal"), value: $draft.principal, format: .number)
-                        .keyboardType(.decimalPad)
+                    CurrencyField("agreement.form.principal", value: $draft.principal, currencyCode: draft.currencyCode)
                     Stepper(value: $draft.installmentCount, in: 1...96) {
                         Text(localizedFormat("agreement.form.installments", draft.installmentCount))
                     }
