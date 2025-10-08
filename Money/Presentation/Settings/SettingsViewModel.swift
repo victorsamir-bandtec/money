@@ -9,6 +9,7 @@ final class SettingsViewModel: ObservableObject {
     @Published var salaryHistory: [SalarySnapshot] = []
     @Published var error: AppError?
     @Published var exportURL: URL?
+    @Published var showingClearConfirmation = false
 
     private let environment: AppEnvironment
     private let calendar: Calendar
@@ -84,6 +85,26 @@ final class SettingsViewModel: ObservableObject {
             exportURL = url
         } catch let error as AppError {
             self.error = error
+        } catch {
+            self.error = .persistence("error.generic")
+        }
+    }
+
+    func populateSampleData() {
+        do {
+            try environment.sampleDataService.populateData()
+            NotificationCenter.default.postTransactionDataUpdates()
+            load()
+        } catch {
+            self.error = .persistence("error.generic")
+        }
+    }
+
+    func clearAllData() {
+        do {
+            try environment.sampleDataService.clearAllData()
+            NotificationCenter.default.postTransactionDataUpdates()
+            load()
         } catch {
             self.error = .persistence("error.generic")
         }

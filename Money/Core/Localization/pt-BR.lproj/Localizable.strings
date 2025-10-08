@@ -205,6 +205,11 @@
 "settings.about" = "Sobre";
 "settings.version" = "Versão";
 "settings.developer" = "Equipe Money";
+"settings.data.populate" = "Popular dados de exemplo";
+"settings.data.clear" = "Limpar todos os dados";
+"settings.data.clear.confirmation.title" = "Limpar todos os dados?";
+"settings.data.clear.confirmation.message" = "Esta ação removerá permanentemente todos os devedores, acordos, despesas e transações. Não é possível desfazer.";
+"settings.data.clear.confirmation.confirm" = "Limpar tudo";
 
 "sample.marlon.title" = "Empréstimo Janeiro";
 "sample.transaction.groceries" = "Compras da semana";

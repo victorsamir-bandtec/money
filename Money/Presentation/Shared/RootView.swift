@@ -25,8 +25,5 @@ struct RootView: View {
                 }
         }
         .tint(.appThemeColor)
-        .task {
-            try? environment.sampleDataService.populateIfNeeded()
-        }
     }
 }

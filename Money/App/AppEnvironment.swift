@@ -47,7 +47,11 @@ final class AppEnvironment {
         financeCalculator = FinanceCalculator()
         currencyFormatter = CurrencyFormatter()
         notificationScheduler = LocalNotificationScheduler(center: UNUserNotificationCenter.current())
-        sampleDataService = SampleDataService(context: modelContext, financeCalculator: financeCalculator)
+        sampleDataService = SampleDataService(
+            context: modelContext,
+            financeCalculator: financeCalculator,
+            notificationScheduler: notificationScheduler
+        )
     }
 
     func saveFeatureFlags() {

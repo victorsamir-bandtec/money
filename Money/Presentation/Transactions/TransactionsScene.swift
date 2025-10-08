@@ -132,6 +132,7 @@ struct TransactionsScene: View {
                 coverageText: expensesViewModel.formattedCoveragePercentage(),
                 coverageValue: expensesViewModel.metrics.coverage
             )
+            .listRowBackground(Color.clear)
         }
         .listRowInsets(EdgeInsets(top: 24, leading: 20, bottom: 20, trailing: 20))
         .listRowSeparator(.hidden)
@@ -193,6 +194,9 @@ struct TransactionsScene: View {
                                 }
                                 .tint(.indigo)
                             }
+                            .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                         }
                     } header: {
                         Text(section.date, format: .dateTime.day().month().year())
@@ -547,6 +551,7 @@ private struct VariableHeroCard: View {
             shadow: .standard,
             intensity: .prominent
         )
+        .compositingGroup()
     }
 
 }
@@ -619,6 +624,7 @@ private struct FixedExpensesHeroCard: View {
             shadow: .standard,
             intensity: .prominent
         )
+        .compositingGroup()
     }
 
 }
@@ -729,6 +735,7 @@ private struct TransactionRow: View {
             shadow: .compact,
             intensity: .subtle
         )
+        .compositingGroup()
     }
 }
 
@@ -797,6 +804,7 @@ private struct TransactionsSummaryCard: View {
             shadow: .compact,
             intensity: .subtle
         )
+        .compositingGroup()
     }
 }
 

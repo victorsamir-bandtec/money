@@ -194,6 +194,11 @@
 "settings.about" = "About";
 "settings.version" = "Version";
 "settings.developer" = "Money App Team";
+"settings.data.populate" = "Populate sample data";
+"settings.data.clear" = "Clear all data";
+"settings.data.clear.confirmation.title" = "Clear all data?";
+"settings.data.clear.confirmation.message" = "This will permanently remove all debtors, agreements, expenses and transactions. This cannot be undone.";
+"settings.data.clear.confirmation.confirm" = "Clear everything";
 
 "sample.marlon.title" = "January Loan";
 "sample.transaction.groceries" = "Weekly groceries";

@@ -68,6 +68,26 @@ struct SettingsScene: View {
                     Label(String(localized: "settings.share"), systemImage: "square.and.arrow.up")
                 }
             }
+
+            Button(String(localized: "settings.data.populate")) {
+                viewModel.populateSampleData()
+            }
+
+            Button(String(localized: "settings.data.clear"), role: .destructive) {
+                viewModel.showingClearConfirmation = true
+            }
+        }
+        .confirmationDialog(
+            String(localized: "settings.data.clear.confirmation.title"),
+            isPresented: $viewModel.showingClearConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button(String(localized: "settings.data.clear.confirmation.confirm"), role: .destructive) {
+                viewModel.clearAllData()
+            }
+            Button(String(localized: "common.cancel"), role: .cancel) {}
+        } message: {
+            Text(String(localized: "settings.data.clear.confirmation.message"))
         }
     }
 

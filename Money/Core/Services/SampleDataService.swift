@@ -7,18 +7,85 @@ import Observation
 final class SampleDataService {
     private let context: ModelContext
     private let financeCalculator: FinanceCalculator
+    private let notificationScheduler: NotificationScheduling?
 
-    init(context: ModelContext, financeCalculator: FinanceCalculator) {
+    init(
+        context: ModelContext,
+        financeCalculator: FinanceCalculator,
+        notificationScheduler: NotificationScheduling? = nil
+    ) {
         self.context = context
         self.financeCalculator = financeCalculator
+        self.notificationScheduler = notificationScheduler
+    }
+
+    func populateData() throws {
+        guard try isStoreEmpty() else { return }
+        try createScenarioMarlon()
+        try context.save()
+    }
+
+    func clearAllData() throws {
+        // Delete all debtors (cascade deletes agreements, installments, and payments)
+        let debtorDescriptor = FetchDescriptor<Debtor>()
+        let debtors = try context.fetch(debtorDescriptor)
+        if let scheduler = notificationScheduler {
+            let agreementIDs = debtors
+                .flatMap { $0.agreements }
+                .map(\.id)
+            for agreementID in agreementIDs {
+                Task { @MainActor in
+                    await scheduler.cancelReminders(for: agreementID)
+                }
+            }
+        }
+        for debtor in debtors {
+            context.delete(debtor)
+        }
+
+        // Delete all fixed expenses
+        let expenseDescriptor = FetchDescriptor<FixedExpense>()
+        let expenses = try context.fetch(expenseDescriptor)
+        for expense in expenses {
+            context.delete(expense)
+        }
+
+        // Delete all cash transactions
+        let transactionDescriptor = FetchDescriptor<CashTransaction>()
+        let transactions = try context.fetch(transactionDescriptor)
+        for transaction in transactions {
+            context.delete(transaction)
+        }
+
+        // Delete all salary snapshots
+        let salaryDescriptor = FetchDescriptor<SalarySnapshot>()
+        let salaries = try context.fetch(salaryDescriptor)
+        for salary in salaries {
+            context.delete(salary)
+        }
+
+        try context.save()
     }
 
     func populateIfNeeded() throws {
-        let fetch = FetchDescriptor<Debtor>()
-        let count = try context.fetch(fetch).count
-        guard count == 0 else { return }
-        try createScenarioMarlon()
-        try context.save()
+        try populateData()
+    }
+
+    private func isStoreEmpty() throws -> Bool {
+        let debtorDescriptor = FetchDescriptor<Debtor>()
+        let expenseDescriptor = FetchDescriptor<FixedExpense>()
+        let transactionDescriptor = FetchDescriptor<CashTransaction>()
+        let salaryDescriptor = FetchDescriptor<SalarySnapshot>()
+
+        let debtors = try context.fetch(debtorDescriptor)
+        let expenses = try context.fetch(expenseDescriptor)
+        let transactions = try context.fetch(transactionDescriptor)
+        let salaries = try context.fetch(salaryDescriptor)
+
+        return debtors.isEmpty &&
+        expenses.isEmpty &&
+        transactions.isEmpty &&
+        salaries.isEmpty
     }
 
     func createScenarioMarlon() throws {
