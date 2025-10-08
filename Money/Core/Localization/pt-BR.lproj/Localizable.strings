@@ -78,12 +78,19 @@
 "debtors.row.archive" = "Arquivar";
 "debtors.row.unarchive" = "Reativar";
 "debtors.row.archived" = "Arquivado";
-"debtors.row.agreements" = "%1$lld acordos ativos";
-"debtors.row.agreements.none" = "Sem acordos ativos";
-"debtors.row.agreements.single" = "%1$lld acordo ativo";
-"debtors.row.agreements.multiple" = "%1$lld acordos ativos";
+"debtors.row.status.none" = "Nenhum acordo cadastrado";
+"debtors.row.status.settled" = "Dívidas quitadas";
+"debtors.row.status.closed" = "Todos os acordos quitados";
+"debtors.row.status.active.single" = "%1$lld acordo ativo";
+"debtors.row.status.active.multiple" = "%1$lld acordos ativos";
+"debtors.row.installments.open.single" = "%1$lld parcela em aberto";
+"debtors.row.installments.open.multiple" = "%1$lld parcelas em aberto";
+"debtors.row.installments.overdue.single" = "%1$lld parcela em atraso";
+"debtors.row.installments.overdue.multiple" = "%1$lld parcelas em atraso";
+"debtors.row.progress" = "%1$lld de %2$lld parcelas pagas";
 "debtors.row.phone" = "Telefone: %1$@";
 "debtors.row.delete" = "Excluir";
+"debtors.row.remaining" = "Valor em aberto";
 "debtors.delete.confirmation.title" = "Excluir devedor";
 "debtors.delete.confirmation.message" = "Tem certeza de que deseja excluir %1$@? Todos os acordos e parcelas vinculados serão removidos.";
 "debtors.delete.confirmation.confirm" = "Excluir definitivamente";
@@ -93,7 +100,6 @@
 "debtors.form.phone" = "Telefone";
 "debtors.form.note" = "Anotações";
 
-"debtor.info" = "Dados do devedor";
 "debtor.name" = "Nome";
 "debtor.phone" = "Telefone";
 "debtor.agreements" = "Acordos";
@@ -249,7 +255,6 @@
 "debtor.metric.installments.paid.caption" = "Número de parcelas quitadas";
 "debtor.metric.installments.total" = "Total de parcelas";
 "debtor.metric.installments.total.caption" = "Parcelas em todos os acordos";
-"debtor.info.title" = "Informações do devedor";
 "debtor.agreements.subtitle" = "Histórico de acordos e parcelas";
 "debtor.agreements.empty.message" = "Adicione um novo acordo para começar o acompanhamento.";
 

@@ -75,18 +75,25 @@
 "debtors.row.archive" = "Archive";
 "debtors.row.unarchive" = "Restore";
 "debtors.row.archived" = "Archived";
-"debtors.row.agreements" = "%1$lld active agreements";
-"debtors.row.agreements.none" = "No active agreements";
-"debtors.row.agreements.single" = "%1$lld active agreement";
-"debtors.row.agreements.multiple" = "%1$lld active agreements";
+"debtors.row.status.none" = "No agreements yet";
+"debtors.row.status.settled" = "All debts settled";
+"debtors.row.status.closed" = "All agreements settled";
+"debtors.row.status.active.single" = "%1$lld active agreement";
+"debtors.row.status.active.multiple" = "%1$lld active agreements";
+"debtors.row.installments.open.single" = "%1$lld installment open";
+"debtors.row.installments.open.multiple" = "%1$lld installments open";
+"debtors.row.installments.overdue.single" = "%1$lld installment overdue";
+"debtors.row.installments.overdue.multiple" = "%1$lld installments overdue";
+"debtors.row.progress" = "%1$lld of %2$lld installments paid";
 "debtors.row.phone" = "Phone: %1$@";
+"debtors.row.delete" = "Delete";
+"debtors.row.remaining" = "Amount outstanding";
 "debtors.form.title" = "Add debtor";
 "debtors.form.info" = "Information";
 "debtors.form.name" = "Name";
 "debtors.form.phone" = "Phone";
 "debtors.form.note" = "Notes";
 
-"debtor.info" = "Debtor details";
 "debtor.name" = "Name";
 "debtor.phone" = "Phone";
 "debtor.agreements" = "Agreements";
@@ -237,7 +244,6 @@
 "debtor.metric.installments.paid.caption" = "Number of settled payments";
 "debtor.metric.installments.total" = "Total installments";
 "debtor.metric.installments.total.caption" = "Installments across all agreements";
-"debtor.info.title" = "Debtor information";
 "debtor.agreements.subtitle" = "Agreement and installment history";
 "debtor.agreements.empty.message" = "Add a new agreement to start tracking.";
 

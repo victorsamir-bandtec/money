@@ -26,7 +26,6 @@ struct DebtorDetailScene: View {
         ScrollView {
             VStack(spacing: 28) {
                 metricsSection
-                debtorInfoSection
                 agreementsSection
             }
             .padding(.horizontal, 20)
@@ -97,72 +96,6 @@ struct DebtorDetailScene: View {
                     icon: "list.number",
                     tint: .purple
                 )
-            }
-        }
-    }
-
-    private var debtorInfoSection: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(String(localized: "debtor.info.title"))
-                    .font(.headline)
-                    .foregroundStyle(.secondary)
-            }
-
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(spacing: 14) {
-                    DebtorAvatar(initials: viewModel.debtor.initials)
-
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(viewModel.debtor.name)
-                            .font(.title3.weight(.semibold))
-
-                        if let phone = viewModel.debtor.phone {
-                            phoneLink(phone)
-                        }
-                    }
-
-                    Spacer(minLength: 0)
-                }
-
-                if let note = viewModel.debtor.note, !note.isEmpty {
-                    Text(note)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
-                }
-            }
-            .padding(20)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .moneyCard(
-                tint: .appThemeColor,
-                cornerRadius: 24,
-                shadow: .compact,
-                intensity: .subtle
-            )
-        }
-    }
-
-    private func phoneLink(_ phone: String) -> some View {
-        Group {
-            if let url = URL(string: "tel://\(phone)") {
-                Link(destination: url) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "phone.fill")
-                            .font(.caption)
-                        Text(phone)
-                            .font(.subheadline)
-                    }
-                    .foregroundStyle(Color.accentColor)
-                }
-            } else {
-                HStack(spacing: 6) {
-                    Image(systemName: "phone.fill")
-                        .font(.caption)
-                    Text(phone)
-                        .font(.subheadline)
-                }
-                .foregroundStyle(.secondary)
             }
         }
     }

@@ -10,6 +10,7 @@ final class DebtorsListViewModel: ObservableObject {
     @Published var error: AppError?
     @Published private(set) var totalCount: Int = 0
     @Published private(set) var archivedCount: Int = 0
+    @Published private(set) var summaries: [UUID: DebtorSummary] = [:]
 
     private let context: ModelContext
 
@@ -36,6 +37,7 @@ final class DebtorsListViewModel: ObservableObject {
                 debtor.name.localizedCaseInsensitiveContains(term)
             }
         }
+        summaries = try computeSummaries(for: results)
         debtors = results
     }
 
@@ -82,5 +84,99 @@ final class DebtorsListViewModel: ObservableObject {
             context.rollback()
             self.error = .persistence("error.generic")
         }
+    }
+}
+
+extension DebtorsListViewModel {
+    struct DebtorSummary: Equatable {
+        let totalAgreements: Int
+        let activeAgreements: Int
+        let totalInstallments: Int
+        let paidInstallments: Int
+        let openInstallments: Int
+        let overdueInstallments: Int
+        let totalAmount: Decimal
+        let paidAmount: Decimal
+
+        var remainingAmount: Decimal {
+            (totalAmount - paidAmount).clamped(to: .zero...totalAmount)
+        }
+
+        static let empty = DebtorSummary(
+            totalAgreements: 0,
+            activeAgreements: 0,
+            totalInstallments: 0,
+            paidInstallments: 0,
+            openInstallments: 0,
+            overdueInstallments: 0,
+            totalAmount: .zero,
+            paidAmount: .zero
+        )
+    }
+
+    func summary(for debtor: Debtor) -> DebtorSummary {
+        summaries[debtor.id] ?? .empty
+    }
+
+    private func computeSummaries(for debtors: [Debtor]) throws -> [UUID: DebtorSummary] {
+        var output: [UUID: DebtorSummary] = [:]
+        var needsSave = false
+        for debtor in debtors {
+            let result = try makeSummary(for: debtor)
+            output[debtor.id] = result.summary
+            needsSave = needsSave || result.didUpdateClosedStatus
+        }
+        if needsSave {
+            try context.save()
+        }
+        return output
+    }
+
+    private func makeSummary(for debtor: Debtor) throws -> (summary: DebtorSummary, didUpdateClosedStatus: Bool) {
+        let debtorID = debtor.id
+
+        let agreementsDescriptor = FetchDescriptor<DebtAgreement>(predicate: #Predicate { agreement in
+            agreement.debtor.id == debtorID
+        })
+        let agreements = try context.fetch(agreementsDescriptor)
+
+        var didUpdateClosedStatus = false
+        for agreement in agreements where agreement.updateClosedStatus() {
+            didUpdateClosedStatus = true
+        }
+
+        let activeAgreements = agreements.filter { !$0.closed }
+
+        let installmentsDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
+            installment.agreement.debtor.id == debtorID
+        })
+        let installments = try context.fetch(installmentsDescriptor)
+        let activeInstallments = installments.filter { !$0.agreement.closed }
+
+        let totalInstallments = activeInstallments.count
+        let paidInstallments = activeInstallments.filter { $0.status == .paid }.count
+        let openInstallments = max(totalInstallments - paidInstallments, 0)
+        let overdueInstallments = activeInstallments.filter { $0.isOverdue }.count
+
+        let totalAmount = activeInstallments.reduce(into: Decimal.zero) { result, installment in
+            result += installment.amount
+        }
+        let paidAmount = activeInstallments.reduce(into: Decimal.zero) { result, installment in
+            let normalized = min(installment.paidAmount, installment.amount)
+            result += normalized
+        }
+
+        let summary = DebtorSummary(
+            totalAgreements: agreements.count,
+            activeAgreements: activeAgreements.count,
+            totalInstallments: totalInstallments,
+            paidInstallments: paidInstallments,
+            openInstallments: openInstallments,
+            overdueInstallments: overdueInstallments,
+            totalAmount: totalAmount,
+            paidAmount: paidAmount
+        )
+
+        return (summary, didUpdateClosedStatus)
     }
 }

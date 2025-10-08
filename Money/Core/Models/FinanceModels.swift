@@ -75,7 +75,7 @@ extension DebtAgreement {
     /// - Returns: `true` when the stored value was modified.
     @discardableResult
     func updateClosedStatus() -> Bool {
-        let shouldClose = installments.allSatisfy { $0.status == .paid }
+        let shouldClose = !installments.isEmpty && installments.allSatisfy { $0.status == .paid }
         guard closed != shouldClose else { return false }
         closed = shouldClose
         return true

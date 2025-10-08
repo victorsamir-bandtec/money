@@ -42,7 +42,11 @@ struct DebtorsScene: View {
                     } else {
                         ForEach(viewModel.debtors, id: \.id) { debtor in
                             NavigationLink(destination: DebtorDetailScene(debtor: debtor, environment: environment, context: context)) {
-                                DebtorRow(debtor: debtor)
+                                DebtorRow(
+                                    debtor: debtor,
+                                    summary: viewModel.summary(for: debtor),
+                                    environment: environment
+                                )
                             }
                             .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
                             .listRowSeparator(.hidden)
@@ -109,6 +113,12 @@ struct DebtorsScene: View {
                 }
             }
             .appErrorAlert(errorBinding)
+            .onReceive(NotificationCenter.default.publisher(for: .financialDataDidChange)) { _ in
+                reload()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .debtorDataDidChange)) { _ in
+                reload()
+            }
             .confirmationDialog(
                 String(localized: "debtors.delete.confirmation.title"),
                 isPresented: $showingDeleteDebtorDialog,
@@ -330,65 +340,69 @@ private struct DebtorsEmptyState: View {
 
 private struct DebtorRow: View {
     let debtor: Debtor
-
-    private var agreementText: String {
-        switch debtor.agreements.count {
-        case 0:
-            return String(localized: "debtors.row.agreements.none")
-        case 1:
-            return localizedFormat("debtors.row.agreements.single", debtor.agreements.count)
-        default:
-            return localizedFormat("debtors.row.agreements.multiple", debtor.agreements.count)
-        }
-    }
-
-    private var agreementIcon: String {
-        debtor.agreements.isEmpty ? "exclamationmark.triangle.fill" : "checkmark.seal.fill"
-    }
-
-    private var agreementTint: Color {
-        if debtor.archived { return .gray }
-        return debtor.agreements.isEmpty ? .orange : .green
-    }
-
-    private var cardTint: Color {
-        if debtor.archived { return .gray }
-        if debtor.agreements.isEmpty { return .orange }
-        return .appThemeColor
-    }
+    let summary: DebtorsListViewModel.DebtorSummary
+    let environment: AppEnvironment
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
-                DebtorAvatar(initials: debtor.initials)
+        VStack(alignment: .leading, spacing: 18) {
+            header
 
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(debtor.name)
-                        .font(.headline.weight(.semibold))
-                    if let note = debtor.note, !note.isEmpty {
-                        Text(note)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
+            VStack(alignment: .leading, spacing: 12) {
+                if summary.totalAgreements == 0 {
+                    // Sem acordos cadastrados
+                    HStack(spacing: 10) {
+                        Image(systemName: "doc.badge.plus")
+                            .font(.title3)
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("debtors.row.status.none")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else if summary.remainingAmount == 0 {
+                    // Dívidas quitadas
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.title3)
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("debtors.row.status.settled")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    // Valor em aberto
+                    HStack(spacing: 10) {
+                        Image(systemName: "banknote.fill")
+                            .font(.title3)
+                            .foregroundStyle(remainingAmountColor)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(formattedRemainingAmount)
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(.primary)
+                            Text("debtors.row.remaining")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
 
-                Spacer(minLength: 0)
-
-                if debtor.archived {
-                    Text("debtors.row.archived")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.orange)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(.orange.opacity(0.18), in: Capsule())
+                if summary.overdueInstallments > 0 {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.orange)
+                        Text(installmentsText(for: summary.overdueInstallments, keyBase: "debtors.row.installments.overdue"))
+                            .font(.subheadline.weight(.medium))
+                            .foregroundStyle(.orange)
+                    }
                 }
             }
-
-            InfoChip(text: agreementText, systemImage: agreementIcon, tint: agreementTint)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 20)
         .frame(maxWidth: .infinity, alignment: .leading)
         .moneyCard(
             tint: cardTint,
@@ -397,31 +411,60 @@ private struct DebtorRow: View {
             intensity: .subtle
         )
     }
-}
 
-private struct InfoChip: View {
-    let text: String
-    let systemImage: String
-    let tint: Color
-    @Environment(\.colorScheme) private var colorScheme
+    private var header: some View {
+        HStack(alignment: .top, spacing: 14) {
+            DebtorAvatar(initials: debtor.initials)
 
-    var body: some View {
-        Label(text, systemImage: systemImage)
-            .font(.footnote.weight(.semibold))
-            .labelStyle(.titleAndIcon)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(tint.opacity(colorScheme == .dark ? 0.15 : 0.12))
-            )
-            .foregroundStyle(foregroundColor)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(debtor.name)
+                    .font(.headline.weight(.semibold))
+
+                if let note = debtor.note, !note.isEmpty {
+                    Text(note)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer(minLength: 0)
+
+            if debtor.archived {
+                Text("debtors.row.archived")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(.orange.opacity(0.18), in: Capsule())
+            }
+        }
     }
 
-    private var foregroundColor: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.92)
-            : tint
+    private var formattedRemainingAmount: String {
+        environment.currencyFormatter.string(from: summary.remainingAmount)
+    }
+
+    private var remainingAmountColor: Color {
+        if summary.overdueInstallments > 0 {
+            return .orange
+        }
+        return summary.remainingAmount > 0 ? .appThemeColor : .green
+    }
+
+    private func installmentsText(for count: Int, keyBase: String) -> String {
+        if count == 1 {
+            return localizedFormat("\(keyBase).single", count)
+        }
+        return localizedFormat("\(keyBase).multiple", count)
+    }
+
+    private var cardTint: Color {
+        if debtor.archived { return .gray }
+        if summary.overdueInstallments > 0 { return .orange }
+        if summary.totalAgreements == 0 { return .orange }
+        if summary.remainingAmount == 0 { return .green }
+        return .appThemeColor
     }
 }
 
