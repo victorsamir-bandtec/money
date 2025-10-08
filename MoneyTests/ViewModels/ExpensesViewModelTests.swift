@@ -147,7 +147,7 @@ struct ExpensesViewModelTests {
 
         #expect(viewModel.expenses.count == 1)
 
-        viewModel.deleteExpense(expense)
+        viewModel.removeExpense(expense)
         #expect(viewModel.expenses.isEmpty)
     }
 }

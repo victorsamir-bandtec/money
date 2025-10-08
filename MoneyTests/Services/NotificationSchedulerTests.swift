@@ -4,32 +4,32 @@ import UserNotifications
 @testable import Money
 
 @MainActor
-final class UNUserNotificationCenterMock: UNUserNotificationCenter {
+final class UserNotificationCenterMock: UserNotificationCentering {
     var authorizationGranted = true
     var scheduledRequests: [UNNotificationRequest] = []
     var removedIdentifiers: [String] = []
 
-    override func requestAuthorization(options: UNAuthorizationOptions = []) async throws -> Bool {
+    func requestAuthorization(options: UNAuthorizationOptions = []) async throws -> Bool {
         return authorizationGranted
     }
 
-    override func add(_ request: UNNotificationRequest) async throws {
+    func add(_ request: UNNotificationRequest) async throws {
         scheduledRequests.append(request)
     }
 
-    override func removePendingNotificationRequests(withIdentifiers identifiers: [String]) {
+    func removePendingNotificationRequests(withIdentifiers identifiers: [String]) {
         removedIdentifiers.append(contentsOf: identifiers)
     }
 
-    override func pendingNotificationRequests() async -> [UNNotificationRequest] {
-        return scheduledRequests
+    func getPendingNotificationRequests(completionHandler: @escaping ([UNNotificationRequest]) -> Void) {
+        completionHandler(scheduledRequests)
     }
 }
 
 struct NotificationSchedulerTests {
     @Test("Agenda lembrete criando notificacao") @MainActor
     func scheduleReminderCreatesNotification() async throws {
-        let center = UNUserNotificationCenterMock()
+        let center = UserNotificationCenterMock()
         let scheduler = LocalNotificationScheduler(center: center, anticipationDays: 2)
 
         let calendar = Calendar.current
@@ -55,7 +55,7 @@ struct NotificationSchedulerTests {
 
     @Test("Cancela lembretes para acordo removendo todos") @MainActor
     func cancelRemindersForAgreementRemovesAll() async throws {
-        let center = UNUserNotificationCenterMock()
+        let center = UserNotificationCenterMock()
         let scheduler = LocalNotificationScheduler(center: center)
 
         let agreementID = UUID()
@@ -88,7 +88,7 @@ struct NotificationSchedulerTests {
 
     @Test("Cancela lembretes para parcela especifica removendo apenas dela") @MainActor
     func cancelRemindersForInstallmentRemovesSpecific() async throws {
-        let center = UNUserNotificationCenterMock()
+        let center = UserNotificationCenterMock()
         let scheduler = LocalNotificationScheduler(center: center)
 
         let agreementID = UUID()
@@ -120,7 +120,7 @@ struct NotificationSchedulerTests {
 
     @Test("Solicita autorizacao quando concedida retorna sucesso") @MainActor
     func requestAuthorizationWhenGrantedSucceeds() async throws {
-        let center = UNUserNotificationCenterMock()
+        let center = UserNotificationCenterMock()
         center.authorizationGranted = true
 
         let scheduler = LocalNotificationScheduler(center: center)
@@ -131,7 +131,7 @@ struct NotificationSchedulerTests {
 
     @Test("Solicita autorizacao quando negada lanca erro") @MainActor
     func requestAuthorizationWhenDeniedThrowsError() async throws {
-        let center = UNUserNotificationCenterMock()
+        let center = UserNotificationCenterMock()
         center.authorizationGranted = false
 
         let scheduler = LocalNotificationScheduler(center: center)
@@ -151,7 +151,7 @@ struct NotificationSchedulerTests {
 
     @Test("Trigger com data passada retorna nil") @MainActor
     func triggerWithPastDateReturnsNil() async throws {
-        let center = UNUserNotificationCenterMock()
+        let center = UserNotificationCenterMock()
         let scheduler = LocalNotificationScheduler(center: center)
 
         // Data no passado
@@ -173,7 +173,7 @@ struct NotificationSchedulerTests {
 
     @Test("Agenda notificacao com antecedencia correta") @MainActor
     func schedulesNotificationWithCorrectAnticipation() async throws {
-        let center = UNUserNotificationCenterMock()
+        let center = UserNotificationCenterMock()
         let anticipationDays = 3
         let scheduler = LocalNotificationScheduler(center: center, anticipationDays: anticipationDays)
 

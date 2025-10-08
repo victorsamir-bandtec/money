@@ -136,9 +136,13 @@ final class AccessibilityUITests: XCTestCase {
         // Tabs
         let tabs = app.tabBars.buttons.allElementsBoundByIndex
         XCTAssertGreaterThan(tabs.count, 0, "Deve haver tabs")
+        guard tabs.indices.contains(1) else {
+            XCTFail("Esperado pelo menos duas tabs para navegar até Devedores")
+            return
+        }
 
         // Navegar para Devedores e verificar identificadores
-        let debtorsTab = tabs.element(boundBy: 1)
+        let debtorsTab = tabs[1]
         debtorsTab.tap()
 
         // Botões devem ter identificadores ou labels únicos

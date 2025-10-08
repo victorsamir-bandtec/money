@@ -9,6 +9,17 @@ protocol NotificationScheduling: AnyObject {
     func cancelReminders(for agreementID: UUID, installmentNumber: Int) async
 }
 
+@MainActor
+protocol UserNotificationCentering: AnyObject {
+    func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
+    func add(_ request: UNNotificationRequest) async throws
+    func removePendingNotificationRequests(withIdentifiers identifiers: [String])
+    func getPendingNotificationRequests(completionHandler: @escaping ([UNNotificationRequest]) -> Void)
+}
+
+@MainActor
+extension UNUserNotificationCenter: UserNotificationCentering {}
+
 struct InstallmentReminderPayload: Sendable {
     let agreementID: UUID
     let installmentNumber: Int
@@ -17,10 +28,10 @@ struct InstallmentReminderPayload: Sendable {
 
 @MainActor
 final class LocalNotificationScheduler: NotificationScheduling {
-    private let center: UNUserNotificationCenter
+    private let center: UserNotificationCentering
     private let anticipationDays: Int
 
-    init(center: UNUserNotificationCenter, anticipationDays: Int = 2) {
+    init(center: UserNotificationCentering = UNUserNotificationCenter.current(), anticipationDays: Int = 2) {
         self.center = center
         self.anticipationDays = anticipationDays
     }

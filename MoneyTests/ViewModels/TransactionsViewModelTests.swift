@@ -183,7 +183,8 @@ struct TransactionsViewModelTests {
             date: .now,
             amount: 0,
             type: .expense,
-            category: "Teste"
+            category: "Teste",
+            note: nil
         )
 
         #expect(viewModel.error != nil)
@@ -194,14 +195,15 @@ struct TransactionsViewModelTests {
             date: .now,
             amount: -50,
             type: .expense,
-            category: "Teste"
+            category: "Teste",
+            note: nil
         )
 
         #expect(viewModel.error != nil)
     }
 
     @Test("Observador de notificacao recarrega dados") @MainActor
-    func notificationObserverReloadsData() throws {
+    func notificationObserverReloadsData() async throws {
         let schema = Schema([CashTransaction.self])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -229,11 +231,8 @@ struct TransactionsViewModelTests {
         NotificationCenter.default.post(name: .cashTransactionDataDidChange, object: nil)
 
         // Aguardar um pouco para o observador processar
-        let expectation = XCTestExpectation(description: "Wait for notification")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 1.0)
+        try await Task.sleep(nanoseconds: 150_000_000)
+        await Task.yield()
 
         // Verificar que dados foram recarregados
         #expect(viewModel.sections.count == 1)
