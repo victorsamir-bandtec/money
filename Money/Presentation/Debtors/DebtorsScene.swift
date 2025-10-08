@@ -7,6 +7,7 @@ struct DebtorsScene: View {
     @State private var draft = DebtorDraft()
     @State private var debtorPendingDeletion: Debtor?
     @State private var showingDeleteDebtorDialog = false
+    @State private var selectedDebtor: Debtor?
     private let environment: AppEnvironment
     private let context: ModelContext
 
@@ -41,12 +42,14 @@ struct DebtorsScene: View {
                         .transition(.opacity)
                     } else {
                         ForEach(viewModel.debtors, id: \.id) { debtor in
-                            NavigationLink(destination: DebtorDetailScene(debtor: debtor, environment: environment, context: context)) {
-                                DebtorRow(
-                                    debtor: debtor,
-                                    summary: viewModel.summary(for: debtor),
-                                    environment: environment
-                                )
+                            DebtorRow(
+                                debtor: debtor,
+                                summary: viewModel.summary(for: debtor),
+                                environment: environment
+                            )
+                            .contentShape(Rectangle())
+                            .onTapGesture {
+                                selectedDebtor = debtor
                             }
                             .listRowInsets(EdgeInsets(top: 8, leading: 20, bottom: 8, trailing: 20))
                             .listRowSeparator(.hidden)
@@ -74,9 +77,12 @@ struct DebtorsScene: View {
             .listStyle(.plain)
             .scrollIndicators(.hidden)
             .scrollContentBackground(.hidden)
-            .background(DebtorsBackground())
+            .background(AppBackground(variant: .debtors))
             .animation(.easeInOut(duration: 0.2), value: viewModel.debtors)
             .navigationTitle("debtors.title")
+            .navigationDestination(item: $selectedDebtor) { debtor in
+                DebtorDetailScene(debtor: debtor, environment: environment, context: context)
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { showingCreateSheet = true }) {
@@ -465,42 +471,6 @@ private struct DebtorRow: View {
         if summary.totalAgreements == 0 { return .orange }
         if summary.remainingAmount == 0 { return .green }
         return .appThemeColor
-    }
-}
-
-private struct DebtorsBackground: View {
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        ZStack {
-            Color(.systemBackground)
-            LinearGradient(
-                colors: gradientColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .opacity(colorScheme == .dark ? 1 : 0.6)
-            RadialGradient(
-                colors: [Color.accentColor.opacity(colorScheme == .dark ? 0.25 : 0.12), Color.clear],
-                center: .topLeading,
-                startRadius: 0,
-                endRadius: 420
-            )
-        }
-        .ignoresSafeArea()
-    }
-
-    private var gradientColors: [Color] {
-        if colorScheme == .dark {
-            return [
-                Color(red: 0.05, green: 0.08, blue: 0.13),
-                Color(red: 0.01, green: 0.02, blue: 0.05)
-            ]
-        }
-        return [
-            Color(.systemGroupedBackground),
-            Color(.secondarySystemGroupedBackground)
-        ]
     }
 }
 

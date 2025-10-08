@@ -73,7 +73,7 @@ struct TransactionsScene: View {
             .listStyle(.plain)
             .scrollIndicators(.hidden)
             .scrollContentBackground(.hidden)
-            .background(TransactionsBackground())
+            .background(AppBackground(variant: .transactions))
             .navigationTitle(String(localized: "transactions.title"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -673,42 +673,6 @@ private struct HeroHeader: View {
                     .foregroundStyle(.secondary)
             }
         }
-    }
-}
-
-private struct TransactionsBackground: View {
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        ZStack {
-            Color(.systemBackground)
-            LinearGradient(
-                colors: gradientColors,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .opacity(colorScheme == .dark ? 1 : 0.6)
-            RadialGradient(
-                colors: [Color.accentColor.opacity(colorScheme == .dark ? 0.25 : 0.12), Color.clear],
-                center: .topTrailing,
-                startRadius: 0,
-                endRadius: 420
-            )
-        }
-        .ignoresSafeArea()
-    }
-
-    private var gradientColors: [Color] {
-        if colorScheme == .dark {
-            return [
-                Color(red: 0.07, green: 0.09, blue: 0.16),
-                Color(red: 0.02, green: 0.03, blue: 0.07)
-            ]
-        }
-        return [
-            Color(.systemGroupedBackground),
-            Color(.secondarySystemGroupedBackground)
-        ]
     }
 }
 

@@ -19,6 +19,8 @@ struct SettingsScene: View {
                 dataSection
                 aboutSection
             }
+            .scrollContentBackground(.hidden)
+            .background(AppBackground(variant: .settings))
             .navigationTitle(String(localized: "settings.title"))
         }
         .task { viewModel.load() }
@@ -32,13 +34,11 @@ struct SettingsScene: View {
         Section(String(localized: "settings.salary.section")) {
             SettingsSalaryRow(
                 salary: viewModel.salary,
-                history: viewModel.salaryHistory,
                 formatter: formatter,
                 onCreate: presentSalaryCreation,
                 onEdit: presentSalaryEditor
             )
         }
-        .textCase(nil)
     }
 
     private var notificationsSection: some View {
@@ -107,94 +107,48 @@ struct SettingsScene: View {
 
 private struct SettingsSalaryRow: View {
     let salary: SalarySnapshot?
-    let history: [SalarySnapshot]
     let formatter: CurrencyFormatter
     var onCreate: () -> Void
     var onEdit: (SalarySnapshot) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            header
-            salaryContent
-            if history.count > 1 {
-                Divider()
-                historyList
-            }
-        }
-        .padding(.vertical, 12)
-    }
+        if let salary {
+            HStack(alignment: .top) {
+                Label {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(String(localized: "settings.salary.row.title"))
+                            .font(.body)
+                        Text(formatter.string(from: salary.amount))
+                            .font(.headline)
+                        Text(salary.referenceMonth, format: .dateTime.month(.wide).year())
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "dollarsign.circle")
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(Color.green)
+                }
 
-    private var header: some View {
-        HStack {
-            Label {
-                Text(String(localized: "settings.salary.row.title"))
-                    .font(.headline)
-            } icon: {
-                Image(systemName: "dollarsign.circle")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(Color.accentColor)
-            }
-            .labelStyle(.titleAndIcon)
+                Spacer()
 
-            Spacer(minLength: 12)
-
-            if let salary {
                 Button(String(localized: "settings.salary.edit")) {
                     onEdit(salary)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.small)
-            } else {
+            }
+        } else {
+            HStack {
+                Label(String(localized: "settings.salary.row.title"), systemImage: "dollarsign.circle")
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(Color.green)
+
+                Spacer()
+
                 Button(String(localized: "settings.salary.add"), action: onCreate)
                     .buttonStyle(.bordered)
                     .controlSize(.small)
-            }
-        }
-    }
-
-    private var salaryContent: some View {
-        Group {
-            if let salary {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(formatter.string(from: salary.amount))
-                        .font(.headline.weight(.semibold))
-                    Text(salary.referenceMonth, format: .dateTime.month(.wide).year())
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    if let note = salary.note, !note.isEmpty {
-                        Text(note)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            } else {
-                Text(String(localized: "settings.salary.empty"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    private var historyList: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(String(localized: "settings.salary.history"))
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(history.dropFirst(), id: \.id) { snapshot in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(snapshot.referenceMonth, format: .dateTime.month(.abbreviated).year())
-                                .font(.caption.weight(.semibold))
-                            Text(formatter.string(from: snapshot.amount))
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color.primary.opacity(0.06), in: Capsule())
-                    }
-                }
             }
         }
     }

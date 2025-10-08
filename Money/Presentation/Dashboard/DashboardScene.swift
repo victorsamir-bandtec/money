@@ -18,7 +18,7 @@ struct DashboardScene: View {
                 .padding(.horizontal, 20)
                 .padding(.vertical, 24)
             }
-            .background(LinearGradient(colors: [.black.opacity(0.05), .clear], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
+            .background(AppBackground(variant: .dashboard))
             .navigationTitle(String(localized: "dashboard.title"))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
