@@ -8,6 +8,7 @@ struct DebtorDetailScene: View {
     @State private var showingAgreementForm = false
     @State private var draft = AgreementDraft()
     @State private var expandedAgreements: Set<UUID> = []
+    @State private var navigateToCreditProfile = false
 
     init(debtor: Debtor, environment: AppEnvironment, context: ModelContext) {
         self.environment = environment
@@ -96,6 +97,32 @@ struct DebtorDetailScene: View {
                     icon: "list.number",
                     tint: .purple
                 )
+            }
+
+            Button(action: { navigateToCreditProfile = true }) {
+                HStack(spacing: 12) {
+                    Image(systemName: "chart.bar.doc.horizontal.fill")
+                        .font(.title3)
+                        .foregroundStyle(.purple)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("credit.profile.title")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("Análise de comportamento e risco")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "arrow.forward.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(16)
+                .moneyCard(tint: .purple, cornerRadius: 22, shadow: .compact, intensity: .subtle)
+            }
+            .buttonStyle(.plain)
+            .navigationDestination(isPresented: $navigateToCreditProfile) {
+                CreditProfileDetailView(debtor: viewModel.debtor, environment: environment, context: context)
             }
         }
     }

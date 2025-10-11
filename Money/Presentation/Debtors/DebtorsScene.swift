@@ -49,6 +49,7 @@ struct DebtorsScene: View {
                             DebtorRow(
                                 debtor: debtor,
                                 summary: viewModel.summary(for: debtor),
+                                profile: viewModel.creditProfile(for: debtor),
                                 environment: environment
                             )
                             .contentShape(Rectangle())
@@ -260,6 +261,7 @@ private struct DebtorsSummaryCard: View {
 private struct DebtorRow: View {
     let debtor: Debtor
     let summary: DebtorsListViewModel.DebtorSummary
+    let profile: DebtorCreditProfile?
     let environment: AppEnvironment
 
     var body: some View {
@@ -348,6 +350,10 @@ private struct DebtorRow: View {
             }
 
             Spacer(minLength: 0)
+
+            if let profile = profile {
+                CreditScoreBadge(score: profile.score, riskLevel: profile.riskLevel, style: .compact)
+            }
 
             if debtor.archived {
                 StatusBadge.archived()

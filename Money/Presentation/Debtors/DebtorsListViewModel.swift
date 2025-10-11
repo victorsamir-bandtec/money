@@ -11,8 +11,10 @@ final class DebtorsListViewModel: ObservableObject {
     @Published private(set) var totalCount: Int = 0
     @Published private(set) var archivedCount: Int = 0
     @Published private(set) var summaries: [UUID: DebtorSummary] = [:]
+    @Published private(set) var profiles: [UUID: DebtorCreditProfile] = [:]
 
     private let context: ModelContext
+    private let calculator = CreditScoreCalculator()
 
     init(context: ModelContext) {
         self.context = context
@@ -37,7 +39,22 @@ final class DebtorsListViewModel: ObservableObject {
             }
         }
         summaries = try computeSummaries(for: results)
+        profiles = try loadProfiles(for: results)
         debtors = results
+    }
+
+    func creditProfile(for debtor: Debtor) -> DebtorCreditProfile? {
+        profiles[debtor.id]
+    }
+
+    private func loadProfiles(for debtors: [Debtor]) throws -> [UUID: DebtorCreditProfile] {
+        var output: [UUID: DebtorCreditProfile] = [:]
+        for debtor in debtors {
+            if let profile = try? calculator.calculateProfile(for: debtor, context: context) {
+                output[debtor.id] = profile
+            }
+        }
+        return output
     }
 
     func addDebtor(name: String, phone: String?, note: String?) {

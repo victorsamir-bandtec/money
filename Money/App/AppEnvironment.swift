@@ -36,7 +36,8 @@ final class AppEnvironment {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let modelConfiguration = configuration ?? ModelConfiguration(isStoredInMemoryOnly: false)
         do {
