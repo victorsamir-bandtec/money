@@ -76,7 +76,7 @@ struct InstallmentOverview: Identifiable, Equatable, Sendable {
 final class DashboardViewModel: ObservableObject {
     private let context: ModelContext
     private let currencyFormatter: CurrencyFormatter
-    private var notificationObservers: [Any] = []
+    private let observers = NotificationObservers()
 
     @Published var summary: DashboardSummary = .empty
     @Published var upcoming: [InstallmentOverview] = []
@@ -85,37 +85,8 @@ final class DashboardViewModel: ObservableObject {
     init(context: ModelContext, currencyFormatter: CurrencyFormatter) {
         self.context = context
         self.currencyFormatter = currencyFormatter
-        setupNotificationObservers()
-    }
-
-    deinit {
-        notificationObservers.forEach { NotificationCenter.default.removeObserver($0) }
-    }
-
-    private func setupNotificationObservers() {
-        // Observe financial data changes to reload dashboard metrics
-        let financialObserver = NotificationCenter.default.addObserver(
-            forName: .financialDataDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                try? self?.load()
-            }
-        }
-        notificationObservers.append(financialObserver)
-
-        // Also observe payment data changes specifically
-        let paymentObserver = NotificationCenter.default.addObserver(
-            forName: .paymentDataDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                try? self?.load()
-            }
-        }
-        notificationObservers.append(paymentObserver)
+        observers.observe(.financialDataDidChange) { [weak self] in try? self?.load() }
+        observers.observe(.paymentDataDidChange) { [weak self] in try? self?.load() }
     }
 
     func load(currentDate: Date = .now) throws {

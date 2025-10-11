@@ -44,11 +44,11 @@ final class ExpensesViewModel: ObservableObject {
         guard validate(name: name, amount: amount, dueDay: dueDay) else { return }
 
         let expense = FixedExpense(
-            name: name.trimmed(),
+            name: name.normalized,
             amount: amount,
-            category: normalized(category),
+            category: category.normalizedOrNil,
             dueDay: dueDay,
-            note: normalized(note)
+            note: note.normalizedOrNil
         )
         context.insert(expense)
         persistChanges()
@@ -57,11 +57,11 @@ final class ExpensesViewModel: ObservableObject {
     func updateExpense(_ expense: FixedExpense, name: String, amount: Decimal, category: String?, dueDay: Int, note: String?) {
         guard validate(name: name, amount: amount, dueDay: dueDay) else { return }
 
-        expense.name = name.trimmed()
+        expense.name = name.normalized
         expense.amount = amount
-        expense.category = normalized(category)
+        expense.category = category.normalizedOrNil
         expense.dueDay = dueDay
-        expense.note = normalized(note)
+        expense.note = note.normalizedOrNil
         persistChanges()
     }
 
@@ -104,25 +104,17 @@ final class ExpensesViewModel: ObservableObject {
     }
 
     private func persistChanges() {
-        do {
-            try context.save()
+        context.saveAndReload {
             try fetchExpenses()
             recalculateDerivedState()
-            notifyFinancialChange()
-        } catch {
-            context.rollback()
-            self.error = .persistence("error.generic")
         }
-    }
-
-    private func notifyFinancialChange() {
-        NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
+        .handlePersistenceError { self.error = $0 }
     }
 
     private func fetchExpenses() throws {
         let descriptor = FetchDescriptor<FixedExpense>()
         expenses = try context.fetch(descriptor)
-        availableCategories = Array(Set(expenses.compactMap { $0.normalizedCategory })).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        availableCategories = expenses.uniqueCategories
     }
 
     private func fetchSalary(for month: Date) throws {
@@ -136,25 +128,22 @@ final class ExpensesViewModel: ObservableObject {
     private func applyFilters() {
         var results = expenses
 
+        // Status filter
         switch statusFilter {
-        case .active:
-            results = results.filter { $0.active }
-        case .archived:
-            results = results.filter { !$0.active }
-        case .all:
-            break
+        case .active: results = results.filter { $0.active }
+        case .archived: results = results.filter { !$0.active }
+        case .all: break
         }
 
-        if let category = selectedCategory?.lowercased(), !category.isEmpty {
-            results = results.filter { ($0.category ?? "").lowercased() == category }
-        }
+        // Category filter
+        results = CategoryFilter.apply(to: results, selectedCategory: selectedCategory)
 
-        let trimmedQuery = searchText.trimmed().lowercased()
-        if !trimmedQuery.isEmpty {
-            results = results.filter { expense in
-                expense.name.lowercased().contains(trimmedQuery) ||
-                (expense.category?.lowercased().contains(trimmedQuery) ?? false) ||
-                (expense.note?.lowercased().contains(trimmedQuery) ?? false)
+        // Search filter
+        results = SearchFilter.apply(to: results, searchText: searchText) { query in
+            { expense in
+                expense.name.containsIgnoringCase(query) ||
+                (expense.category?.containsIgnoringCase(query) ?? false) ||
+                (expense.note?.containsIgnoringCase(query) ?? false)
             }
         }
 
@@ -219,7 +208,7 @@ final class ExpensesViewModel: ObservableObject {
     }
 
     private func validate(name: String, amount: Decimal, dueDay: Int) -> Bool {
-        guard !name.trimmed().isEmpty else {
+        guard name.isNotBlank else {
             error = .validation("error.expense.name")
             return false
         }
@@ -232,11 +221,6 @@ final class ExpensesViewModel: ObservableObject {
             return false
         }
         return true
-    }
-
-    private func normalized(_ value: String?) -> String? {
-        guard let trimmed = value?.trimmed(), !trimmed.isEmpty else { return nil }
-        return trimmed
     }
 }
 
@@ -272,10 +256,4 @@ private extension NumberFormatter {
         formatter.maximumFractionDigits = 1
         return formatter
     }()
-}
-
-private extension String {
-    func trimmed() -> String {
-        trimmingCharacters(in: .whitespacesAndNewlines)
-    }
 }

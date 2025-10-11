@@ -33,9 +33,13 @@ struct DebtorsScene: View {
 
                 Section {
                     if viewModel.debtors.isEmpty {
-                        DebtorsEmptyState(showArchived: viewModel.showArchived) {
-                            showingCreateSheet = true
-                        }
+                        AppEmptyState(
+                            icon: viewModel.showArchived ? "archivebox" : "person.badge.plus",
+                            title: "debtors.empty.title",
+                            message: "debtors.empty.message",
+                            actionTitle: "debtors.empty.action",
+                            action: { showingCreateSheet = true }
+                        )
                         .listRowInsets(EdgeInsets(top: 16, leading: 20, bottom: 40, trailing: 20))
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
@@ -226,7 +230,7 @@ private struct DebtorsSummaryCard: View {
             }
 
             // Campo de busca
-            DebtorsSearchField(text: $searchText)
+            AppSearchField.forNames(text: $searchText, prompt: "debtors.search")
 
             // Filtro de exibição
             VStack(alignment: .leading, spacing: 8) {
@@ -249,97 +253,6 @@ private struct DebtorsSummaryCard: View {
             cornerRadius: 28,
             shadow: .standard,
             intensity: .subtle
-        )
-    }
-}
-
-private struct DebtorsSearchField: View {
-    @Binding var text: String
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-            TextField("debtors.search", text: $text)
-                .textInputAutocapitalization(.words)
-                .disableAutocorrection(true)
-            if !text.isEmpty {
-                Button {
-                    text = ""
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.secondary.opacity(0.6))
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("debtors.search.clear")
-            }
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 14)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(fillColor)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .strokeBorder(strokeColor)
-        )
-    }
-
-    private var fillColor: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.08)
-            : Color.black.opacity(0.05)
-    }
-
-    private var strokeColor: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.08)
-            : Color.black.opacity(0.08)
-    }
-}
-
-private struct DebtorsEmptyState: View {
-    var showArchived: Bool
-    var onAdd: () -> Void
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: showArchived ? "archivebox" : "person.badge.plus")
-                .font(.system(size: 44, weight: .semibold))
-                .foregroundStyle(Color.accentColor)
-
-            Text("debtors.empty.title")
-                .font(.headline)
-
-            Text("debtors.empty.message")
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-
-            Button(action: onAdd) {
-                Text("debtors.empty.action")
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(Color.accentColor)
-                    )
-                    .foregroundStyle(.white)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(32)
-        .frame(maxWidth: .infinity)
-        .background(
-            GlassBackgroundStyle.current.material,
-            in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08))
         )
     }
 }
@@ -437,12 +350,7 @@ private struct DebtorRow: View {
             Spacer(minLength: 0)
 
             if debtor.archived {
-                Text("debtors.row.archived")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.orange)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.orange.opacity(0.18), in: Capsule())
+                StatusBadge.archived()
             }
         }
     }
@@ -505,7 +413,7 @@ private struct DebtorForm: View {
                 Button("common.save") {
                     completion(.save(draft))
                 }
-                .disabled(draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(draft.name.isBlankOrEmpty)
             }
         }
     }

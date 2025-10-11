@@ -25,16 +25,12 @@ final class TransactionsViewModel: ObservableObject {
     private let calendar: Calendar
     private var monthInterval: DateInterval?
     private var allTransactions: [CashTransaction] = []
-    private var notificationObservers: [Any] = []
+    private let transactionObserver = NotificationObserver(.cashTransactionDataDidChange)
 
     init(context: ModelContext, calendar: Calendar = .current) {
         self.context = context
         self.calendar = calendar
         setupObservers()
-    }
-
-    deinit {
-        notificationObservers.forEach { NotificationCenter.default.removeObserver($0) }
     }
 
     func load(for month: Date = .now) throws {
@@ -49,8 +45,8 @@ final class TransactionsViewModel: ObservableObject {
             date: date,
             amount: amount,
             type: type,
-            category: normalized(category),
-            note: normalized(note)
+            category: category.normalizedOrNil,
+            note: note.normalizedOrNil
         )
         context.insert(transaction)
         persistChanges()
@@ -61,8 +57,8 @@ final class TransactionsViewModel: ObservableObject {
         transaction.date = date
         transaction.amount = amount
         transaction.type = type
-        transaction.category = normalized(category)
-        transaction.note = normalized(note)
+        transaction.category = category.normalizedOrNil
+        transaction.note = note.normalizedOrNil
         persistChanges()
     }
 
@@ -91,9 +87,7 @@ final class TransactionsViewModel: ObservableObject {
         let fetched = try context.fetch(descriptor)
         fetched.forEach { _ = $0.category }
         allTransactions = fetched
-        availableCategories = Array(
-            Set(allTransactions.compactMap { $0.normalizedCategory })
-        ).sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+        availableCategories = allTransactions.uniqueCategories
     }
 
     private func recalculateDerivedState() {
@@ -104,25 +98,21 @@ final class TransactionsViewModel: ObservableObject {
     private func applyFilters() {
         var results = allTransactions
 
+        // Type filter
         switch typeFilter {
-        case .all:
-            break
-        case .expenses:
-            results = results.filter { $0.type == .expense }
-        case .income:
-            results = results.filter { $0.type == .income }
+        case .all: break
+        case .expenses: results = results.filter { $0.type == .expense }
+        case .income: results = results.filter { $0.type == .income }
         }
 
-        if let category = categoryFilter?.lowercased(), !category.isEmpty {
-            results = results.filter { ($0.category ?? "").lowercased() == category }
-        }
+        // Category filter
+        results = CategoryFilter.apply(to: results, selectedCategory: categoryFilter)
 
-        let trimmedQuery = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if !trimmedQuery.isEmpty {
-            results = results.filter { transaction in
-                let category = transaction.category?.lowercased() ?? ""
-                let note = transaction.note?.lowercased() ?? ""
-                return category.contains(trimmedQuery) || note.contains(trimmedQuery)
+        // Search filter
+        results = SearchFilter.apply(to: results, searchText: searchText) { query in
+            { transaction in
+                (transaction.category?.containsIgnoringCase(query) ?? false) ||
+                (transaction.note?.containsIgnoringCase(query) ?? false)
             }
         }
 
@@ -209,17 +199,21 @@ final class TransactionsViewModel: ObservableObject {
     }
 
     private func persistChanges() {
-        do {
-            try context.save()
-            if let reference = monthInterval?.start {
-                try load(for: reference)
-            } else {
-                try load()
-            }
-            NotificationCenter.default.postTransactionDataUpdates()
-        } catch {
-            context.rollback()
-            self.error = .persistence("error.generic")
+        Task {
+            await context.saveWithCallbacks(
+                notification: .cashTransactionDataDidChange,
+                onSuccess: { [weak self] in
+                    guard let self else { return }
+                    if let reference = self.monthInterval?.start {
+                        try self.load(for: reference)
+                    } else {
+                        try self.load()
+                    }
+                },
+                onError: { [weak self] _ in
+                    self?.error = .persistence("error.generic")
+                }
+            )
         }
     }
 
@@ -231,25 +225,13 @@ final class TransactionsViewModel: ObservableObject {
         return true
     }
 
-    private func normalized(_ value: String?) -> String? {
-        guard let trimmed = value?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmed.isEmpty else {
-            return nil
-        }
-        return trimmed
-    }
-
     private func setupObservers() {
-        let observer = NotificationCenter.default.addObserver(
-            forName: .cashTransactionDataDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
+        transactionObserver.observe { [weak self] in
             guard let self else { return }
             Task { @MainActor in
                 try? self.load(for: self.monthInterval?.start ?? .now)
             }
         }
-        notificationObservers.append(observer)
     }
 }
 

@@ -12,7 +12,7 @@ final class DebtorDetailViewModel: ObservableObject {
     private let context: ModelContext
     private let calculator: FinanceCalculator
     private let notificationScheduler: NotificationScheduling?
-    private var notificationObservers: [Any] = []
+    private let observers = NotificationObservers()
     private var reminderSyncTask: Task<Void, Never>?
 
     init(debtor: Debtor, context: ModelContext, calculator: FinanceCalculator, notificationScheduler: NotificationScheduling?) {
@@ -23,46 +23,21 @@ final class DebtorDetailViewModel: ObservableObject {
         setupNotificationObservers()
     }
 
-    deinit {
-        notificationObservers.forEach { NotificationCenter.default.removeObserver($0) }
-    }
-
     private func setupNotificationObservers() {
-        // Observe payment data changes to reload agreements when payments are registered
-        let paymentObserver = NotificationCenter.default.addObserver(
-            forName: .paymentDataDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
+        let reloadHandler: () -> Void = { [weak self] in
             Task { @MainActor [weak self] in
                 try? self?.load()
             }
         }
-        notificationObservers.append(paymentObserver)
+
+        // Observe payment data changes to reload agreements when payments are registered
+        observers.observe(.paymentDataDidChange, handler: reloadHandler)
 
         // Observe agreement data changes to reload when agreements are modified
-        let agreementObserver = NotificationCenter.default.addObserver(
-            forName: .agreementDataDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                try? self?.load()
-            }
-        }
-        notificationObservers.append(agreementObserver)
+        observers.observe(.agreementDataDidChange, handler: reloadHandler)
 
         // Observe financial changes as a catch‑all to keep metrics fresh
-        let financialObserver = NotificationCenter.default.addObserver(
-            forName: .financialDataDidChange,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                try? self?.load()
-            }
-        }
-        notificationObservers.append(financialObserver)
+        observers.observe(.financialDataDidChange, handler: reloadHandler)
     }
 
     // MARK: - Computed Metrics
@@ -156,7 +131,7 @@ final class DebtorDetailViewModel: ObservableObject {
 
             let agreement = DebtAgreement(
                 debtor: debtor,
-                title: draft.title.isEmpty ? nil : draft.title,
+                title: draft.title.normalizedOrNil,
                 principal: draft.principal,
                 startDate: draft.startDate,
                 installmentCount: draft.installmentCount,
@@ -182,19 +157,31 @@ final class DebtorDetailViewModel: ObservableObject {
                 context.insert(installment)
                 createdInstallments.append(installment)
             }
-            try context.save()
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
-            if let scheduler = notificationScheduler {
-                for installment in createdInstallments {
-                    Task { await scheduler.syncReminders(for: installment) }
-                }
+
+            Task {
+                await context.saveWithCallbacks(
+                    notification: .agreementDataDidChange,
+                    onSuccess: { [weak self] in
+                        guard let self else { return }
+                        if let scheduler = self.notificationScheduler {
+                            for installment in createdInstallments {
+                                Task { await scheduler.syncReminders(for: installment) }
+                            }
+                        }
+                        try self.load()
+                    },
+                    onError: { [weak self] error in
+                        if let appError = error as? AppError {
+                            self?.error = appError
+                        } else {
+                            self?.error = .persistence("error.generic")
+                        }
+                    }
+                )
             }
-            try load()
         } catch let error as AppError {
-            context.rollback()
             self.error = error
         } catch {
-            context.rollback()
             self.error = .persistence("error.generic")
         }
     }
@@ -212,13 +199,16 @@ final class DebtorDetailViewModel: ObservableObject {
         installments.removeAll { $0.agreement.id == targetID }
         context.delete(agreement)
 
-        do {
-            try context.save()
-            try load()
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
-        } catch {
-            context.rollback()
-            self.error = .persistence("error.generic")
+        Task {
+            await context.saveWithCallbacks(
+                notification: .agreementDataDidChange,
+                onSuccess: { [weak self] in
+                    try self?.load()
+                },
+                onError: { [weak self] _ in
+                    self?.error = .persistence("error.generic")
+                }
+            )
         }
     }
 
@@ -235,15 +225,20 @@ final class DebtorDetailViewModel: ObservableObject {
         case .pending:
             installment.status = .pending
         }
-        do {
-            let closedChanged = agreement.updateClosedStatus()
-            try context.save()
-            syncReminders(for: agreement)
-            try load()
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
-        } catch {
-            context.rollback()
-            self.error = .persistence("error.generic")
+
+        let closedChanged = agreement.updateClosedStatus()
+        Task {
+            await context.saveWithCallbacks(
+                notification: closedChanged ? .agreementDataDidChange : .financialDataDidChange,
+                onSuccess: { [weak self] in
+                    guard let self else { return }
+                    self.syncReminders(for: agreement)
+                    try self.load()
+                },
+                onError: { [weak self] _ in
+                    self?.error = .persistence("error.generic")
+                }
+            )
         }
     }
 

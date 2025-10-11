@@ -31,8 +31,7 @@ final class DebtorsListViewModel: ObservableObject {
         totalCount = fullList.count
         archivedCount = fullList.filter(\.archived).count
 
-        let term = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !term.isEmpty {
+        if let term = searchText.normalizedOrNil {
             results = results.filter { debtor in
                 debtor.name.localizedCaseInsensitiveContains(term)
             }
@@ -42,8 +41,7 @@ final class DebtorsListViewModel: ObservableObject {
     }
 
     func addDebtor(name: String, phone: String?, note: String?) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
+        guard let trimmed = name.normalizedOrNil else {
             error = .validation("error.debtor.name")
             return
         }

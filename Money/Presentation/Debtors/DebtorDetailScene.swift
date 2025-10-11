@@ -125,28 +125,10 @@ struct DebtorDetailScene: View {
     }
 
     private var agreementsEmptyContent: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "doc.text.fill")
-                .font(.system(size: 44, weight: .semibold))
-                .foregroundStyle(Color.accentColor)
-
-            Text(String(localized: "debtor.agreements.empty"))
-                .font(.headline)
-
-            Text(String(localized: "debtor.agreements.empty.message"))
-                .font(.subheadline)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.secondary)
-        }
-        .padding(32)
-        .frame(maxWidth: .infinity)
-        .background(
-            GlassBackgroundStyle.current.material,
-            in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08))
+        AppEmptyState(
+            icon: "doc.text.fill",
+            title: "debtor.agreements.empty",
+            message: "debtor.agreements.empty.message"
         )
     }
 
@@ -268,7 +250,7 @@ private struct AgreementCard: View {
                                 Button(String(localized: "status.overdue")) { action(installment, .overdue) }
                             } label: {
                                 Label {
-                                    Text(statusLabel(for: installment.status))
+                                    Text(installment.status.localizedDescription)
                                 } icon: {
                                     Image(systemName: "ellipsis")
                                 }
@@ -280,7 +262,7 @@ private struct AgreementCard: View {
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .moneyCard(
-                        tint: tint(for: installment.status),
+                        tint: installment.status.tintColor(isClosed: overview.isClosed),
                         cornerRadius: 18,
                         shadow: .compact,
                         intensity: .subtle
@@ -305,22 +287,7 @@ private struct AgreementCard: View {
     }
 
     private var statusBadge: some View {
-        let closed = overview.isClosed
-        return Text(String(localized: closed ? "debtor.agreement.closed" : "debtor.agreement.open"))
-            .font(.caption).bold()
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background((closed ? Color.green : Color.blue).opacity(0.15), in: Capsule())
-            .foregroundStyle(closed ? Color.green : Color.blue)
-    }
-
-    private func statusLabel(for status: InstallmentStatus) -> LocalizedStringKey {
-        switch status {
-        case .pending: return "status.pending"
-        case .partial: return "status.partial"
-        case .paid: return "status.paid"
-        case .overdue: return "status.overdue"
-        }
+        overview.isClosed ? StatusBadge.closed() : StatusBadge.open()
     }
 
     private var collapsedOverview: some View {
@@ -352,16 +319,6 @@ private struct AgreementCard: View {
             Color.primary.opacity(0.04),
             in: RoundedRectangle(cornerRadius: 18, style: .continuous)
         )
-    }
-
-    private func tint(for status: InstallmentStatus) -> Color {
-        switch status {
-        case .paid: return .green
-        case .partial: return .yellow
-        case .overdue: return .orange
-        case .pending:
-            return overview.isClosed ? .green : .appThemeColor
-        }
     }
 }
 

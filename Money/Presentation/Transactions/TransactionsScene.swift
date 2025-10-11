@@ -8,28 +8,22 @@ struct TransactionsScene: View {
 
         var pickerTitleKey: String {
             switch self {
-            case .variableFlow:
-                return "transactions.mode.variable"
-            case .fixedExpenses:
-                return "transactions.mode.fixed"
+            case .variableFlow: return "transactions.mode.variable"
+            case .fixedExpenses: return "transactions.mode.fixed"
             }
         }
 
         var searchPromptKey: String {
             switch self {
-            case .variableFlow:
-                return "transactions.search"
-            case .fixedExpenses:
-                return "expenses.search"
+            case .variableFlow: return "transactions.search"
+            case .fixedExpenses: return "expenses.search"
             }
         }
 
         var addAccessibilityKey: String {
             switch self {
-            case .variableFlow:
-                return "transactions.add"
-            case .fixedExpenses:
-                return "expenses.add"
+            case .variableFlow: return "transactions.add"
+            case .fixedExpenses: return "expenses.add"
             }
         }
 
@@ -122,6 +116,8 @@ struct TransactionsScene: View {
         .appErrorAlert(errorBinding)
     }
 
+    // MARK: - View Sections
+
     private var modeSection: some View {
         Section {
             TransactionsHeader(
@@ -159,12 +155,12 @@ struct TransactionsScene: View {
     private var transactionsListSection: some View {
         Group {
             if transactionsViewModel.sections.isEmpty {
-                ContentUnavailableView(
-                    String(localized: "transactions.empty.title"),
-                    systemImage: "tray",
-                    description: Text(String(localized: "transactions.empty.description"))
+                AppEmptyState(
+                    icon: "tray",
+                    title: "transactions.empty.title",
+                    message: "transactions.empty.description",
+                    style: .minimal
                 )
-                .frame(maxWidth: .infinity, alignment: .center)
                 .listRowInsets(EdgeInsets(top: 40, leading: 16, bottom: 80, trailing: 16))
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
@@ -228,9 +224,12 @@ struct TransactionsScene: View {
     private var expensesListSection: some View {
         Section {
             if expensesViewModel.filteredExpenses.isEmpty {
-                ExpensesEmptyState(
-                    hasActiveFilters: expensesHasActiveFilters,
-                    onAdd: presentCreateExpenseForm
+                AppEmptyState(
+                    icon: expensesHasActiveFilters ? "line.3.horizontal.decrease.circle" : "creditcard",
+                    title: expensesHasActiveFilters ? "expenses.empty.filtered" : "expenses.empty",
+                    message: "expenses.empty.message",
+                    actionTitle: "expenses.add",
+                    action: presentCreateExpenseForm
                 )
                 .listRowInsets(EdgeInsets(top: 16, leading: 20, bottom: 40, trailing: 20))
                 .listRowSeparator(.hidden)
@@ -293,9 +292,11 @@ struct TransactionsScene: View {
         .textCase(nil)
     }
 
+    // MARK: - Helper Properties
+
     private var transactionsHasActiveFilters: Bool {
         transactionsViewModel.categoryFilter != nil ||
-        !transactionsViewModel.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        transactionsViewModel.searchText.isNotBlank ||
         transactionsViewModel.typeFilter != .all ||
         transactionsViewModel.sortOrder != .dateDescending
     }
@@ -306,6 +307,35 @@ struct TransactionsScene: View {
         expensesViewModel.statusFilter != .active ||
         expensesViewModel.sortOption != .dueDate
     }
+
+    private var searchBinding: Binding<String> {
+        Binding(
+            get: {
+                switch mode {
+                case .variableFlow: return transactionsViewModel.searchText
+                case .fixedExpenses: return expensesViewModel.searchText
+                }
+            },
+            set: { newValue in
+                switch mode {
+                case .variableFlow: transactionsViewModel.searchText = newValue
+                case .fixedExpenses: expensesViewModel.searchText = newValue
+                }
+            }
+        )
+    }
+
+    private var errorBinding: Binding<AppError?> {
+        Binding(
+            get: { expensesViewModel.error ?? transactionsViewModel.error },
+            set: { newValue in
+                expensesViewModel.error = newValue
+                transactionsViewModel.error = newValue
+            }
+        )
+    }
+
+    // MARK: - Actions
 
     private func toggleTransactionCategory(_ category: String) {
         if transactionsViewModel.categoryFilter?.localizedCaseInsensitiveCompare(category) == .orderedSame {
@@ -339,10 +369,8 @@ struct TransactionsScene: View {
 
     private func addAction() {
         switch mode {
-        case .variableFlow:
-            presentCreateTransactionForm()
-        case .fixedExpenses:
-            presentCreateExpenseForm()
+        case .variableFlow: presentCreateTransactionForm()
+        case .fixedExpenses: presentCreateExpenseForm()
         }
     }
 
@@ -435,38 +463,9 @@ struct TransactionsScene: View {
         try? transactionsViewModel.load(for: referenceDate)
         try? expensesViewModel.load(currentMonth: referenceDate)
     }
-
-    private var errorBinding: Binding<AppError?> {
-        Binding(
-            get: { expensesViewModel.error ?? transactionsViewModel.error },
-            set: { newValue in
-                expensesViewModel.error = newValue
-                transactionsViewModel.error = newValue
-            }
-        )
-    }
-
-    private var searchBinding: Binding<String> {
-        Binding(
-            get: {
-                switch mode {
-                case .variableFlow:
-                    return transactionsViewModel.searchText
-                case .fixedExpenses:
-                    return expensesViewModel.searchText
-                }
-            },
-            set: { newValue in
-                switch mode {
-                case .variableFlow:
-                    transactionsViewModel.searchText = newValue
-                case .fixedExpenses:
-                    expensesViewModel.searchText = newValue
-                }
-            }
-        )
-    }
 }
+
+// MARK: - Header Component
 
 private struct TransactionsHeader: View {
     @Binding var mode: TransactionsScene.Mode
@@ -499,958 +498,5 @@ private struct TransactionsHeader: View {
             }
         }
         .padding(.horizontal, 4)
-    }
-}
-
-private struct VariableHeroCard: View {
-    let metrics: TransactionsViewModel.TransactionsMetrics
-    let formatter: CurrencyFormatter
-
-    private var tint: Color { metrics.netBalance >= .zero ? .appThemeColor : .red }
-    private var icon: String { metrics.netBalance >= .zero ? "arrow.up.right" : "arrow.down.left" }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HeroHeader(
-                tint: tint,
-                icon: icon,
-                title: "transactions.metric.balance",
-                subtitle: "transactions.metric.balance.caption"
-            )
-
-            Text(formatter.string(from: metrics.netBalance))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-
-            Divider()
-                .background(Color.primary.opacity(0.06))
-
-            HStack(alignment: .top, spacing: 24) {
-                InlineMetric(
-                    title: "transactions.metric.expenses",
-                    value: formatter.string(from: metrics.totalExpenses),
-                    icon: "arrow.up.circle",
-                    tint: .pink
-                )
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                InlineMetric(
-                    title: "transactions.metric.income",
-                    value: formatter.string(from: metrics.totalIncome),
-                    icon: "arrow.down.circle",
-                    tint: .appThemeColor
-                )
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: tint,
-            cornerRadius: 28,
-            shadow: .standard,
-            intensity: .prominent
-        )
-        .compositingGroup()
-    }
-
-}
-
-private struct FixedExpensesHeroCard: View {
-    let metrics: ExpensesViewModel.ExpensesMetrics
-    let formatter: CurrencyFormatter
-    let coverageText: String?
-    let coverageValue: Double?
-
-    private var progressValue: Double? {
-        guard let value = coverageValue else { return nil }
-        return min(max(value, 0), 1)
-    }
-
-    private var remainingTint: Color {
-        guard let remaining = metrics.remaining else { return .gray }
-        if remaining > 0 { return .appThemeColor }
-        if remaining < 0 { return .red }
-        return .gray
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HeroHeader(
-                tint: .pink,
-                icon: "creditcard",
-                title: "expenses.metric.total",
-                subtitle: "expenses.metric.total.caption"
-            )
-
-            Text(formatter.string(from: metrics.totalExpenses))
-                .font(.system(size: 34, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-
-            if let progressValue, let coverageText {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text("expenses.metric.coverage")
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(coverageText)
-                            .font(.footnote.weight(.semibold))
-                            .foregroundStyle(.primary)
-                    }
-                    ProgressView(value: progressValue)
-                        .tint(Color.pink)
-                        .progressViewStyle(LinearProgressViewStyle())
-                }
-            }
-
-            if let remaining = metrics.remaining {
-                HStack(alignment: .top, spacing: 24) {
-                    InlineMetric(
-                        title: "transactions.fixed.balance",
-                        value: formatter.string(from: remaining),
-                        icon: remaining >= 0 ? "arrowtriangle.up.circle" : "arrowtriangle.down.circle",
-                        tint: remainingTint
-                    )
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: .pink,
-            cornerRadius: 28,
-            shadow: .standard,
-            intensity: .prominent
-        )
-        .compositingGroup()
-    }
-
-}
-
-private struct InlineMetric: View {
-    let title: LocalizedStringKey
-    let value: String
-    let icon: String
-    let tint: Color
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label {
-                Text(title)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(tint)
-            } icon: {
-                Image(systemName: icon)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(tint)
-            }
-            Text(value)
-                .font(.headline.weight(.semibold))
-                .foregroundStyle(.primary)
-        }
-    }
-}
-
-private struct HeroHeader: View {
-    let tint: Color
-    let icon: String
-    let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
-
-    var body: some View {
-        HStack(alignment: .top, spacing: 14) {
-            ZStack {
-                Circle()
-                    .fill(tint.opacity(0.18))
-                    .frame(width: 40, height: 40)
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(tint)
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(tint)
-                Text(subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-}
-
-private struct TransactionRow: View {
-    let transaction: CashTransaction
-    let formatter: CurrencyFormatter
-
-    private var amountText: String {
-        formatter.string(from: transaction.amount)
-    }
-
-    private var amountColor: Color {
-        transaction.type == .income ? .green : .red
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(transaction.category ?? String(localized: transaction.type.titleKey))
-                        .font(.headline)
-                    if let note = transaction.note, !note.isEmpty {
-                        Text(note)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-                }
-                Spacer()
-                Text(amountText)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(amountColor)
-            }
-
-            HStack(spacing: 12) {
-                Label(transaction.type == .income ? String(localized: "transactions.type.income") : String(localized: "transactions.type.expense"), systemImage: transaction.type == .income ? "arrow.down.circle" : "arrow.up.circle")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(amountColor.opacity(0.8))
-
-                Label {
-                    Text(transaction.date, style: .time)
-                } icon: {
-                    Image(systemName: "clock")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: amountColor,
-            cornerRadius: 22,
-            shadow: .compact,
-            intensity: .subtle
-        )
-        .compositingGroup()
-    }
-}
-
-private struct TransactionsSummaryCard: View {
-    @Binding var typeFilter: TransactionsViewModel.TypeFilter
-    @Binding var sortOrder: TransactionsViewModel.SortOrder
-    @Binding var categoryFilter: String?
-    let categories: [String]
-    let hasActiveFilters: Bool
-    let clearFilters: () -> Void
-    let toggleCategory: (String) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            Picker("transactions.filter.type", selection: $typeFilter) {
-                Text(String(localized: "transactions.filter.all")).tag(TransactionsViewModel.TypeFilter.all)
-                Text(String(localized: "transactions.filter.expense")).tag(TransactionsViewModel.TypeFilter.expenses)
-                Text(String(localized: "transactions.filter.income")).tag(TransactionsViewModel.TypeFilter.income)
-            }
-            .pickerStyle(.segmented)
-
-            HStack {
-                Menu {
-                    Picker("transactions.sort.title", selection: $sortOrder) {
-                        ForEach(TransactionsViewModel.SortOrder.allCases, id: \.self) { option in
-                            Label(option.localizedTitle, systemImage: option.systemImage).tag(option)
-                        }
-                    }
-                } label: {
-                    Label(sortOrder.localizedTitle, systemImage: "arrow.up.arrow.down.circle")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Color.accentColor.opacity(0.15), in: Capsule())
-                }
-
-                Spacer()
-
-                if hasActiveFilters {
-                    Button(String(localized: "common.clear.filters"), action: clearFilters)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            if !categories.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(categories, id: \.self) { category in
-                            FilterChip(
-                                title: category,
-                                isSelected: categoryFilter?.localizedCaseInsensitiveCompare(category) == .orderedSame,
-                                action: { toggleCategory(category) }
-                            )
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: .appThemeColor,
-            cornerRadius: 26,
-            shadow: .compact,
-            intensity: .subtle
-        )
-        .compositingGroup()
-    }
-}
-
-private struct FilterChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(.footnote.weight(.semibold))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.accentColor.opacity(0.2) : Color(.secondarySystemBackground), in: Capsule())
-                .overlay(
-                    Capsule()
-                        .strokeBorder(Color.accentColor.opacity(isSelected ? 0.6 : 0.25), lineWidth: 1)
-                )
-        }
-        .buttonStyle(.plain)
-        .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-    }
-}
-
-private enum TransactionFormMode {
-    case create
-    case edit(CashTransaction)
-
-    var titleKey: LocalizedStringKey {
-        switch self {
-        case .create:
-            return "transactions.form.title"
-        case .edit:
-            return "transactions.form.edit"
-        }
-    }
-}
-
-private struct TransactionForm: View {
-    @Binding var draft: TransactionDraft
-    let mode: TransactionFormMode
-    let categories: [String]
-    let completion: (ResultAction) -> Void
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(String(localized: "transactions.form.section.basic")) {
-                    DatePicker(String(localized: "transactions.form.date"), selection: $draft.date, displayedComponents: [.date, .hourAndMinute])
-                    Picker(String(localized: "transactions.form.type"), selection: $draft.type) {
-                        ForEach(CashTransactionType.allCases, id: \.self) { type in
-                            Text(String(localized: type.titleKey)).tag(type)
-                        }
-                    }
-                    CurrencyField("transactions.form.amount", value: $draft.amount)
-                }
-
-                Section(String(localized: "transactions.form.details")) {
-                    TextField(String(localized: "transactions.form.category"), text: $draft.category)
-                    if !categories.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack {
-                                ForEach(categories, id: \.self) { category in
-                                    FilterChip(
-                                        title: category,
-                                        isSelected: draft.category.localizedCaseInsensitiveCompare(category) == .orderedSame,
-                                        action: { draft.category = category }
-                                    )
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                        .listRowInsets(EdgeInsets())
-                    }
-                    TextField(String(localized: "transactions.form.note"), text: $draft.note, axis: .vertical)
-                        .lineLimit(3, reservesSpace: true)
-                }
-            }
-            .navigationTitle(mode.titleKey)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel")) {
-                        completion(.cancel)
-                        dismiss()
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save")) {
-                        completion(.save(draft))
-                        dismiss()
-                    }
-                    .disabled(!draft.isValid)
-                }
-            }
-        }
-    }
-
-    enum ResultAction {
-        case save(TransactionDraft)
-        case cancel
-    }
-}
-
-private struct TransactionDraft: Equatable {
-    var date: Date = .now
-    var amount: Decimal = .zero
-    var type: CashTransactionType = .expense
-    var category: String = ""
-    var note: String = ""
-
-    init() {}
-
-    init(transaction: CashTransaction) {
-        date = transaction.date
-        amount = transaction.amount
-        type = transaction.type
-        category = transaction.category ?? ""
-        note = transaction.note ?? ""
-    }
-
-    var isValid: Bool { amount > 0 }
-}
-
-private enum ExpenseFormMode {
-    case create
-    case edit(FixedExpense)
-
-    var navigationTitle: LocalizedStringKey {
-        switch self {
-        case .create:
-            return "expenses.form.title"
-        case .edit:
-            return "expenses.form.edit.title"
-        }
-    }
-}
-
-private struct ExpenseDetailContext: Identifiable {
-    let expense: FixedExpense
-    var id: UUID { expense.id }
-}
-
-private struct ExpensesSummaryCard: View {
-    @Binding var searchText: String
-    @Binding var statusFilter: ExpensesViewModel.StatusFilter
-    @Binding var selectedCategory: String?
-    @Binding var sortOption: ExpensesViewModel.SortOption
-    let categories: [String]
-    var onToggleCategory: (String) -> Void
-    var onClearFilters: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            SearchField(text: $searchText)
-            filterControls
-        }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: .pink,
-            cornerRadius: 26,
-            shadow: .compact,
-            intensity: .subtle
-        )
-    }
-
-    private var filterControls: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Picker("expenses.filter.status", selection: $statusFilter) {
-                Text(String(localized: "expenses.filter.active")).tag(ExpensesViewModel.StatusFilter.active)
-                Text(String(localized: "expenses.filter.all")).tag(ExpensesViewModel.StatusFilter.all)
-                Text(String(localized: "expenses.filter.archived")).tag(ExpensesViewModel.StatusFilter.archived)
-            }
-            .pickerStyle(.segmented)
-
-            HStack {
-                Menu {
-                    Picker("expenses.filter.sort", selection: $sortOption) {
-                        ForEach(ExpensesViewModel.SortOption.allCases, id: \.self) { option in
-                            Label(option.localizedTitle, systemImage: option.systemImage)
-                                .tag(option)
-                        }
-                    }
-                } label: {
-                    Label(sortOption.localizedTitle, systemImage: "arrow.up.arrow.down")
-                        .font(.subheadline.weight(.semibold))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Color.accentColor.opacity(0.15), in: Capsule())
-                }
-
-                Spacer()
-
-                if hasActiveFilters {
-                    Button(String(localized: "common.clear.filters"), action: onClearFilters)
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .accessibilityLabel(String(localized: "common.clear.filters"))
-                }
-            }
-
-            if categories.isEmpty {
-                EmptyView()
-            } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 10) {
-                        ForEach(categories, id: \.self) { category in
-                            CategoryChip(
-                                text: category,
-                                isSelected: selectedCategory?.localizedCaseInsensitiveCompare(category) == .orderedSame,
-                                action: { onToggleCategory(category) }
-                            )
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-            }
-        }
-    }
-
-    private var hasActiveFilters: Bool {
-        !searchText.isEmpty || selectedCategory != nil || statusFilter != .active || sortOption != .dueDate
-    }
-}
-
-private struct ExpenseCard: View {
-    let expense: FixedExpense
-    let formatter: CurrencyFormatter
-    let dueDate: Date?
-    let isOverdue: Bool
-
-    private var categoryText: String? {
-        expense.category?.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var cardTint: Color {
-        if !expense.active { return .gray }
-        if isOverdue { return .orange }
-        return .appThemeColor
-    }
-
-    private var cardIntensity: MoneyCardIntensity {
-        isOverdue ? .standard : .subtle
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(expense.name)
-                        .font(.headline.weight(.semibold))
-                    if let note = expense.note, !note.isEmpty {
-                        Text(note)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                    }
-                }
-                Spacer()
-                Text(formatter.string(from: expense.amount))
-                    .font(.title3.bold())
-            }
-
-            HStack(spacing: 12) {
-                if let dueDate {
-                    Label {
-                        Text(dueDate, format: .dateTime.day(.twoDigits).month(.abbreviated))
-                    } icon: {
-                        Image(systemName: "calendar")
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                } else {
-                    Label(localizedFormat("expenses.due", expense.dueDay), systemImage: "calendar")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                if let categoryText {
-                    StatusChip(
-                        text: categoryText,
-                        systemImage: "tag",
-                        tint: .cyan
-                    )
-                }
-
-                if !expense.active {
-                    StatusChip(text: String(localized: "expenses.status.archived"), systemImage: "archivebox", tint: .orange)
-                } else if isOverdue {
-                    StatusChip(text: String(localized: "expenses.status.overdue"), systemImage: "exclamationmark.triangle.fill", tint: .red)
-                }
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 18)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: cardTint,
-            cornerRadius: 26,
-            shadow: .compact,
-            intensity: cardIntensity
-        )
-    }
-
-}
-
-private struct StatusChip: View {
-    let text: String
-    let systemImage: String
-    let tint: Color
-    @Environment(\.colorScheme) private var colorScheme
-
-    var body: some View {
-        Label(text, systemImage: systemImage)
-            .font(.footnote.weight(.semibold))
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(
-                Capsule(style: .continuous)
-                    .fill(tint.opacity(colorScheme == .dark ? 0.18 : 0.12))
-            )
-            .foregroundStyle(foregroundColor)
-    }
-
-    private var foregroundColor: Color {
-        colorScheme == .dark
-            ? Color.white.opacity(0.9)
-            : tint
-    }
-}
-
-private struct CategoryChip: View {
-    let text: String
-    let isSelected: Bool
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(text)
-                .font(.footnote.weight(.semibold))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(
-                    Capsule(style: .continuous)
-                        .fill(isSelected ? Color.accentColor.opacity(0.2) : Color.primary.opacity(0.08))
-                )
-                .foregroundStyle(isSelected ? Color.accentColor : .primary)
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-private struct ExpensesEmptyState: View {
-    var hasActiveFilters: Bool
-    var onAdd: () -> Void
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: hasActiveFilters ? "line.3.horizontal.decrease.circle" : "creditcard" )
-                .font(.system(size: 44, weight: .semibold))
-                .foregroundStyle(Color.accentColor)
-
-            Text(hasActiveFilters ? String(localized: "expenses.empty.filtered") : String(localized: "expenses.empty"))
-                .font(.headline)
-                .multilineTextAlignment(.center)
-
-            Text(String(localized: "expenses.empty.message"))
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-
-            Button(action: onAdd) {
-                Text(String(localized: "expenses.add"))
-                    .fontWeight(.semibold)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
-                    .background(
-                        Capsule(style: .continuous)
-                            .fill(Color.accentColor)
-                    )
-                    .foregroundStyle(Color.white)
-            }
-        }
-        .padding(32)
-        .frame(maxWidth: .infinity, alignment: .center)
-        .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-    }
-}
-
-private struct ExpenseDraft: Equatable {
-    var name: String = ""
-    var amount: Decimal = .zero
-    var category: String = ""
-    var dueDay: Int = 5
-    var note: String = ""
-
-    init() {}
-
-    init(expense: FixedExpense) {
-        name = expense.name
-        amount = expense.amount
-        category = expense.category ?? ""
-        dueDay = expense.dueDay
-        note = expense.note ?? ""
-    }
-
-    var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && amount > 0 && (1...31).contains(dueDay)
-    }
-}
-
-private struct ExpenseForm: View {
-    @Binding var draft: ExpenseDraft
-    let mode: ExpenseFormMode
-    let suggestedCategories: [String]
-    var completion: (ResultAction) -> Void
-    @FocusState private var focusedField: Field?
-
-    private enum Field {
-        case name
-        case amount
-        case category
-        case note
-    }
-
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section(String(localized: "expenses.form.details")) {
-                    TextField(String(localized: "expenses.form.name"), text: $draft.name)
-                        .focused($focusedField, equals: .name)
-                    CurrencyField("expenses.form.amount", value: $draft.amount)
-                        .focused($focusedField, equals: .amount)
-                    Stepper(value: $draft.dueDay, in: 1...31) {
-                        Text(localizedFormat("expenses.form.dueDay", draft.dueDay))
-                    }
-                }
-
-                Section(String(localized: "expenses.form.category")) {
-                    TextField(String(localized: "expenses.form.category.placeholder"), text: $draft.category)
-                        .focused($focusedField, equals: .category)
-                    if !suggestedCategories.isEmpty {
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 10) {
-                                ForEach(suggestedCategories, id: \.self) { category in
-                                    CategoryChip(
-                                        text: category,
-                                        isSelected: draft.category.localizedCaseInsensitiveCompare(category) == .orderedSame
-                                    ) {
-                                        draft.category = category
-                                    }
-                                }
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                }
-
-                Section(String(localized: "expenses.form.note")) {
-                    TextField(String(localized: "expenses.form.note.placeholder"), text: $draft.note, axis: .vertical)
-                        .focused($focusedField, equals: .note)
-                        .lineLimit(3, reservesSpace: true)
-                }
-            }
-            .navigationTitle(mode.navigationTitle)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel")) { completion(.cancel) }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save")) { completion(.save(draft)) }
-                        .disabled(!draft.isValid)
-                }
-            }
-        }
-    }
-
-    enum ResultAction {
-        case save(ExpenseDraft)
-        case cancel
-    }
-}
-
-private struct SearchField: View {
-    @Binding var text: String
-    @FocusState private var isFocused: Bool
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
-
-            TextField(String(localized: "expenses.search"), text: $text)
-                .textInputAutocapitalization(.never)
-                .disableAutocorrection(true)
-                .focused($isFocused)
-
-            if !text.isEmpty {
-                Button {
-                    text = ""
-                    isFocused = false
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(Color.secondary)
-                        .accessibilityLabel(String(localized: "expenses.search.clear"))
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-    }
-}
-
-private struct ExpenseDetailView: View {
-    let expense: FixedExpense
-    let formatter: CurrencyFormatter
-    let dueDate: Date?
-    let isOverdue: Bool
-    var onEdit: () -> Void
-    var onDuplicate: () -> Void
-    var onArchiveToggle: () -> Void
-    var onDelete: () -> Void
-
-    var body: some View {
-        VStack(spacing: 20) {
-            Capsule()
-                .fill(Color.secondary.opacity(0.4))
-                .frame(width: 42, height: 5)
-                .padding(.top, 8)
-
-            VStack(spacing: 12) {
-                Text(expense.name)
-                    .font(.title3.bold())
-                Text(formatter.string(from: expense.amount))
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.primary)
-            }
-
-            VStack(alignment: .leading, spacing: 12) {
-                if let dueDate {
-                    DetailRow(icon: "calendar", title: dueDate.formatted(date: .abbreviated, time: .omitted))
-                } else {
-                    DetailRow(icon: "calendar", title: localizedFormat("expenses.due", expense.dueDay))
-                }
-
-                if let category = expense.category, !category.isEmpty {
-                    DetailRow(icon: "tag", title: category)
-                }
-
-                if let note = expense.note, !note.isEmpty {
-                    DetailRow(icon: "note.text", title: note)
-                }
-
-                if !expense.active {
-                    DetailRow(icon: "archivebox", title: String(localized: "expenses.status.archived"))
-                } else if isOverdue {
-                    DetailRow(icon: "exclamationmark.triangle", title: String(localized: "expenses.status.overdue"))
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            VStack(spacing: 12) {
-                Button(action: onEdit) {
-                    Label(String(localized: "common.edit"), systemImage: "pencil")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.borderedProminent)
-
-                Button(action: onDuplicate) {
-                    Label(String(localized: "expenses.duplicate"), systemImage: "doc.on.doc")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-
-                Button(action: onArchiveToggle) {
-                    Label(expense.active ? String(localized: "expenses.archive") : String(localized: "expenses.unarchive"), systemImage: expense.active ? "archivebox" : "tray.and.arrow.up")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-                .tint(.orange)
-
-                Button(role: .destructive, action: onDelete) {
-                    Label(String(localized: "common.remove"), systemImage: "trash")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.bordered)
-            }
-        }
-        .padding(24)
-        .presentationDragIndicator(.hidden)
-    }
-}
-
-private struct DetailRow: View {
-    let icon: String
-    let title: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(width: 20)
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.primary)
-            Spacer()
-        }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 14)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-    }
-}
-
-private extension ExpensesViewModel.SortOption {
-    var localizedTitle: String {
-        switch self {
-        case .dueDate:
-            return String(localized: "expenses.sort.dueDate")
-        case .amountDescending:
-            return String(localized: "expenses.sort.amount")
-        case .name:
-            return String(localized: "expenses.sort.name")
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .dueDate:
-            return "calendar"
-        case .amountDescending:
-            return "arrow.down.circle"
-        case .name:
-            return "textformat"
-        }
     }
 }

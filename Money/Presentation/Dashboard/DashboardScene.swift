@@ -77,7 +77,12 @@ struct DashboardScene: View {
                 .font(.headline)
                 .foregroundStyle(.secondary)
             if viewModel.upcoming.isEmpty {
-                ContentUnavailableView(String(localized: "dashboard.upcoming.empty"), systemImage: "calendar.badge.clock")
+                AppEmptyState(
+                    icon: "calendar.badge.clock",
+                    title: "dashboard.upcoming.empty",
+                    message: "dashboard.upcoming.empty.message",
+                    style: .minimal
+                )
             } else {
                 ForEach(viewModel.upcoming) { installment in
                     installmentRow(installment)
@@ -87,23 +92,7 @@ struct DashboardScene: View {
     }
 
     private func installmentRow(_ installment: InstallmentOverview) -> some View {
-        let tint: Color
-        let intensity: MoneyCardIntensity
-        if installment.status == .paid {
-            tint = .green
-            intensity = .subtle
-        } else if installment.isOverdue {
-            tint = .orange
-            intensity = .standard
-        } else if installment.status == .partial {
-            tint = .yellow
-            intensity = .standard
-        } else {
-            tint = .cyan
-            intensity = .subtle
-        }
-
-        return VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(installment.displayTitle)
                     .font(.headline)
@@ -120,35 +109,18 @@ struct DashboardScene: View {
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                if installment.status == .paid {
-                    statusTag("status.paid", color: .green)
-                } else if installment.isOverdue {
-                    statusTag("status.overdue", color: .orange)
-                } else if installment.status == .partial {
-                    statusTag("status.partial", color: .yellow)
-                } else {
-                    statusTag("status.pending", color: .cyan)
-                }
+                installment.status.badge()
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .moneyCard(
-            tint: tint,
+            tint: installment.status.tintColor,
             cornerRadius: 22,
             shadow: .compact,
-            intensity: intensity
+            intensity: installment.status.cardIntensity(isOverdue: installment.isOverdue)
         )
         .accessibilityElement(children: .combine)
-    }
-
-    private func statusTag(_ title: LocalizedStringKey, color: Color) -> some View {
-        Text(title)
-            .font(.caption).bold()
-            .padding(.horizontal, 10)
-            .padding(.vertical, 4)
-            .background(color.opacity(0.2), in: Capsule())
-            .foregroundStyle(color)
     }
 
     private func load() async throws {
