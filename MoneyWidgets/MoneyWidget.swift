@@ -1,87 +1,134 @@
 import WidgetKit
 import SwiftUI
 
-struct WidgetSummary {
-    var salary: Decimal
-    var received: Decimal
-    var overdue: Decimal
-    var fixedExpenses: Decimal
-    var planned: Decimal
-    var variableExpenses: Decimal
-    var variableIncome: Decimal
-    var remainingToReceive: Decimal
-    var availableToSpend: Decimal
-
-    init(
-        salary: Decimal,
-        received: Decimal,
-        overdue: Decimal,
-        fixedExpenses: Decimal,
-        planned: Decimal,
-        variableExpenses: Decimal = .zero,
-        variableIncome: Decimal = .zero
-    ) {
-        self.salary = salary
-        self.received = received
-        self.overdue = overdue
-        self.fixedExpenses = fixedExpenses
-        self.planned = planned
-        self.variableExpenses = variableExpenses
-        self.variableIncome = variableIncome
-        self.remainingToReceive = planned + overdue
-        self.availableToSpend = salary + received + planned + variableIncome - (fixedExpenses + overdue + variableExpenses)
-    }
-
-    static let empty = WidgetSummary(salary: .zero, received: .zero, overdue: .zero, fixedExpenses: .zero, planned: .zero)
-}
+// MARK: - Timeline Entry
 
 struct MoneyWidgetEntry: TimelineEntry {
     let date: Date
     let summary: WidgetSummary
+    let installments: [WidgetInstallment]
+
+    static let placeholder = MoneyWidgetEntry(
+        date: Date(),
+        summary: .empty,
+        installments: []
+    )
+
+    static let sample = MoneyWidgetEntry(
+        date: Date(),
+        summary: WidgetSummary(
+            salary: 4200,
+            received: 320,
+            overdue: 450,
+            fixedExpenses: 820,
+            planned: 1500,
+            variableExpenses: 200,
+            variableIncome: 150
+        ),
+        installments: [
+            WidgetInstallment(
+                id: UUID(),
+                agreementID: UUID(),
+                debtorName: "João Silva",
+                agreementTitle: "Empréstimo Pessoal",
+                dueDate: Calendar.current.date(byAdding: .day, value: 2, to: .now)!,
+                amount: 350.00,
+                statusRaw: InstallmentStatus.pending.rawValue,
+                isOverdue: false
+            ),
+            WidgetInstallment(
+                id: UUID(),
+                agreementID: UUID(),
+                debtorName: "Maria Santos",
+                agreementTitle: nil,
+                dueDate: Calendar.current.date(byAdding: .day, value: -3, to: .now)!,
+                amount: 150.00,
+                statusRaw: InstallmentStatus.overdue.rawValue,
+                isOverdue: true
+            )
+        ]
+    )
 }
+
+// MARK: - Timeline Provider
 
 struct MoneyWidgetProvider: TimelineProvider {
     func placeholder(in context: Context) -> MoneyWidgetEntry {
-        MoneyWidgetEntry(date: Date(), summary: .empty)
+        .placeholder
     }
 
     func getSnapshot(in context: Context, completion: @escaping (MoneyWidgetEntry) -> Void) {
-        completion(MoneyWidgetEntry(date: Date(), summary: sampleSummary))
+        if context.isPreview {
+            completion(.sample)
+        } else {
+            Task {
+                let entry = await fetchEntry()
+                completion(entry)
+            }
+        }
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<MoneyWidgetEntry>) -> Void) {
-        let entry = MoneyWidgetEntry(date: Date(), summary: sampleSummary)
-        let next = Date().addingTimeInterval(60 * 60)
-        completion(Timeline(entries: [entry], policy: .after(next)))
+        Task {
+            let entry = await fetchEntry()
+            let nextUpdate = Calendar.current.startOfDay(for: Date().addingTimeInterval(86400))
+            let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+            completion(timeline)
+        }
     }
 
-    private var sampleSummary: WidgetSummary {
-        WidgetSummary(salary: 4200, received: 320, overdue: 450, fixedExpenses: 820, planned: 1500, variableExpenses: 200, variableIncome: 150)
+    private func fetchEntry() async -> MoneyWidgetEntry {
+        do {
+            let provider = try WidgetDataProvider.shared()
+            let summary = try await provider.fetchWidgetSummary()
+            let installments = try await provider.fetchUpcomingInstallments(limit: WidgetConstants.maxInstallmentsToDisplay)
+            return MoneyWidgetEntry(
+                date: Date(),
+                summary: summary,
+                installments: installments
+            )
+        } catch {
+            // Log structured error for debugging - avoid exposing to user
+            print("⚠️ Widget data fetch failed: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("  Domain: \(nsError.domain), Code: \(nsError.code)")
+            }
+            return MoneyWidgetEntry(
+                date: Date(),
+                summary: .empty,
+                installments: []
+            )
+        }
     }
 }
 
+// MARK: - Widget Entry View
+
 struct MoneyWidgetEntryView: View {
+    @Environment(\.widgetFamily) var family
     var entry: MoneyWidgetProvider.Entry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Money")
-                .font(.headline)
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Saldo: \(entry.summary.availableToSpend, format: .currency(code: \"BRL\"))")
-                    .font(.caption)
-                Text("Previsto: \(entry.summary.planned, format: .currency(code: \"BRL\"))")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .padding()
-        .containerBackground(for: .widget) {
-            Color(.black.opacity(0.08))
+        switch family {
+        case .systemSmall:
+            SmallWidgetView(summary: entry.summary)
+        case .systemMedium:
+            MediumWidgetView(
+                summary: entry.summary,
+                nextInstallment: entry.installments.first
+            )
+        case .systemLarge:
+            LargeWidgetView(
+                summary: entry.summary,
+                installments: entry.installments
+            )
+        default:
+            SmallWidgetView(summary: entry.summary)
         }
     }
 }
+
+// MARK: - Widget Configuration
 
 @main
 struct MoneyWidget: Widget {
@@ -91,14 +138,31 @@ struct MoneyWidget: Widget {
         StaticConfiguration(kind: kind, provider: MoneyWidgetProvider()) { entry in
             MoneyWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Resumo do Money")
-        .description("Veja rapidamente o saldo mensal e os próximos recebimentos.")
-        .supportedFamilies([.systemSmall, .systemMedium])
+        .configurationDisplayName(String(localized: "widget.title"))
+        .description(String(localized: "widget.description"))
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
     }
 }
 
-#Preview(as: .systemSmall) {
+// MARK: - Previews
+
+#Preview("Small", as: .systemSmall) {
     MoneyWidget()
 } timeline: {
-    MoneyWidgetEntry(date: Date(), summary: .empty)
+    MoneyWidgetEntry.placeholder
+    MoneyWidgetEntry.sample
+}
+
+#Preview("Medium", as: .systemMedium) {
+    MoneyWidget()
+} timeline: {
+    MoneyWidgetEntry.placeholder
+    MoneyWidgetEntry.sample
+}
+
+#Preview("Large", as: .systemLarge) {
+    MoneyWidget()
+} timeline: {
+    MoneyWidgetEntry.placeholder
+    MoneyWidgetEntry.sample
 }

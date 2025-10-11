@@ -17,7 +17,7 @@ final class AppEnvironment {
         featureFlags: FeatureFlags? = nil,
         featureFlagsStore: FeatureFlagsStoring? = nil,
         notificationScheduler: NotificationScheduling? = nil,
-        configuration: ModelConfiguration? = nil
+        isStoredInMemoryOnly: Bool = false
     ) {
         let store = featureFlagsStore ?? FeatureFlagsStore()
         self.featureFlagsStore = store
@@ -29,19 +29,10 @@ final class AppEnvironment {
             resolvedFeatureFlags = store.load()
         }
         self.featureFlags = resolvedFeatureFlags
-        let schema = Schema([
-            Debtor.self,
-            DebtAgreement.self,
-            Installment.self,
-            Payment.self,
-            CashTransaction.self,
-            FixedExpense.self,
-            SalarySnapshot.self,
-            DebtorCreditProfile.self
-        ])
-        let modelConfiguration = configuration ?? ModelConfiguration(isStoredInMemoryOnly: false)
+
+        // Use SharedContainer for app group support (widget data sharing)
         do {
-            container = try ModelContainer(for: schema, configurations: modelConfiguration)
+            container = try SharedContainer.createModelContainer(isStoredInMemoryOnly: isStoredInMemoryOnly)
         } catch {
             fatalError("Não foi possível configurar SwiftData: \(error)")
         }

@@ -345,3 +345,19 @@
 "credit.score.accessibility" = "Score de crédito: %lld. Nível de risco: %@";
 "credit.recommendation.profit.title" = "Lucratividade Alta";
 "credit.recommendation.profit.message" = "ROI excelente de %@";
+
+// MARK: - Widget Strings
+"widget.title" = "Resumo Financeiro";
+"widget.description" = "Acompanhe seu saldo disponível e próximos recebimentos";
+"widget.balance.available" = "Saldo disponível";
+"widget.balance.to.receive" = "A receber";
+"widget.balance.received" = "Recebido";
+"widget.balance.overdue" = "Em atraso";
+"widget.balance.planned" = "Previsto";
+"widget.next.installment" = "Próximo vencimento";
+"widget.upcoming.title" = "Próximos vencimentos";
+"widget.upcoming.next" = "Próximo";
+"widget.overdue.badge" = "Em atraso";
+"widget.no.data" = "Configure o app para ver seus dados";
+"widget.empty" = "Sem parcelas nos próximos dias";
+"widget.empty.message" = "Sem cobranças nos próximos 14 dias";

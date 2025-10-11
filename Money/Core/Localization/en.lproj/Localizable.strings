@@ -334,3 +334,19 @@
 "credit.score.accessibility" = "Credit score: %lld. Risk level: %@";
 "credit.recommendation.profit.title" = "High Profitability";
 "credit.recommendation.profit.message" = "Excellent ROI of %@";
+
+// MARK: - Widget Strings
+"widget.title" = "Financial Summary";
+"widget.description" = "Track your available balance and upcoming receivables";
+"widget.balance.available" = "Available balance";
+"widget.balance.to.receive" = "To receive";
+"widget.balance.received" = "Received";
+"widget.balance.overdue" = "Overdue";
+"widget.balance.planned" = "Planned";
+"widget.next.installment" = "Next due";
+"widget.upcoming.title" = "Upcoming installments";
+"widget.upcoming.next" = "Next";
+"widget.overdue.badge" = "Overdue";
+"widget.no.data" = "Set up the app to see your data";
+"widget.empty" = "No installments in coming days";
+"widget.empty.message" = "No payments due in the next 14 days";

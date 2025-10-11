@@ -240,7 +240,7 @@ enum CashTransactionType: String, Codable, CaseIterable, Sendable {
 
 // MARK: - FixedExpense Extensions
 
-extension FixedExpense: Categorizable {
+extension FixedExpense {
     /// Returns the next calendar date matching the stored `dueDay`, rolling over to the following month when needed.
     func nextDueDate(reference: Date = .now, calendar: Calendar = .current) -> Date? {
         var components = calendar.dateComponents([.year, .month], from: reference)
@@ -260,7 +260,7 @@ extension FixedExpense: Categorizable {
 
 // MARK: - CashTransaction Extensions
 
-extension CashTransaction: Categorizable {
+extension CashTransaction {
     var signedAmount: Decimal {
         type == .expense ? -amount : amount
     }
