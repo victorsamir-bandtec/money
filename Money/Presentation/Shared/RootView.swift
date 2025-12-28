@@ -11,6 +11,10 @@ struct RootView: View {
                 .tabItem {
                     Label(String(localized: "tab.dashboard"), systemImage: "chart.bar.xaxis")
                 }
+            HistoricalAnalysisScene(environment: environment, context: modelContext)
+                .tabItem {
+                    Label(String(localized: "tab.analytics"), systemImage: "chart.xyaxis.line")
+                }
             DebtorsScene(environment: environment, context: modelContext)
                 .tabItem {
                     Label(String(localized: "tab.debtors"), systemImage: "person.3")

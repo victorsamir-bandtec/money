@@ -10,6 +10,13 @@
 		9A09CB302E9AE30500B35429 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A09CB2F2E9AE30500B35429 /* WidgetKit.framework */; };
 		9A09CB322E9AE30500B35429 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A09CB312E9AE30500B35429 /* SwiftUI.framework */; };
 		9A09CB432E9AE30600B35429 /* MoneyWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A09CB2D2E9AE30500B35429 /* MoneyWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		9AD690D02F9F91B100BF12E0 /* HistoricalAnalysisScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C12F9F91B100BF12E0 /* HistoricalAnalysisScene.swift */; };
+		9AD690D12F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C22F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift */; };
+		9AD690D22F9F91B100BF12E0 /* TrendChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C32F9F91B100BF12E0 /* TrendChart.swift */; };
+		9AD690D32F9F91B100BF12E0 /* ScenarioCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C42F9F91B100BF12E0 /* ScenarioCard.swift */; };
+		9AD690D42F9F91B100BF12E0 /* HistoricalAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C52F9F91B100BF12E0 /* HistoricalAggregator.swift */; };
+		9AD690D52F9F91B100BF12E0 /* CashFlowProjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C62F9F91B100BF12E0 /* CashFlowProjector.swift */; };
+		9AD690D62F9F91B100BF12E0 /* AnalyticsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C72F9F91B100BF12E0 /* AnalyticsModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -58,6 +65,13 @@
 		9A389BCC2E903FFA003D3B83 /* Money.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Money.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A389BDB2E903FFB003D3B83 /* MoneyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoneyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		9A389BE52E903FFB003D3B83 /* MoneyUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoneyUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		9AD690C12F9F91B100BF12E0 /* HistoricalAnalysisScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoricalAnalysisScene.swift; sourceTree = "<group>"; };
+		9AD690C22F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoricalAnalysisViewModel.swift; sourceTree = "<group>"; };
+		9AD690C32F9F91B100BF12E0 /* TrendChart.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrendChart.swift; sourceTree = "<group>"; };
+		9AD690C42F9F91B100BF12E0 /* ScenarioCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScenarioCard.swift; sourceTree = "<group>"; };
+		9AD690C52F9F91B100BF12E0 /* HistoricalAggregator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoricalAggregator.swift; path = Money/Core/Services/HistoricalAggregator.swift; sourceTree = SOURCE_ROOT; };
+		9AD690C62F9F91B100BF12E0 /* CashFlowProjector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CashFlowProjector.swift; path = Money/Core/Services/CashFlowProjector.swift; sourceTree = SOURCE_ROOT; };
+		9AD690C72F9F91B100BF12E0 /* AnalyticsModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AnalyticsModels.swift; path = Money/Core/Models/AnalyticsModels.swift; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -157,6 +171,7 @@
 			children = (
 				9A09CB562E9AE3A400B35429 /* MoneyWidgetsExtension.entitlements */,
 				9A389BCE2E903FFA003D3B83 /* Money */,
+				9AD690E02F9F91B100BF12E0 /* Analytics */,
 				9A389BDE2E903FFB003D3B83 /* MoneyTests */,
 				9A389BE82E903FFB003D3B83 /* MoneyUITests */,
 				9A09CB332E9AE30500B35429 /* MoneyWidgets */,
@@ -174,6 +189,30 @@
 				9A09CB2D2E9AE30500B35429 /* MoneyWidgetsExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		9AD690E02F9F91B100BF12E0 /* Analytics */ = {
+			isa = PBXGroup;
+			children = (
+				9AD690C12F9F91B100BF12E0 /* HistoricalAnalysisScene.swift */,
+				9AD690C22F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift */,
+				9AD690E12F9F91B100BF12E0 /* Components */,
+				9AD690C52F9F91B100BF12E0 /* HistoricalAggregator.swift */,
+				9AD690C62F9F91B100BF12E0 /* CashFlowProjector.swift */,
+				9AD690C72F9F91B100BF12E0 /* AnalyticsModels.swift */,
+			);
+			name = Analytics;
+			path = Money/Presentation/Analytics;
+			sourceTree = "<group>";
+		};
+		9AD690E12F9F91B100BF12E0 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				9AD690C32F9F91B100BF12E0 /* TrendChart.swift */,
+				9AD690C42F9F91B100BF12E0 /* ScenarioCard.swift */,
+			);
+			name = Components;
+			path = Components;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -363,6 +402,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9AD690D02F9F91B100BF12E0 /* HistoricalAnalysisScene.swift in Sources */,
+				9AD690D12F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift in Sources */,
+				9AD690D22F9F91B100BF12E0 /* TrendChart.swift in Sources */,
+				9AD690D32F9F91B100BF12E0 /* ScenarioCard.swift in Sources */,
+				9AD690D42F9F91B100BF12E0 /* HistoricalAggregator.swift in Sources */,
+				9AD690D52F9F91B100BF12E0 /* CashFlowProjector.swift in Sources */,
+				9AD690D62F9F91B100BF12E0 /* AnalyticsModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -426,6 +472,7 @@
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "APPEX $(inherited)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
@@ -459,6 +506,7 @@
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "APPEX $(inherited)";
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;

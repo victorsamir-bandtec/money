@@ -361,3 +361,44 @@
 "widget.no.data" = "Configure o app para ver seus dados";
 "widget.empty" = "Sem parcelas nos próximos dias";
 "widget.empty.message" = "Sem cobranças nos próximos 14 dias";
+
+// MARK: - Analytics Strings
+"tab.analytics" = "Análise";
+"analytics.title" = "Análise Histórica";
+"analytics.refresh" = "Recarregar análise";
+"analytics.period" = "Período";
+"analytics.range.3months" = "3 meses";
+"analytics.range.6months" = "6 meses";
+"analytics.range.12months" = "12 meses";
+
+// Analytics Metrics
+"analytics.metric.avg.income" = "Receita Média";
+"analytics.metric.avg.expenses" = "Despesa Média";
+"analytics.metric.avg.balance" = "Saldo Médio";
+"analytics.metric.growth.label" = "Crescimento:";
+
+// Charts
+"analytics.charts.title" = "Tendências";
+"analytics.income.trend" = "Evolução de Receitas";
+"analytics.expense.trend" = "Evolução de Despesas";
+"analytics.balance.trend" = "Saldo Mensal";
+"analytics.chart.month" = "Mês";
+"analytics.chart.value" = "Valor";
+"analytics.chart.empty" = "Sem dados para o período";
+
+// Projections
+"analytics.projections.title" = "Projeções Futuras";
+"analytics.projections.subtitle" = "Cenários baseados na média dos últimos 6 meses";
+"analytics.projection.confidence" = "Confiança:";
+"projection.scenario.optimistic" = "Otimista";
+"projection.scenario.realistic" = "Realista";
+"projection.scenario.pessimistic" = "Pessimista";
+
+// Empty State
+"analytics.empty.title" = "Sem Histórico";
+"analytics.empty.message" = "Não há dados históricos suficientes para gerar análises. Continue registrando transações e pagamentos.";
+
+// Errors
+"error.historical.load" = "Erro ao carregar dados históricos";
+"error.projections.load" = "Erro ao gerar projeções";
+"projection.error.insufficient.data" = "Dados insuficientes para projeção. É necessário pelo menos 1 mês de histórico.";
