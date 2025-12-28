@@ -7,8 +7,13 @@ import SwiftData
     var phone: String?
     var note: String?
     @Relationship(deleteRule: .cascade) var agreements: [DebtAgreement]
+    @Relationship(deleteRule: .nullify, inverse: \DebtorCreditProfile.debtor) var creditProfile: DebtorCreditProfile?
     var createdAt: Date
     var archived: Bool
+
+    var currentScore: Int {
+        creditProfile?.score ?? 50
+    }
 
     init(
         id: UUID = UUID(),

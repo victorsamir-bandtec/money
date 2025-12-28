@@ -37,9 +37,10 @@ struct CreditScoreCalculator: Sendable {
         }
 
         var allInstallments: [Installment] = []
-        for agreement in agreements {
-            allInstallments.append(contentsOf: agreement.installments)
-        }
+        let installmentsDescriptor = FetchDescriptor<Installment>(
+            predicate: #Predicate { $0.agreement.debtor.id == debtorId }
+        )
+        allInstallments = try context.fetch(installmentsDescriptor)
 
         let metrics = calculateMetrics(
             installments: allInstallments,

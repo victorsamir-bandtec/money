@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 import SwiftData
 @testable import Money
@@ -67,6 +68,7 @@ struct CreditScoreCalculatorTests {
                 method: .pix
             )
             context.insert(payment)
+            installment.payments.append(payment)
         }
 
         try context.save()
@@ -122,6 +124,7 @@ struct CreditScoreCalculatorTests {
                 method: .pix
             )
             context.insert(payment)
+            installment.payments.append(payment)
         }
 
         try context.save()
@@ -176,6 +179,7 @@ struct CreditScoreCalculatorTests {
                 method: .pix
             )
             context.insert(payment)
+            installment.payments.append(payment)
         }
 
         try context.save()

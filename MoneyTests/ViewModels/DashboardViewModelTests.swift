@@ -119,7 +119,7 @@ struct DashboardViewModelTests {
         try context.save()
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
-        try viewModel.load(currentDate: .now)
+        try viewModel.load(currentDate: Date.now)
 
         #expect(viewModel.summary.fixedExpenses == Decimal(1100))
         #expect(viewModel.summary.totalExpenses == Decimal(1100))
@@ -141,13 +141,13 @@ struct DashboardViewModelTests {
         let context = container.mainContext
 
         let calendar = Calendar.current
-        let currentMonth = calendar.startOfDay(for: .now)
+        let currentMonth = calendar.startOfDay(for: Date.now)
         context.insert(SalarySnapshot(referenceMonth: currentMonth, amount: 5000))
         context.insert(FixedExpense(name: "Aluguel", amount: 1500, dueDay: 5))
         try context.save()
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
-        try viewModel.load(currentDate: .now)
+        try viewModel.load(currentDate: Date.now)
 
         #expect(viewModel.summary.salary == Decimal(5000))
         #expect(viewModel.summary.fixedExpenses == Decimal(1500))
@@ -156,8 +156,7 @@ struct DashboardViewModelTests {
 
     @Test("Limpar dados zera resumo e parcelas futuras") @MainActor
     func clearingDataResetsDashboardState() throws {
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        let environment = AppEnvironment(configuration: configuration)
+        let environment = AppEnvironment(isStoredInMemoryOnly: true)
 
         try environment.sampleDataService.populateData()
 
@@ -166,14 +165,14 @@ struct DashboardViewModelTests {
             currencyFormatter: environment.currencyFormatter
         )
 
-        try viewModel.load(currentDate: .now)
-        #expect(viewModel.summary != .empty)
+        try viewModel.load(currentDate: Date.now)
+        #expect(viewModel.summary != DashboardSummary.empty)
         #expect(!viewModel.upcoming.isEmpty)
 
         try environment.sampleDataService.clearAllData()
-        try viewModel.load(currentDate: .now)
+        try viewModel.load(currentDate: Date.now)
 
-        #expect(viewModel.summary == .empty)
+        #expect(viewModel.summary == DashboardSummary.empty)
         #expect(viewModel.upcoming.isEmpty)
         #expect(viewModel.alerts.isEmpty)
     }

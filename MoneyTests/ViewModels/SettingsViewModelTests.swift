@@ -25,8 +25,7 @@ final class FeatureFlagsStoreSpy: FeatureFlagsStoring {
 struct SettingsViewModelTests {
     @Test("Atualiza salário e histórico a partir de Ajustes") @MainActor
     func updatesSalary() throws {
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        let environment = AppEnvironment(configuration: configuration)
+        let environment = AppEnvironment(isStoredInMemoryOnly: true)
         let viewModel = SettingsViewModel(environment: environment)
 
         let calendar = Calendar.current
@@ -49,9 +48,8 @@ struct SettingsViewModelTests {
 
     @Test("Alterna alertas de vencimento sincronizando ambiente") @MainActor
     func togglesNotifications() throws {
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let store = FeatureFlagsStoreSpy(initialFlags: FeatureFlags(enableNotifications: false))
-        let environment = AppEnvironment(featureFlagsStore: store, configuration: configuration)
+        let environment = AppEnvironment(featureFlagsStore: store, isStoredInMemoryOnly: true)
         let viewModel = SettingsViewModel(environment: environment)
 
         #expect(!viewModel.notificationsEnabled)
@@ -76,8 +74,7 @@ struct SettingsViewModelTests {
             SalarySnapshot.self,
             CashTransaction.self
         ])
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
-        let environment = AppEnvironment(configuration: configuration)
+        let environment = AppEnvironment(isStoredInMemoryOnly: true)
         let viewModel = SettingsViewModel(environment: environment)
 
         // Criar alguns dados para exportar
@@ -123,14 +120,13 @@ struct SettingsViewModelTests {
             func cancelReminders(for agreementID: UUID, installmentNumber: Int) async {}
         }
 
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let store = FeatureFlagsStoreSpy(initialFlags: FeatureFlags(enableNotifications: true))
         let scheduler = NotificationSchedulerMock()
 
         let environment = AppEnvironment(
             featureFlagsStore: store,
             notificationScheduler: scheduler,
-            configuration: configuration
+            isStoredInMemoryOnly: true
         )
         let viewModel = SettingsViewModel(environment: environment)
 
@@ -166,7 +162,7 @@ struct SettingsViewModelTests {
         let environment = AppEnvironment(
             featureFlagsStore: store,
             notificationScheduler: scheduler,
-            configuration: configuration
+            isStoredInMemoryOnly: true
         )
         let viewModel = SettingsViewModel(environment: environment)
 

@@ -34,8 +34,8 @@ enum SharedContainer {
             CashTransaction.self,
             FixedExpense.self,
             SalarySnapshot.self,
-            MonthlySnapshot.self,
-            CashFlowProjection.self
+            // MonthlySnapshot.self,
+            // CashFlowProjection.self
         ])
         #else
         // App principal - todos os modelos incluindo analytics
@@ -47,8 +47,8 @@ enum SharedContainer {
             CashTransaction.self,
             FixedExpense.self,
             SalarySnapshot.self,
-            MonthlySnapshot.self,
-            CashFlowProjection.self
+            // MonthlySnapshot.self,
+            // CashFlowProjection.self
         ])
         #endif
 
