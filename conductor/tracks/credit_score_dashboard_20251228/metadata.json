@@ -1,0 +1,8 @@
+{
+  "track_id": "credit_score_dashboard_20251228",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2025-12-28T10:00:00Z",
+  "updated_at": "2025-12-28T10:00:00Z",
+  "description": "Implementação de algoritmo para calcular score de devedores e visualização preditiva de recebimentos futuros."
+}
