@@ -11,14 +11,22 @@ final class DebtorDetailViewModel: ObservableObject {
     let debtor: Debtor
     private let context: ModelContext
     private let calculator: FinanceCalculator
+    private let debtService: DebtService
     private let notificationScheduler: NotificationScheduling?
     private let observers = NotificationObservers()
     private var reminderSyncTask: Task<Void, Never>?
 
-    init(debtor: Debtor, context: ModelContext, calculator: FinanceCalculator, notificationScheduler: NotificationScheduling?) {
+    init(
+        debtor: Debtor,
+        context: ModelContext,
+        calculator: FinanceCalculator,
+        debtService: DebtService,
+        notificationScheduler: NotificationScheduling?
+    ) {
         self.debtor = debtor
         self.context = context
         self.calculator = calculator
+        self.debtService = debtService
         self.notificationScheduler = notificationScheduler
         setupNotificationObservers()
     }
@@ -127,36 +135,16 @@ final class DebtorDetailViewModel: ObservableObject {
 
     func createAgreement(from draft: AgreementDraft) {
         do {
-            let normalizedRate = draft.interestRate.map { $0 / 100 }
-
-            let agreement = DebtAgreement(
+            let agreement = try debtService.createAgreement(
                 debtor: debtor,
-                title: draft.title.normalizedOrNil,
+                title: draft.title,
                 principal: draft.principal,
                 startDate: draft.startDate,
                 installmentCount: draft.installmentCount,
                 currencyCode: draft.currencyCode,
-                interestRateMonthly: normalizedRate
+                interestRate: draft.interestRate,
+                context: context
             )
-            context.insert(agreement)
-
-            let schedule = try calculator.generateSchedule(
-                principal: draft.principal,
-                installments: draft.installmentCount,
-                monthlyInterest: normalizedRate,
-                firstDueDate: draft.startDate
-            )
-            var createdInstallments: [Installment] = []
-            for spec in schedule {
-                let installment = Installment(
-                    agreement: agreement,
-                    number: spec.number,
-                    dueDate: spec.dueDate,
-                    amount: spec.amount
-                )
-                context.insert(installment)
-                createdInstallments.append(installment)
-            }
 
             Task {
                 await context.saveWithCallbacks(
@@ -165,7 +153,9 @@ final class DebtorDetailViewModel: ObservableObject {
                         guard let self else { return }
                         if let scheduler = self.notificationScheduler {
                             let agreementID = agreement.id
-                            let targetInstallment = InstallmentReminderSelector.selectTarget(from: createdInstallments)
+                            let installments = agreement.installments
+                            let targetInstallment = InstallmentReminderSelector.selectTarget(from: installments)
+                            
                             reminderSyncTask?.cancel()
                             reminderSyncTask = Task { @MainActor in
                                 await scheduler.cancelReminders(for: agreementID)

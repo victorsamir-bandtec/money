@@ -1,20 +1,32 @@
-# Product Guidelines - Money (iOS)
+# Money - Diretrizes do Produto
 
-## Comunicação e Tom de Voz
-- **Amigável e Casual:** As mensagens e notificações devem ser leves e descontraídas. O objetivo é reduzir a fricção social e o desconforto inerente à cobrança de dívidas entre amigos e familiares.
-- **Transparência:** Informar claramente ao usuário o status de suas finanças sem usar jargões bancários complexos.
+## Voz e tom (pt-BR)
+- Tom amigavel, leve e acolhedor.
+- Tratar sempre por "voce".
+- Frases curtas; evitar jargoes e culpa (financas como organizacao, nao julgamento).
 
-## Design e Experiência do Usuário (UX)
-- **Nativo iOS 26 (Liquid Glass):** Priorizar o uso de componentes padrão do SDK da Apple para o iOS 26. O efeito "Liquid Glass" deve vir das propriedades nativas do sistema, garantindo que o app pareça uma extensão natural do SO.
-- **Acessibilidade:** Seguir as diretrizes de Human Interface Guidelines (HIG) para garantir que o app seja utilizável por todos.
+## Nomenclatura
+- Usar termos consistentes: devedor, acordo, parcela, vencimento, pagamento, despesa fixa, salario.
+- Preferir verbos de acao em CTAs: "Adicionar", "Registrar", "Marcar como pago".
 
-## Privacidade e Dados
-- **Local-First:** A privacidade é um pilar fundamental. Todos os dados financeiros são armazenados localmente no dispositivo via SwiftData. A sincronização externa deve ser opcional e via iCloud (CloudKit), garantindo que o usuário tenha controle total sobre seus dados.
+## Identidade visual
+- Direcao "minimalista flat": superficies limpas, poucos efeitos, hierarquia clara e bastante espaco em branco.
+- Usar componentes iOS nativos e cores do sistema quando possivel.
+- Evitar excesso de translucidez/blur; se houver (ex.: iOS 26), manter uso discreto e funcional.
 
-## Inteligência e Insights
-- **Visualização Passiva:** Insights de inteligência, como o Score de Crédito, devem ser apresentados de forma discreta no perfil do devedor, sem interromper o fluxo de uso principal.
-- **Relatórios Periódicos:** Fornecer resumos contextuais (semanais/mensais) para dar ao usuário uma visão macro de sua saúde financeira e progresso nos recebimentos.
+## Cores e estados
+- Paleta base neutra; cores entram para comunicar estado.
+- Valores/estados: usar cor + sinal (+/-) quando fizer sentido.
+- Nao depender apenas de cor: combinar com texto/icone (acessibilidade).
 
-## Engenharia e Arquitetura
-- **Modularidade MVVM:** Manter uma separação rigorosa entre a lógica de apresentação (Views) e a lógica de negócio (ViewModels/Services). Cada componente deve ser testável e independente.
-- **Swift 6 e Concorrência:** Utilizar as capacidades modernas do Swift 6 para garantir um app performático e livre de data races.
+## Tipografia e layout
+- Dynamic Type sempre ativo; layouts refluem bem em tamanhos grandes.
+- Numeros monetarios com alinhamento/espacamento que facilite leitura.
+
+## Icones e motion
+- SF Symbols consistentes por feature.
+- Animacoes sutis e rapidas, priorizando feedback (sem efeitos decorativos longos).
+
+## Acessibilidade e localizacao
+- Labels de acessibilidade para valores e estados.
+- pt-BR como linguagem primaria; en-US como secundario.

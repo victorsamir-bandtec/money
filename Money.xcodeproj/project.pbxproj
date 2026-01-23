@@ -211,7 +211,6 @@
 				9AD690C32F9F91B100BF12E0 /* TrendChart.swift */,
 				9AD690C42F9F91B100BF12E0 /* ScenarioCard.swift */,
 			);
-			name = Components;
 			path = Components;
 			sourceTree = "<group>";
 		};

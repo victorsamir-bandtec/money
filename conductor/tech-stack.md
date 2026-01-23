@@ -1,25 +1,35 @@
-# Technology Stack - Money (iOS)
+# Money - Tech Stack
 
-## Core
-- **Linguagem:** Swift 6
-- **Plataforma Mínima:** iOS 26 (com fallback para iOS 17+)
-- **IDE:** Xcode 16+
+## Plataforma
+- iOS (minimo 17+), com visual iOS 26 quando disponivel.
+- Xcode 16 beta+ (SDK iOS 26) para desenvolvimento; fallback para iOS 17+.
 
-## Interface de Usuário (UI)
-- **Framework:** SwiftUI
-- **Estilo:** iOS 26 Native Liquid Glass (utilizando componentes e materiais do sistema)
-- **Arquitetura de UI:** MVVM (Model-View-ViewModel)
+## Linguagem e runtime
+- Swift 6 (modo strict de concorrencia).
+- async/await como padrao para codigo assincrono.
 
-## Dados e Persistência
-- **Armazenamento Local:** SwiftData (Framework primário de persistência)
-- **Sincronização:** CloudKit (via SwiftData, planejado)
-- **Formatos de Intercâmbio:** CSV (para exportação/importação de dados)
+## UI
+- SwiftUI.
+- Acessibilidade: Dynamic Type e VoiceOver como requisitos de qualidade.
 
-## Testes e Qualidade
-- **Testes Unitários:** XCTest & Swift Testing
-- **Testes de Interface:** XCTest (UI Tests)
-- **Linting/Formatação:** SwiftFormat
+## Persistencia
+- SwiftData (ModelContainer/ModelContext).
+- Modelos com `@Model` e relacoes via `@Relationship`.
 
-## Ferramentas de Build e CI
-- **Gerenciador de Pacotes:** Swift Package Manager (SPM) - nativo do projeto Xcode
-- **Scripts:** Shell scripts (para integração com Xcode)
+## Arquitetura
+- MVVM.
+- Servicos em `Money/Core/Services` com ViewModels coordenando estado e fluxo.
+- DI via `AppEnvironment`.
+
+## Features de plataforma
+- Widgets: WidgetKit.
+- App Shortcuts: App Intents (Siri/Spotlight).
+- Notificacoes locais: UserNotifications (UNUserNotificationCenter).
+
+## Testes
+- Unit tests: Swift Testing (preferencial) + XCTest.
+- UI tests: XCUITest.
+
+## Tooling
+- Build/test via `xcodebuild`.
+- Formatacao via SwiftFormat.

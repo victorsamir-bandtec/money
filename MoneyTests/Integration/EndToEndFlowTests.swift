@@ -30,10 +30,13 @@ struct EndToEndFlowTests {
         let debtor = try #require(debtorsListVM.debtors.first)
 
         // 2. Criar acordo
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let debtorDetailVM = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: nil
         )
         try debtorDetailVM.load()
@@ -152,10 +155,13 @@ struct EndToEndFlowTests {
         try context.save()
 
         let scheduler = NotificationSchedulerSpy()
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let debtorDetailVM = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: scheduler
         )
 
@@ -202,10 +208,13 @@ struct EndToEndFlowTests {
         context.insert(debtor)
 
         let scheduler = NotificationSchedulerSpy()
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let debtorDetailVM = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: scheduler
         )
 

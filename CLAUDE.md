@@ -2,6 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## User Preferences
+
+- **Idioma**: Sempre responder em Português do Brasil (pt-BR)
+
 ## Project Overview
 
 Money is a SwiftUI (Swift 6) iOS app for tracking debtors, installment agreements, payments, fixed expenses, and salary. The project uses MVVM architecture, SwiftData for local persistence, and targets iOS 17+ with a "Liquid Glass" visual design. The primary language is Portuguese (pt-BR) with English (en-US) localization.

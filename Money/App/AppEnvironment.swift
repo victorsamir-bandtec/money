@@ -10,6 +10,7 @@ final class AppEnvironment {
     let modelContext: ModelContext
     let financeCalculator: FinanceCalculator
     let currencyFormatter: CurrencyFormatter
+    let debtService: DebtService
     let notificationScheduler: NotificationScheduling
     let sampleDataService: SampleDataService
 
@@ -39,6 +40,7 @@ final class AppEnvironment {
         modelContext = container.mainContext
         financeCalculator = FinanceCalculator()
         currencyFormatter = CurrencyFormatter()
+        debtService = DebtService(calculator: financeCalculator)
         if let notificationScheduler {
             self.notificationScheduler = notificationScheduler
         } else {

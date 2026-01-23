@@ -22,10 +22,13 @@ struct DebtorDetailViewModelTests {
         let debtor = Debtor(name: "Ana")
         context.insert(debtor)
 
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: nil
         )
 
@@ -61,10 +64,13 @@ struct DebtorDetailViewModelTests {
         let debtor = Debtor(name: "Ana")
         context.insert(debtor)
 
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: nil
         )
 
@@ -123,10 +129,13 @@ struct DebtorDetailViewModelTests {
         try context.save()
 
         let scheduler = NotificationSchedulerSpy()
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: scheduler
         )
 
@@ -172,10 +181,13 @@ struct DebtorDetailViewModelTests {
         context.insert(installment2)
         try context.save()
 
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: nil
         )
 
@@ -223,10 +235,13 @@ struct DebtorDetailViewModelTests {
         context.insert(installment3)
         try context.save()
 
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: debtor,
             context: context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: nil
         )
 

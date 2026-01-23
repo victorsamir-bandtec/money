@@ -18,6 +18,7 @@ struct DebtorDetailScene: View {
             debtor: debtor,
             context: context,
             calculator: environment.financeCalculator,
+            debtService: environment.debtService,
             notificationScheduler: scheduler
         )
         _viewModel = StateObject(wrappedValue: viewModel)

@@ -72,18 +72,32 @@ struct FinanceCalculator: Sendable {
     ) -> [InstallmentSpec] {
         let pmt = pricePMT(principal: principal, rate: rate, nper: count)
         // Arredonda a parcela para 2 casas, padrão em contratos.
-        // Diferenças residuais de centavos ao longo de anos seriam ajustadas na última
-        // em sistemas bancários reais, mas aqui mantemos PMT constante.
         let paymentValue = pmt.rounded(2)
 
         var balance = principal
         var specs: [InstallmentSpec] = []
+        
         for index in 0..<count {
             let due = calendar.date(byAdding: .month, value: index, to: firstDue) ?? firstDue
             let interest = (balance * rate).rounded(2)
-            let amortization = (paymentValue - interest).rounded(2)
-            balance = (balance - amortization).clamped(to: .zero...principal)
-            specs.append(.init(number: index + 1, dueDate: due, amount: paymentValue))
+            
+            let amount: Decimal
+            let amortization: Decimal
+            
+            if index == count - 1 {
+                // Última parcela: ajusta para zerar o saldo
+                // O valor da parcela é o saldo restante + juros do período
+                amortization = balance
+                amount = amortization + interest
+                balance = .zero
+            } else {
+                // Parcelas intermediárias
+                amount = paymentValue
+                amortization = (amount - interest)
+                balance -= amortization
+            }
+            
+            specs.append(.init(number: index + 1, dueDate: due, amount: amount))
         }
         return specs
     }

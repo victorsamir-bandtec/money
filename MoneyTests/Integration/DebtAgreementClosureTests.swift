@@ -37,10 +37,13 @@ struct DebtAgreementClosureTests {
     func closesAgreementAfterMarkingInstallmentsPaid() async throws {
         let environment = try makeEnvironment()
         let scheduler = NotificationSchedulerSpy()
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: environment.debtor,
             context: environment.context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: scheduler
         )
         try viewModel.load()
@@ -64,10 +67,13 @@ struct DebtAgreementClosureTests {
     func reopensAgreementWhenMarkingPending() async throws {
         let environment = try makeEnvironment()
         let scheduler = NotificationSchedulerSpy()
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: environment.debtor,
             context: environment.context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: scheduler
         )
         try viewModel.load()
@@ -131,8 +137,8 @@ struct InstallmentReminderSchedulingTests {
         #expect(scheduler.actions.contains(.cancelInstallment(agreementID: environment.agreement.id, installment: installment.number)))
     }
 
-    @Test("Não agenda lembretes para parcelas vencidas") @MainActor
-    func doesNotScheduleWhenDueDateIsInThePast() async throws {
+    @Test("Agenda lembretes para parcelas vencidas") @MainActor
+    func schedulesForOverdueInstallments() async throws {
         let environment = try makeEnvironment()
         let scheduler = NotificationSchedulerSpy()
         let installment = try #require(environment.agreement.installments.first)
@@ -142,11 +148,8 @@ struct InstallmentReminderSchedulingTests {
 
         await scheduler.syncReminders(for: installment)
 
-        #expect(!scheduler.actions.contains(where: { action in
-            if case .schedule = action { return true }
-            return false
-        }))
-        #expect(scheduler.actions.contains(.cancelInstallment(agreementID: environment.agreement.id, installment: installment.number)))
+        #expect(scheduler.actions.contains(.schedule(agreementID: environment.agreement.id, installment: installment.number)))
+        #expect(!scheduler.actions.contains(.cancelInstallment(agreementID: environment.agreement.id, installment: installment.number)))
     }
 
     @Test("Agenda lembretes para parcelas pendentes futuras") @MainActor
@@ -194,10 +197,13 @@ struct AgreementDeletionTests {
     func deletesAgreementAndCancelsReminders() async throws {
         let environment = try makeEnvironment()
         let scheduler = NotificationSchedulerSpy()
+        let calculator = FinanceCalculator()
+        let debtService = DebtService(calculator: calculator)
         let viewModel = DebtorDetailViewModel(
             debtor: environment.debtor,
             context: environment.context,
-            calculator: FinanceCalculator(),
+            calculator: calculator,
+            debtService: debtService,
             notificationScheduler: scheduler
         )
 
