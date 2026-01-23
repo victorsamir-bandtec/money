@@ -18,7 +18,7 @@
 
 ## Arquitetura
 - MVVM.
-- Servicos em `Money/Core/Services` com ViewModels coordenando estado e fluxo.
+- Servicos em `Money/Core/Services` (ex: `FinanceCalculator`, `DebtService`) com ViewModels coordenando estado e fluxo.
 - DI via `AppEnvironment`.
 
 ## Features de plataforma
