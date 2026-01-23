@@ -173,4 +173,21 @@ struct SettingsViewModelTests {
         // Deve ter erro
         #expect(viewModel.error != nil)
     }
+
+    @Test("Altera tema e persiste") @MainActor
+    func changesTheme() {
+        let environment = AppEnvironment(isStoredInMemoryOnly: true)
+        let viewModel = SettingsViewModel(environment: environment)
+        
+        // Reset defaults for test
+        UserDefaults.standard.removeObject(forKey: "user_theme_preference")
+        
+        viewModel.setTheme(.dark)
+        #expect(viewModel.currentTheme == .dark)
+        #expect(UserDefaults.standard.integer(forKey: "user_theme_preference") == 2)
+        
+        viewModel.setTheme(.light)
+        #expect(viewModel.currentTheme == .light)
+        #expect(UserDefaults.standard.integer(forKey: "user_theme_preference") == 1)
+    }
 }

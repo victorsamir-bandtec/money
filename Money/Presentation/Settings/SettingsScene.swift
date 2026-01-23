@@ -13,15 +13,16 @@ struct SettingsScene: View {
 
     var body: some View {
         NavigationStack {
-            Form {
+            List {
                 salarySection
-                notificationsSection
+                preferencesSection
                 dataSection
+                supportSection
                 aboutSection
             }
-            .scrollContentBackground(.hidden)
-            .background(AppBackground(variant: .settings))
+            .listStyle(.insetGrouped)
             .navigationTitle(String(localized: "settings.title"))
+            .preferredColorScheme(viewModel.currentTheme.colorScheme)
         }
         .task { viewModel.load() }
         .sheet(isPresented: $showingSalaryForm) {
@@ -31,51 +32,87 @@ struct SettingsScene: View {
     }
 
     private var salarySection: some View {
-        Section(String(localized: "settings.salary.section")) {
+        Section {
             SettingsSalaryRow(
                 salary: viewModel.salary,
                 formatter: formatter,
                 onCreate: presentSalaryCreation,
                 onEdit: presentSalaryEditor
             )
+        } header: {
+            Text("settings.salary.section")
         }
     }
 
-    private var notificationsSection: some View {
-        Section(String(localized: "settings.notifications.section")) {
-            Toggle(isOn: Binding(
-                get: { viewModel.notificationsEnabled },
-                set: { viewModel.toggleNotifications($0) }
-            )) {
-                Label(String(localized: "settings.notifications"), systemImage: "bell")
+    private var preferencesSection: some View {
+        Section {
+            // Notifications
+            HStack {
+                SettingsRow(
+                    title: "settings.notifications",
+                    icon: "bell.fill",
+                    color: .red
+                )
+                Spacer()
+                Toggle("", isOn: Binding(
+                    get: { viewModel.notificationsEnabled },
+                    set: { viewModel.toggleNotifications($0) }
+                ))
+                .labelsHidden()
+            }
+            
+            if !viewModel.notificationsEnabled {
+                 Button("settings.notifications.request") {
+                    Task { await viewModel.requestNotificationPermission() }
+                }
             }
 
-            Button(String(localized: "settings.notifications.request")) {
-                Task { await viewModel.requestNotificationPermission() }
+            // Theme
+            Picker(selection: $viewModel.currentTheme) {
+                ForEach(AppThemeOption.allCases) { option in
+                    Text(option.label).tag(option)
+                }
+            } label: {
+                SettingsRow(
+                    title: "settings.theme",
+                    icon: "paintbrush.fill",
+                    color: .blue
+                )
             }
-            .disabled(!viewModel.notificationsEnabled)
+            .pickerStyle(.menu)
+        } header: {
+            Text("settings.preferences")
         }
     }
 
     private var dataSection: some View {
-        Section(String(localized: "settings.data")) {
-            Button(String(localized: "settings.export")) {
+        Section {
+            Button {
                 viewModel.exportCSV()
+            } label: {
+                SettingsRow(title: "settings.export", icon: "square.and.arrow.up.fill", color: .green)
             }
 
             if let url = viewModel.exportURL {
                 ShareLink(item: url) {
-                    Label(String(localized: "settings.share"), systemImage: "square.and.arrow.up")
+                    Label("settings.share", systemImage: "square.and.arrow.up")
                 }
             }
 
-            Button(String(localized: "settings.data.populate")) {
+            Button {
                 viewModel.populateSampleData()
+            } label: {
+                SettingsRow(title: "settings.data.populate", icon: "arrow.down.doc.fill", color: .orange)
             }
 
-            Button(String(localized: "settings.data.clear"), role: .destructive) {
+            Button(role: .destructive) {
                 viewModel.showingClearConfirmation = true
+            } label: {
+                SettingsRow(title: "settings.data.clear", icon: "trash.fill", color: .gray)
+                    .foregroundStyle(.red)
             }
+        } header: {
+            Text("settings.data")
         }
         .confirmationDialog(
             String(localized: "settings.data.clear.confirmation.title"),
@@ -90,11 +127,47 @@ struct SettingsScene: View {
             Text(String(localized: "settings.data.clear.confirmation.message"))
         }
     }
+    
+    private var supportSection: some View {
+        Section {
+            Button {
+                viewModel.openHelp()
+            } label: {
+                SettingsRow(title: "settings.help", icon: "questionmark.circle.fill", color: .blue)
+            }
+            
+            Button {
+                viewModel.rateApp()
+            } label: {
+                SettingsRow(title: "settings.rate", icon: "star.fill", color: .yellow)
+            }
+            
+            Button {
+                viewModel.openContact()
+            } label: {
+                SettingsRow(title: "settings.contact", icon: "envelope.fill", color: .gray)
+            }
+        } header: {
+            Text("settings.support")
+        }
+    }
 
     private var aboutSection: some View {
-        Section(String(localized: "settings.about")) {
-            LabeledContent(String(localized: "settings.version"), value: Bundle.main.appVersion)
-            LabeledContent(String(localized: "settings.developer"), value: "Money App Team")
+        Section {
+            HStack {
+                Text("settings.version")
+                Spacer()
+                Text(Bundle.main.appVersion)
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Text("settings.developer")
+                Spacer()
+                Text("Money App Team")
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("settings.about")
         }
     }
 
@@ -133,42 +206,49 @@ private struct SettingsSalaryRow: View {
 
     var body: some View {
         if let salary {
-            HStack(alignment: .top) {
-                Label {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(String(localized: "settings.salary.row.title"))
-                            .font(.body)
+            Button {
+                onEdit(salary)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "dollarsign.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.green.gradient)
+                        .clipShape(Circle())
+
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(formatter.string(from: salary.amount))
                             .font(.headline)
+                            .foregroundStyle(.primary)
+                        
                         Text(salary.referenceMonth, format: .dateTime.month(.wide).year())
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                } icon: {
-                    Image(systemName: "dollarsign.circle")
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(Color.green)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "pencil")
+                        .foregroundStyle(.secondary)
                 }
-
-                Spacer()
-
-                Button(String(localized: "settings.salary.edit")) {
-                    onEdit(salary)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.small)
+                .padding(.vertical, 4)
             }
         } else {
-            HStack {
-                Label(String(localized: "settings.salary.row.title"), systemImage: "dollarsign.circle")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(Color.green)
-
-                Spacer()
-
-                Button(String(localized: "settings.salary.add"), action: onCreate)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+            Button(action: onCreate) {
+                HStack(spacing: 12) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.white)
+                        .frame(width: 40, height: 40)
+                        .background(Color.gray.gradient)
+                        .clipShape(Circle())
+                    
+                    Text("settings.salary.add")
+                        .font(.body)
+                        .foregroundStyle(.primary)
+                }
+                .padding(.vertical, 4)
             }
         }
     }
@@ -198,27 +278,27 @@ private struct SalaryForm: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(String(localized: "salary.form.section")) {
+                Section("salary.form.section") {
                     CurrencyField("salary.form.amount", value: $draft.amount)
-                    DatePicker(String(localized: "salary.form.month"), selection: $draft.month, displayedComponents: [.date])
+                    DatePicker("salary.form.month", selection: $draft.month, displayedComponents: [.date])
                         .datePickerStyle(.graphical)
                 }
 
-                Section(String(localized: "salary.form.note")) {
-                    TextField(String(localized: "salary.form.note.placeholder"), text: $draft.note, axis: .vertical)
+                Section("salary.form.note") {
+                    TextField("salary.form.note.placeholder", text: $draft.note, axis: .vertical)
                         .lineLimit(3, reservesSpace: true)
                 }
             }
-            .navigationTitle(String(localized: "salary.form.title"))
+            .navigationTitle("salary.form.title")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(String(localized: "common.cancel")) {
+                    Button("common.cancel") {
                         completion(.cancel)
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(String(localized: "common.save")) {
+                    Button("common.save") {
                         completion(.save(draft))
                         dismiss()
                     }

@@ -1,6 +1,31 @@
 import Foundation
 import SwiftData
 import Combine
+import SwiftUI
+
+enum AppThemeOption: Int, CaseIterable, Identifiable {
+    case system = 0
+    case light = 1
+    case dark = 2
+
+    var id: Int { rawValue }
+
+    var label: LocalizedStringKey {
+        switch self {
+        case .system: return "theme.system"
+        case .light: return "theme.light"
+        case .dark: return "theme.dark"
+        }
+    }
+
+    var colorScheme: ColorScheme? {
+        switch self {
+        case .system: return nil
+        case .light: return .light
+        case .dark: return .dark
+        }
+    }
+}
 
 @MainActor
 final class SettingsViewModel: ObservableObject {
@@ -10,14 +35,19 @@ final class SettingsViewModel: ObservableObject {
     @Published var error: AppError?
     @Published var exportURL: URL?
     @Published var showingClearConfirmation = false
+    @Published var currentTheme: AppThemeOption
 
     private let environment: AppEnvironment
     private let calendar: Calendar
+    private let themeKey = "user_theme_preference"
 
     init(environment: AppEnvironment, calendar: Calendar = .current) {
         self.environment = environment
         self.calendar = calendar
         self.notificationsEnabled = environment.featureFlags.enableNotifications
+        
+        let savedTheme = UserDefaults.standard.integer(forKey: "user_theme_preference")
+        self.currentTheme = AppThemeOption(rawValue: savedTheme) ?? .system
     }
 
     func load(referenceDate: Date = .now) {
@@ -27,6 +57,11 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             self.error = .persistence("error.generic")
         }
+    }
+
+    func setTheme(_ theme: AppThemeOption) {
+        currentTheme = theme
+        UserDefaults.standard.set(theme.rawValue, forKey: themeKey)
     }
 
     func toggleNotifications(_ enabled: Bool) {
@@ -108,6 +143,27 @@ final class SettingsViewModel: ObservableObject {
         } catch {
             self.error = .persistence("error.generic")
         }
+    }
+    
+    // MARK: - Support
+    
+    func openHelp() {
+        // Placeholder URL
+        openURL("https://example.com/help")
+    }
+    
+    func rateApp() {
+        // Placeholder App Store URL
+        openURL("https://apps.apple.com/app/id123456789")
+    }
+    
+    func openContact() {
+        openURL("mailto:support@moneyapp.com")
+    }
+    
+    private func openURL(_ string: String) {
+        guard let url = URL(string: string) else { return }
+        UIApplication.shared.open(url)
     }
 
     private func fetchSalary(for month: Date) throws {
