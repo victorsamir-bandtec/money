@@ -69,6 +69,14 @@ struct InstallmentTests {
         let paidInstallment = Installment(agreement: agreement, number: 4, dueDate: pastDate, amount: 100, status: .paid)
         context.insert(paidInstallment)
         #expect(!paidInstallment.isOverdue)
+        
+        // Parcela vencendo HOJE (data exata passada por alguns segundos/minutos, mas mesmo dia)
+        // Bug atual: dueDate < now retorna true se hora for menor.
+        // Esperado: false, pois ainda é o dia do vencimento.
+        let todayDate = Calendar.current.date(byAdding: .hour, value: -1, to: .now)!
+        let dueToday = Installment(agreement: agreement, number: 5, dueDate: todayDate, amount: 100)
+        context.insert(dueToday)
+        #expect(!dueToday.isOverdue) // Isso deve falhar com a lógica atual
     }
 
     @Test("Status enum conversão funciona corretamente") @MainActor

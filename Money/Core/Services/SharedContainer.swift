@@ -24,8 +24,7 @@ enum SharedContainer {
     /// - Parameter isStoredInMemoryOnly: If true, creates in-memory container for testing
     /// - Returns: Configured ModelContainer
     static func createModelContainer(isStoredInMemoryOnly: Bool = false) throws -> ModelContainer {
-        #if APPEX
-        // Widget extension - deve incluir mesmos modelos da aplicação principal
+        // Schema unificado para App e Widget para evitar corrupção de dados
         let schema = Schema([
             Debtor.self,
             DebtAgreement.self,
@@ -34,23 +33,10 @@ enum SharedContainer {
             CashTransaction.self,
             FixedExpense.self,
             SalarySnapshot.self,
-            // MonthlySnapshot.self,
-            // CashFlowProjection.self
+            DebtorCreditProfile.self,
+            MonthlySnapshot.self,
+            CashFlowProjection.self
         ])
-        #else
-        // App principal - todos os modelos incluindo analytics
-        let schema = Schema([
-            Debtor.self,
-            DebtAgreement.self,
-            Installment.self,
-            Payment.self,
-            CashTransaction.self,
-            FixedExpense.self,
-            SalarySnapshot.self,
-            // MonthlySnapshot.self,
-            // CashFlowProjection.self
-        ])
-        #endif
 
         let configuration = isStoredInMemoryOnly ? ModelConfiguration(isStoredInMemoryOnly: true) : modelConfiguration
 

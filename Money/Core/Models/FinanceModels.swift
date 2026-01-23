@@ -1,5 +1,8 @@
 import Foundation
 import SwiftData
+import SwiftUI
+
+// MARK: - Core Finance Models
 
 @Model final class Debtor {
     @Attribute(.unique) var id: UUID
@@ -12,7 +15,7 @@ import SwiftData
     var archived: Bool
 
     var currentScore: Int {
-        creditProfile?.score ?? 50
+        return creditProfile?.score ?? 50
     }
 
     init(
@@ -292,7 +295,7 @@ extension Installment {
     }
 
     var isOverdue: Bool {
-        status == .overdue || (status != .paid && dueDate < .now)
+        status == .overdue || (status != .paid && Calendar.current.startOfDay(for: .now) > Calendar.current.startOfDay(for: dueDate))
     }
 }
 
@@ -306,5 +309,264 @@ extension Decimal {
 
     func clamped(to range: ClosedRange<Decimal>) -> Decimal {
         min(max(self, range.lowerBound), range.upperBound)
+    }
+}
+
+// MARK: - Credit Models
+
+@Model final class DebtorCreditProfile {
+    @Attribute(.unique) var id: UUID
+    @Relationship var debtor: Debtor
+
+    var score: Int
+    var riskLevelRaw: String
+    var lastCalculated: Date
+
+    var totalAgreements: Int
+    var totalInstallments: Int
+    var paidOnTimeCount: Int
+    var paidLateCount: Int
+    var overdueCount: Int
+    var averageDaysLate: Double
+    var onTimePaymentRate: Double
+
+    var totalLent: Decimal
+    var totalPaid: Decimal
+    var totalInterestEarned: Decimal
+    var currentOutstanding: Decimal
+
+    var firstAgreementDate: Date?
+    var lastPaymentDate: Date?
+    var consecutiveOnTimePayments: Int
+    var longestDelayDays: Int
+
+    var riskLevel: RiskLevel {
+        get { RiskLevel(rawValue: riskLevelRaw) ?? .medium }
+        set { riskLevelRaw = newValue.rawValue }
+    }
+
+    var returnOnInvestment: Decimal {
+        guard totalLent > 0 else { return 0 }
+        return (totalInterestEarned / totalLent) * 100
+    }
+
+    var profitMargin: Decimal {
+        guard totalPaid > 0 else { return 0 }
+        return (totalInterestEarned / totalPaid) * 100
+    }
+
+    var collectionRate: Double {
+        guard totalLent > 0 else { return 0 }
+        return Double(truncating: (totalPaid / totalLent) as NSDecimalNumber)
+    }
+
+    init(
+        id: UUID = UUID(),
+        debtor: Debtor,
+        score: Int = 50,
+        riskLevel: RiskLevel = .medium,
+        lastCalculated: Date = .now
+    ) {
+        self.id = id
+        self.debtor = debtor
+        self.score = score
+        self.riskLevelRaw = riskLevel.rawValue
+        self.lastCalculated = lastCalculated
+        self.totalAgreements = 0
+        self.totalInstallments = 0
+        self.paidOnTimeCount = 0
+        self.paidLateCount = 0
+        self.overdueCount = 0
+        self.averageDaysLate = 0
+        self.onTimePaymentRate = 0
+        self.totalLent = .zero
+        self.totalPaid = .zero
+        self.totalInterestEarned = .zero
+        self.currentOutstanding = .zero
+        self.consecutiveOnTimePayments = 0
+        self.longestDelayDays = 0
+    }
+}
+
+enum RiskLevel: String, Codable, CaseIterable, Sendable {
+    case low
+    case medium
+    case high
+
+    var color: Color {
+        switch self {
+        case .low: return .green
+        case .medium: return .orange
+        case .high: return .red
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .low: return "checkmark.shield.fill"
+        case .medium: return "exclamationmark.triangle.fill"
+        case .high: return "xmark.shield.fill"
+        }
+    }
+
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .low: return "credit.risk.low"
+        case .medium: return "credit.risk.medium"
+        case .high: return "credit.risk.high"
+        }
+    }
+
+    var descriptionKey: LocalizedStringKey {
+        switch self {
+        case .low: return "credit.risk.low.description"
+        case .medium: return "credit.risk.medium.description"
+        case .high: return "credit.risk.high.description"
+        }
+    }
+}
+
+// MARK: - Analytics Models
+
+/// Snapshot agregado de todas as métricas financeiras de um mês específico.
+/// Calculado sob demanda ao carregar a tela de análise histórica.
+@Model final class MonthlySnapshot {
+    @Attribute(.unique) var id: UUID
+    var referenceMonth: Date // Primeiro dia do mês (ex: 2024-01-01)
+
+    // Receitas
+    var salary: Decimal
+    var paymentsReceived: Decimal // Pagamentos de devedores
+    var variableIncome: Decimal // Receitas variáveis (CashTransaction.income)
+    var totalIncome: Decimal // Soma de todas as receitas
+
+    // Despesas
+    var fixedExpenses: Decimal // Soma de FixedExpense ativos
+    var variableExpenses: Decimal // CashTransaction.expense
+    var totalExpenses: Decimal // Soma de todas as despesas
+
+    // Saldo
+    var netBalance: Decimal // totalIncome - totalExpenses
+
+    // Métricas de devedores
+    var overdueAmount: Decimal // Valor em atraso no final do mês
+    var activeDebtors: Int // Devedores com saldo devedor
+    var activeAgreements: Int // Acordos ativos
+
+    var createdAt: Date
+
+    init(
+        id: UUID = UUID(),
+        referenceMonth: Date,
+        salary: Decimal = .zero,
+        paymentsReceived: Decimal = .zero,
+        variableIncome: Decimal = .zero,
+        fixedExpenses: Decimal = .zero,
+        variableExpenses: Decimal = .zero,
+        overdueAmount: Decimal = .zero,
+        activeDebtors: Int = 0,
+        activeAgreements: Int = 0,
+        createdAt: Date = .now
+    ) {
+        self.id = id
+        self.referenceMonth = referenceMonth
+        self.salary = salary
+        self.paymentsReceived = paymentsReceived
+        self.variableIncome = variableIncome
+        self.totalIncome = salary + paymentsReceived + variableIncome
+        self.fixedExpenses = fixedExpenses
+        self.variableExpenses = variableExpenses
+        self.totalExpenses = fixedExpenses + variableExpenses
+        self.netBalance = (salary + paymentsReceived + variableIncome) - (fixedExpenses + variableExpenses)
+        self.overdueAmount = overdueAmount
+        self.activeDebtors = activeDebtors
+        self.activeAgreements = activeAgreements
+        self.createdAt = createdAt
+    }
+}
+
+/// Projeção de fluxo de caixa para meses futuros.
+@Model final class CashFlowProjection {
+    @Attribute(.unique) var id: UUID
+    var targetMonth: Date // Mês da projeção
+    var scenario: String // realistic, optimistic, pessimistic
+
+    // Projeções de receita
+    var projectedSalary: Decimal
+    var projectedPayments: Decimal // Parcelas confirmadas a receber
+    var projectedVariableIncome: Decimal // Estimativa baseada em média histórica
+    var totalProjectedIncome: Decimal
+
+    // Projeções de despesa
+    var projectedFixedExpenses: Decimal // Despesas fixas confirmadas
+    var projectedVariableExpenses: Decimal // Estimativa baseada em média histórica
+    var totalProjectedExpenses: Decimal
+
+    // Saldo projetado
+    var projectedBalance: Decimal // totalProjectedIncome - totalProjectedExpenses
+    var confidenceLevel: Double // 0.0 - 1.0 (quão confiável é a projeção)
+
+    var calculatedAt: Date
+
+    var scenarioType: ProjectionScenario {
+        get { ProjectionScenario(rawValue: scenario) ?? .realistic }
+        set { scenario = newValue.rawValue }
+    }
+
+    init(
+        id: UUID = UUID(),
+        targetMonth: Date,
+        scenario: ProjectionScenario = .realistic,
+        projectedSalary: Decimal = .zero,
+        projectedPayments: Decimal = .zero,
+        projectedVariableIncome: Decimal = .zero,
+        projectedFixedExpenses: Decimal = .zero,
+        projectedVariableExpenses: Decimal = .zero,
+        confidenceLevel: Double = 0.7,
+        calculatedAt: Date = .now
+    ) {
+        self.id = id
+        self.targetMonth = targetMonth
+        self.scenario = scenario.rawValue
+        self.projectedSalary = projectedSalary
+        self.projectedPayments = projectedPayments
+        self.projectedVariableIncome = projectedVariableIncome
+        self.totalProjectedIncome = projectedSalary + projectedPayments + projectedVariableIncome
+        self.projectedFixedExpenses = projectedFixedExpenses
+        self.projectedVariableExpenses = projectedVariableExpenses
+        self.totalProjectedExpenses = projectedFixedExpenses + projectedVariableExpenses
+        self.projectedBalance = (projectedSalary + projectedPayments + projectedVariableIncome) - (projectedFixedExpenses + projectedVariableExpenses)
+        self.confidenceLevel = confidenceLevel
+        self.calculatedAt = calculatedAt
+    }
+}
+
+enum ProjectionScenario: String, Codable, CaseIterable, Sendable {
+    case optimistic // +20% receitas, -10% despesas
+    case realistic // Média histórica
+    case pessimistic // -20% receitas, +10% despesas
+
+    var titleKey: LocalizedStringKey {
+        switch self {
+        case .optimistic: return "projection.scenario.optimistic"
+        case .realistic: return "projection.scenario.realistic"
+        case .pessimistic: return "projection.scenario.pessimistic"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .optimistic: return .green
+        case .realistic: return .blue
+        case .pessimistic: return .orange
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .optimistic: return "arrow.up.right.circle.fill"
+        case .realistic: return "equal.circle.fill"
+        case .pessimistic: return "arrow.down.right.circle.fill"
+        }
     }
 }

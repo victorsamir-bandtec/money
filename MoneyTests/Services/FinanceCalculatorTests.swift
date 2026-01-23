@@ -90,4 +90,24 @@ struct FinanceCalculatorTests {
             #expect(spec.dueDate == expectedDates[index])
         }
     }
+
+    @Test("Mantém precisão em financiamentos longos (360 meses)")
+    func maintainsPrecisionInLongTermLoans() throws {
+        // Simulação de financiamento imobiliário: 200k, 1% a.m., 360 meses (Price)
+        let schedule = try calculator.generateSchedule(
+            principal: 200_000,
+            installments: 360,
+            monthlyInterest: 1, // 1%
+            firstDueDate: Date(timeIntervalSince1970: 0)
+        )
+        
+        let pmt = try #require(schedule.first?.amount)
+        let totalPaid = schedule.reduce(Decimal.zero) { $0 + $1.amount }
+        
+        // Verifica se todas as parcelas são iguais (Price)
+        #expect(schedule.allSatisfy { $0.amount == pmt })
+        
+        // Verifica consistência: Total = PMT * Prazo
+        #expect(totalPaid == pmt * 360)
+    }
 }

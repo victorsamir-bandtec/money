@@ -70,10 +70,11 @@ struct FinanceCalculator: Sendable {
         firstDue: Date,
         calendar: Calendar
     ) -> [InstallmentSpec] {
-        let rateDouble = (rate as NSDecimalNumber).doubleValue
-        let principalDouble = (principal as NSDecimalNumber).doubleValue
-        let pmtDouble = pricePMT(principal: principalDouble, rate: rateDouble, nper: count)
-        let paymentValue = Decimal(pmtDouble).rounded(2)
+        let pmt = pricePMT(principal: principal, rate: rate, nper: count)
+        // Arredonda a parcela para 2 casas, padrão em contratos.
+        // Diferenças residuais de centavos ao longo de anos seriam ajustadas na última
+        // em sistemas bancários reais, mas aqui mantemos PMT constante.
+        let paymentValue = pmt.rounded(2)
 
         var balance = principal
         var specs: [InstallmentSpec] = []
@@ -87,10 +88,22 @@ struct FinanceCalculator: Sendable {
         return specs
     }
 
-    private func pricePMT(principal: Double, rate: Double, nper: Int) -> Double {
-        guard rate != 0 else { return principal / Double(nper) }
-        let numerator = principal * rate * pow(1 + rate, Double(nper))
-        let denominator = pow(1 + rate, Double(nper)) - 1
-        return numerator / denominator
+    private func pricePMT(principal: Decimal, rate: Decimal, nper: Int) -> Decimal {
+        guard rate != .zero else { return principal / Decimal(nper) }
+        
+        let rateNS = rate as NSDecimalNumber
+        let onePlusRate = rateNS.adding(.one)
+        let power = onePlusRate.raising(toPower: nper)
+        
+        // PMT = P * i * (1+i)^n / ((1+i)^n - 1)
+        let numerator = (principal as NSDecimalNumber)
+            .multiplying(by: rateNS)
+            .multiplying(by: power)
+            
+        let denominator = power.subtracting(.one)
+        
+        guard denominator != .zero else { return principal / Decimal(nper) }
+        
+        return numerator.dividing(by: denominator).decimalValue
     }
 }
