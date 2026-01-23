@@ -404,3 +404,13 @@
 "error.historical.load" = "Erro ao carregar dados históricos";
 "error.projections.load" = "Erro ao gerar projeções";
 "projection.error.insufficient.data" = "Dados insuficientes para projeção. É necessário pelo menos 1 mês de histórico.";
+
+"settings.preferences" = "Preferências";
+"settings.theme" = "Aparência";
+"theme.system" = "Sistema";
+"theme.light" = "Claro";
+"theme.dark" = "Escuro";
+"settings.support" = "Suporte";
+"settings.help" = "Ajuda / FAQ";
+"settings.rate" = "Avaliar o App";
+"settings.contact" = "Fale Conosco";
