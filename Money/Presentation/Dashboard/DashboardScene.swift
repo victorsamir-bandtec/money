@@ -44,25 +44,15 @@ struct DashboardScene: View {
                     .foregroundStyle(.secondary)
             }
 
-            BalanceOverviewCard(
+            DashboardHeroCard(
                 summary: viewModel.summary,
-                formatter: viewModel.formatted,
-                icon: availableIcon,
-                tint: availableTint
+                formatter: viewModel.formatted
             )
 
-            if !highlightMetrics.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 16) {
-                        ForEach(highlightMetrics) { metric in
-                            QuickMetricTile(metric: metric)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 2)
-                    .padding(.trailing, 4)
-                }
-            }
+            MetricsGrid(
+                summary: viewModel.summary,
+                formatted: viewModel.formatted
+            )
 
             SpendingBreakdownCard(
                 summary: viewModel.summary,
@@ -129,189 +119,6 @@ struct DashboardScene: View {
 
     private func refresh() {
         Task { try await load() }
-    }
-
-    private var availableTint: Color {
-        viewModel.summary.availableToSpend >= .zero ? .blue : .red
-    }
-
-    private var availableIcon: String {
-        viewModel.summary.availableToSpend >= .zero ? "chart.line.uptrend.xyaxis" : "chart.line.downtrend.xyaxis"
-    }
-
-    private var highlightMetrics: [HighlightMetric] {
-        [
-            HighlightMetric(
-                id: "overdue",
-                title: "dashboard.metric.overdue",
-                value: viewModel.formatted(viewModel.summary.overdue),
-                caption: "dashboard.metric.overdue.caption",
-                icon: "exclamationmark.triangle.fill",
-                tint: .orange
-            ),
-            HighlightMetric(
-                id: "fixedExpenses",
-                title: "dashboard.metric.expenses.fixed",
-                value: viewModel.formatted(viewModel.summary.fixedExpenses),
-                caption: nil,
-                icon: "doc.text.fill",
-                tint: .pink
-            ),
-            HighlightMetric(
-                id: "variableExpenses",
-                title: "dashboard.metric.expenses.variable",
-                value: viewModel.formatted(viewModel.summary.variableExpenses),
-                caption: nil,
-                icon: "arrow.uturn.down.circle.fill",
-                tint: .orange
-            ),
-            HighlightMetric(
-                id: "variableIncome",
-                title: "dashboard.metric.expenses.income",
-                value: viewModel.formatted(viewModel.summary.variableIncome),
-                caption: nil,
-                icon: "tray.full.fill",
-                tint: .green
-            )
-        ]
-    }
-}
-
-private struct HighlightMetric: Identifiable {
-    let id: String
-    let title: LocalizedStringKey
-    let value: String
-    let caption: LocalizedStringKey?
-    let icon: String
-    let tint: Color
-}
-
-private struct QuickMetricTile: View {
-    let metric: HighlightMetric
-
-    private var tileSize: CGSize {
-        CGSize(width: 192, height: 164)
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Circle()
-                .fill(metric.tint.opacity(0.18))
-                .overlay {
-                    Image(systemName: metric.icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(metric.tint)
-                }
-                .frame(width: 42, height: 42)
-
-            Text(metric.title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(metric.tint)
-                .lineLimit(2)
-
-            Text(metric.value)
-                .font(.system(size: 22, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-
-            if let caption = metric.caption {
-                Text(caption)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 20)
-        .frame(width: tileSize.width, height: tileSize.height, alignment: .topLeading)
-        .moneyCard(
-            tint: metric.tint,
-            cornerRadius: 24,
-            shadow: .compact,
-            intensity: .standard
-        )
-    }
-}
-
-private struct BalanceOverviewCard: View {
-    let summary: DashboardSummary
-    let formatter: (Decimal) -> String
-    let icon: String
-    let tint: Color
-
-    private var detailColumns: [GridItem] {
-        [
-            GridItem(.flexible(minimum: 120), spacing: 24),
-            GridItem(.flexible(minimum: 120), spacing: 24)
-        ]
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            HStack(spacing: 14) {
-                Circle()
-                    .fill(tint.opacity(0.2))
-                    .overlay {
-                        Image(systemName: icon)
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(tint)
-                    }
-                    .frame(width: 48, height: 48)
-                Text("dashboard.metric.available")
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(tint)
-                Spacer(minLength: 0)
-            }
-
-            Text(formatter(summary.availableToSpend))
-                .font(.system(size: 36, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-
-            Divider()
-
-            LazyVGrid(columns: detailColumns, spacing: 24) {
-                detail(
-                    title: "dashboard.metric.received",
-                    value: formatter(summary.received)
-                )
-                detail(
-                    title: "dashboard.metric.planned",
-                    value: formatter(summary.planned)
-                )
-                detail(
-                    title: "dashboard.metric.remaining",
-                    value: formatter(summary.remainingToReceive)
-                )
-                detail(
-                    title: "dashboard.metric.salary",
-                    value: formatter(summary.salary)
-                )
-            }
-        }
-        .padding(24)
-        .moneyCard(
-            tint: tint,
-            cornerRadius: 28,
-            shadow: .standard,
-            intensity: .prominent
-        )
-    }
-
-    @ViewBuilder
-    private func detail(
-        title: LocalizedStringKey,
-        value: String
-    ) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .textCase(.none)
-
-            Text(value)
-                .font(.system(size: 24, weight: .semibold, design: .rounded))
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
