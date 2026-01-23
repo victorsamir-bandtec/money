@@ -294,8 +294,12 @@ extension Installment {
         (amount - paidAmount).clamped(to: .zero...amount)
     }
 
+    func isOverdue(relativeTo referenceDate: Date, calendar: Calendar = .current) -> Bool {
+        status == .overdue || (status != .paid && calendar.startOfDay(for: referenceDate) > calendar.startOfDay(for: dueDate))
+    }
+
     var isOverdue: Bool {
-        status == .overdue || (status != .paid && Calendar.current.startOfDay(for: .now) > Calendar.current.startOfDay(for: dueDate))
+        isOverdue(relativeTo: .now)
     }
 }
 

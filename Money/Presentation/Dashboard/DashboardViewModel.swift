@@ -55,7 +55,7 @@ struct InstallmentOverview: Identifiable, Equatable, Sendable {
     let number: Int
     let isOverdue: Bool
 
-    init(installment: Installment, agreement: DebtAgreement) {
+    init(installment: Installment, agreement: DebtAgreement, referenceDate: Date = .now) {
         self.id = installment.id
         self.agreementID = agreement.id
         self.debtorName = agreement.debtor.name
@@ -64,7 +64,7 @@ struct InstallmentOverview: Identifiable, Equatable, Sendable {
         self.amount = installment.amount
         self.status = installment.status
         self.number = installment.number
-        self.isOverdue = installment.isOverdue
+        self.isOverdue = installment.isOverdue(relativeTo: referenceDate)
     }
 
     var displayTitle: String {
@@ -100,24 +100,24 @@ final class DashboardViewModel: ObservableObject {
         let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: startOfDay, end: startOfDay)
 
         // Parcelas previstas para o restante do mês (a receber)
-        let monthlyDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
-            installment.dueDate >= monthInterval.start && installment.dueDate < monthInterval.end
-        })
-        var monthInstallments = try context.fetch(monthlyDescriptor)
-        monthInstallments.forEach { _ = $0.paidAmount }
-        let plannedInstallments = monthInstallments.filter { installment in
-            installment.dueDate >= startOfDay && installment.status != .paid && installment.remainingAmount > .zero
+        let plannedPredicate = #Predicate<Installment> { installment in
+            installment.dueDate >= startOfDay
+            && installment.dueDate < monthInterval.end
+            && installment.statusRaw != 2 // paid
+            && installment.amount > installment.paidAmount
         }
+        let plannedDescriptor = FetchDescriptor<Installment>(predicate: plannedPredicate)
+        let plannedInstallments = try context.fetch(plannedDescriptor)
         let planned = plannedInstallments.reduce(into: Decimal.zero) { $0 += $1.remainingAmount }
 
         // Total em atraso acumulado (qualquer parcela vencida com valor restante)
-        let paidStatusRawValue = InstallmentStatus.paid.rawValue
-        let overdueDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
-            installment.dueDate < startOfDay && installment.statusRaw != paidStatusRawValue
-        })
-        var overdueInstallments = try context.fetch(overdueDescriptor)
-        overdueInstallments.forEach { _ = $0.paidAmount }
-        overdueInstallments = overdueInstallments.filter { $0.remainingAmount > .zero }
+        let overduePredicate = #Predicate<Installment> { installment in
+            installment.dueDate < startOfDay
+            && installment.statusRaw != 2 // paid
+            && installment.amount > installment.paidAmount
+        }
+        let overdueDescriptor = FetchDescriptor<Installment>(predicate: overduePredicate)
+        let overdueInstallments = try context.fetch(overdueDescriptor)
         let overdueTotal = overdueInstallments.reduce(into: Decimal.zero) { $0 += $1.remainingAmount }
 
         // Recebido no mês corrente
@@ -167,37 +167,34 @@ final class DashboardViewModel: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         let windowEnd = calendar.date(byAdding: .day, value: 14, to: startOfDay) ?? startOfDay
 
-        let agreementDescriptor = FetchDescriptor<DebtAgreement>()
-        let agreements = try context.fetch(agreementDescriptor)
-        var overdueSnapshots: [InstallmentOverview] = []
-        var upcomingSnapshots: [InstallmentOverview] = []
+        // 1. Fetch Overdue (Any date < startOfDay, status != paid)
+        // Note: statusRaw 2 is .paid
+        let overduePredicate = #Predicate<Installment> { installment in
+            installment.statusRaw != 2
+            && installment.dueDate < startOfDay
+            && installment.amount > installment.paidAmount
+        }
+        var overdueDescriptor = FetchDescriptor<Installment>(predicate: overduePredicate)
+        overdueDescriptor.sortBy = [SortDescriptor(\.dueDate), SortDescriptor(\.number)]
+        let overdueInstallments = try context.fetch(overdueDescriptor)
 
-        for agreement in agreements {
-            for installment in agreement.installments {
-                let remaining = installment.remainingAmount
-                guard remaining > .zero else { continue }
+        // 2. Fetch Upcoming (startOfDay <= date <= windowEnd, status != paid)
+        let upcomingPredicate = #Predicate<Installment> { installment in
+            installment.statusRaw != 2
+            && installment.dueDate >= startOfDay
+            && installment.dueDate <= windowEnd
+            && installment.amount > installment.paidAmount
+        }
+        var upcomingDescriptor = FetchDescriptor<Installment>(predicate: upcomingPredicate)
+        upcomingDescriptor.sortBy = [SortDescriptor(\.dueDate), SortDescriptor(\.number)]
+        let upcomingInstallments = try context.fetch(upcomingDescriptor)
 
-                if installment.status == .paid { continue }
+        let allInstallments = overdueInstallments + upcomingInstallments
 
-                let snapshot = InstallmentOverview(installment: installment, agreement: agreement)
-
-                if installment.dueDate < startOfDay {
-                    overdueSnapshots.append(snapshot)
-                } else if installment.dueDate <= windowEnd {
-                    upcomingSnapshots.append(snapshot)
-                }
-            }
+        let snapshots = allInstallments.map { installment in
+            InstallmentOverview(installment: installment, agreement: installment.agreement, referenceDate: date)
         }
 
-        overdueSnapshots.sort(by: Self.installmentSorter)
-        upcomingSnapshots.sort(by: Self.installmentSorter)
-
-        let existingIds = Set(overdueSnapshots.map(\.id))
-        let filteredUpcoming = upcomingSnapshots.filter { !existingIds.contains($0.id) }
-        var combined = overdueSnapshots + filteredUpcoming
-        combined.sort(by: Self.installmentSorter)
-
-        let snapshots = combined
         upcoming = snapshots
         alerts = snapshots
     }

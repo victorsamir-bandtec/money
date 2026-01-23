@@ -71,12 +71,15 @@ struct InstallmentTests {
         #expect(!paidInstallment.isOverdue)
         
         // Parcela vencendo HOJE (data exata passada por alguns segundos/minutos, mas mesmo dia)
-        // Bug atual: dueDate < now retorna true se hora for menor.
-        // Esperado: false, pois ainda é o dia do vencimento.
+        // Corrigido: dueDate < now não deve retornar true se for o mesmo dia.
         let todayDate = Calendar.current.date(byAdding: .hour, value: -1, to: .now)!
         let dueToday = Installment(agreement: agreement, number: 5, dueDate: todayDate, amount: 100)
         context.insert(dueToday)
-        #expect(!dueToday.isOverdue) // Isso deve falhar com a lógica atual
+        #expect(!dueToday.isOverdue) // Agora deve passar com a lógica startOfDay
+
+        // Teste de Injeção de Dependência de Data
+        let futureReference = calendar.date(byAdding: .day, value: 10, to: .now)!
+        #expect(upcomingInstallment.isOverdue(relativeTo: futureReference)) // Deve estar vencida no futuro
     }
 
     @Test("Status enum conversão funciona corretamente") @MainActor

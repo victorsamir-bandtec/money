@@ -95,7 +95,7 @@ final class SampleDataService {
                 dueDate: spec.dueDate,
                 amount: spec.amount
             )
-            if spec.number <= 3 {
+            if spec.number <= 2 {
                 installment.paidAmount = installment.amount
                 installment.status = .paid
             }
