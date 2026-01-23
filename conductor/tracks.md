@@ -1,1 +1,6 @@
-# Project Tracks\n\nThis file tracks all major tracks for the project. Each track has its own detailed plan in its respective folder.\n\n---\n\n## [ ] Track: Sistema de Score de Confiança e Dashboards Preditivos\n*Link: [./conductor/tracks/credit_score_dashboard_20251228/](./conductor/tracks/credit_score_dashboard_20251228/)*
+# Conductor - Tracks
+
+---
+## [x] Track: Notificacoes: lembretes semanais para parcelas vencidas com saldo restante
+
+Pasta: `conductor/tracks/notificacoes_parcelas_vencidas_20260122`
