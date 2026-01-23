@@ -126,7 +126,9 @@
 
 "notification.installment.title" = "Parcela próxima ao vencimento";
 "notification.installment.subtitle" = "Revise seus recebimentos";
-"notification.installment.body" = "Parcela %1$lld vence em breve.";
+"notification.installment.body" = "Parcela %1$lld vence em breve. Restante: %2$@.";
+"notification.installment.overdue.title" = "Parcela vencida";
+"notification.installment.overdue.body" = "Parcela %1$lld está vencida. Restante: %2$@.";
 
 "expenses.title" = "Despesas";
 "expenses.summary.title" = "Planejamento de despesas";

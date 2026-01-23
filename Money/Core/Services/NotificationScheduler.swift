@@ -24,6 +24,7 @@ struct InstallmentReminderPayload: Sendable {
     let agreementID: UUID
     let installmentNumber: Int
     let dueDate: Date
+    let remainingAmountFormatted: String
 }
 
 @MainActor
@@ -44,17 +45,41 @@ final class LocalNotificationScheduler: NotificationScheduling {
     }
 
     func scheduleReminder(for payload: InstallmentReminderPayload) async throws {
-        let identifiers = [
-            identifier(agreementID: payload.agreementID, number: payload.installmentNumber, type: "due"),
-            identifier(agreementID: payload.agreementID, number: payload.installmentNumber, type: "warn")
-        ]
+        let identifiers = reminderIdentifiers(for: payload.agreementID, installmentNumber: payload.installmentNumber)
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
 
+        let calendar = Calendar.current
+        let startOfToday = calendar.startOfDay(for: Date())
+        let isOverdue = payload.dueDate < startOfToday
+
         let content = UNMutableNotificationContent()
-        content.title = String(localized: "notification.installment.title", bundle: .appModule)
-        let bodyTemplate = String(localized: "notification.installment.body", bundle: .appModule)
-        content.body = String(format: bodyTemplate, locale: Locale.current, payload.installmentNumber)
+        if isOverdue {
+            content.title = String(localized: "notification.installment.overdue.title", bundle: .appModule)
+            let bodyTemplate = String(localized: "notification.installment.overdue.body", bundle: .appModule)
+            content.body = String(
+                format: bodyTemplate,
+                locale: Locale.current,
+                Int64(payload.installmentNumber),
+                payload.remainingAmountFormatted
+            )
+        } else {
+            content.title = String(localized: "notification.installment.title", bundle: .appModule)
+            let bodyTemplate = String(localized: "notification.installment.body", bundle: .appModule)
+            content.body = String(
+                format: bodyTemplate,
+                locale: Locale.current,
+                Int64(payload.installmentNumber),
+                payload.remainingAmountFormatted
+            )
+        }
         content.sound = .default
+
+        if isOverdue {
+            let trigger = overdueTrigger(for: payload.dueDate)
+            let request = UNNotificationRequest(identifier: identifiers[2], content: content, trigger: trigger)
+            try await center.add(request)
+            return
+        }
 
         let dueTrigger = trigger(for: payload.dueDate, daysOffset: 0)
         let warnTrigger = trigger(for: payload.dueDate, daysOffset: -anticipationDays)
@@ -87,15 +112,20 @@ final class LocalNotificationScheduler: NotificationScheduling {
     }
 
     func cancelReminders(for agreementID: UUID, installmentNumber: Int) async {
-        let identifiers = [
-            identifier(agreementID: agreementID, number: installmentNumber, type: "due"),
-            identifier(agreementID: agreementID, number: installmentNumber, type: "warn")
-        ]
+        let identifiers = reminderIdentifiers(for: agreementID, installmentNumber: installmentNumber)
         center.removePendingNotificationRequests(withIdentifiers: identifiers)
     }
 
     private func identifier(agreementID: UUID, number: Int, type: String) -> String {
         "money.installment.\(agreementID.uuidString).\(number).\(type)"
+    }
+
+    private func reminderIdentifiers(for agreementID: UUID, installmentNumber: Int) -> [String] {
+        [
+            identifier(agreementID: agreementID, number: installmentNumber, type: "due"),
+            identifier(agreementID: agreementID, number: installmentNumber, type: "warn"),
+            identifier(agreementID: agreementID, number: installmentNumber, type: "overdue"),
+        ]
     }
 
     private func identifierPrefix(for agreementID: UUID) -> String {
@@ -110,6 +140,15 @@ final class LocalNotificationScheduler: NotificationScheduling {
         components.minute = 0
         guard let triggerDate = calendar.date(from: components), triggerDate >= Date() else { return nil }
         return UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+    }
+
+    private func overdueTrigger(for date: Date) -> UNCalendarNotificationTrigger {
+        let calendar = Calendar.current
+        var components = DateComponents()
+        components.weekday = calendar.component(.weekday, from: date)
+        components.hour = 9
+        components.minute = 0
+        return UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
     }
 
     private func pendingRequests() async -> [UNNotificationRequest] {
@@ -128,19 +167,15 @@ extension NotificationScheduling {
     }
 
     func syncReminders(for installment: Installment) async {
+        let formatter = CurrencyFormatter(locale: Locale.current, currencyCode: installment.agreement.currencyCode)
         let payload = InstallmentReminderPayload(
             agreementID: installment.agreement.id,
             installmentNumber: installment.number,
-            dueDate: installment.dueDate
+            dueDate: installment.dueDate,
+            remainingAmountFormatted: formatter.string(from: installment.remainingAmount)
         )
 
         if installment.status == .paid || installment.remainingAmount == .zero {
-            await cancelReminders(for: payload.agreementID, installmentNumber: payload.installmentNumber)
-            return
-        }
-
-        let startOfToday = Calendar.current.startOfDay(for: Date())
-        guard installment.dueDate >= startOfToday else {
             await cancelReminders(for: payload.agreementID, installmentNumber: payload.installmentNumber)
             return
         }

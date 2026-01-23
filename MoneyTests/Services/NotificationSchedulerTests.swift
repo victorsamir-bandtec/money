@@ -34,11 +34,13 @@ struct NotificationSchedulerTests {
 
         let calendar = Calendar.current
         let futureDate = calendar.date(byAdding: .day, value: 5, to: Date())!
+        let remainingAmount = "R$ 120,00"
 
         let payload = InstallmentReminderPayload(
             agreementID: UUID(),
             installmentNumber: 1,
-            dueDate: futureDate
+            dueDate: futureDate,
+            remainingAmountFormatted: remainingAmount
         )
 
         try await scheduler.scheduleReminder(for: payload)
@@ -50,7 +52,36 @@ struct NotificationSchedulerTests {
         let request = try #require(center.scheduledRequests.first)
         let content = request.content
         #expect(content.title.contains("parcela") || content.title.contains("installment"))
+        #expect(content.body.contains(remainingAmount))
         #expect(content.sound == .default)
+    }
+
+    @Test("Agenda lembrete semanal para parcela vencida") @MainActor
+    func scheduleOverdueReminderCreatesWeeklyNotification() async throws {
+        let center = UserNotificationCenterMock()
+        let scheduler = LocalNotificationScheduler(center: center)
+
+        let calendar = Calendar.current
+        let pastDate = calendar.date(byAdding: .day, value: -10, to: Date())!
+        let remainingAmount = "R$ 50,00"
+
+        let payload = InstallmentReminderPayload(
+            agreementID: UUID(),
+            installmentNumber: 2,
+            dueDate: pastDate,
+            remainingAmountFormatted: remainingAmount
+        )
+
+        try await scheduler.scheduleReminder(for: payload)
+
+        #expect(center.scheduledRequests.count == 1)
+
+        let request = try #require(center.scheduledRequests.first)
+        #expect(request.identifier.contains(".overdue"))
+        #expect(request.content.body.contains(remainingAmount))
+
+        let trigger = try #require(request.trigger as? UNCalendarNotificationTrigger)
+        #expect(trigger.repeats)
     }
 
     @Test("Cancela lembretes para acordo removendo todos") @MainActor
@@ -60,13 +91,15 @@ struct NotificationSchedulerTests {
 
         let agreementID = UUID()
         let futureDate = Date().addingTimeInterval(86400 * 5)
+        let remainingAmount = "R$ 10,00"
 
         // Agendar múltiplas parcelas para o mesmo acordo
         for installmentNumber in 1...3 {
             let payload = InstallmentReminderPayload(
                 agreementID: agreementID,
                 installmentNumber: installmentNumber,
-                dueDate: futureDate
+                dueDate: futureDate,
+                remainingAmountFormatted: remainingAmount
             )
             try await scheduler.scheduleReminder(for: payload)
         }
@@ -93,13 +126,15 @@ struct NotificationSchedulerTests {
 
         let agreementID = UUID()
         let futureDate = Date().addingTimeInterval(86400 * 5)
+        let remainingAmount = "R$ 10,00"
 
         // Agendar múltiplas parcelas
         for installmentNumber in 1...3 {
             let payload = InstallmentReminderPayload(
                 agreementID: agreementID,
                 installmentNumber: installmentNumber,
-                dueDate: futureDate
+                dueDate: futureDate,
+                remainingAmountFormatted: remainingAmount
             )
             try await scheduler.scheduleReminder(for: payload)
         }
@@ -109,8 +144,8 @@ struct NotificationSchedulerTests {
         // Cancelar apenas parcela 2
         await scheduler.cancelReminders(for: agreementID, installmentNumber: 2)
 
-        // Deve ter removido apenas 2 identificadores (vencimento + aviso da parcela 2)
-        #expect(center.removedIdentifiers.count == 2)
+        // Deve ter removido identificadores da parcela 2 (vencimento + aviso + vencida)
+        #expect(center.removedIdentifiers.count == 3)
 
         // Verificar que contém o número da parcela
         for identifier in center.removedIdentifiers {
@@ -149,28 +184,6 @@ struct NotificationSchedulerTests {
         #expect(errorThrown)
     }
 
-    @Test("Trigger com data passada retorna nil") @MainActor
-    func triggerWithPastDateReturnsNil() async throws {
-        let center = UserNotificationCenterMock()
-        let scheduler = LocalNotificationScheduler(center: center)
-
-        // Data no passado
-        let pastDate = Date().addingTimeInterval(-86400)
-
-        let payload = InstallmentReminderPayload(
-            agreementID: UUID(),
-            installmentNumber: 1,
-            dueDate: pastDate
-        )
-
-        // Tentar agendar - pode não lançar erro mas não deve criar triggers
-        try await scheduler.scheduleReminder(for: payload)
-
-        // Pode ter 0 ou poucos requests dependendo da implementação
-        // O importante é que triggers com data passada sejam ignorados
-        #expect(center.scheduledRequests.count <= 2)
-    }
-
     @Test("Agenda notificacao com antecedencia correta") @MainActor
     func schedulesNotificationWithCorrectAnticipation() async throws {
         let center = UserNotificationCenterMock()
@@ -179,11 +192,13 @@ struct NotificationSchedulerTests {
 
         let calendar = Calendar.current
         let dueDate = calendar.date(byAdding: .day, value: 10, to: Date())!
+        let remainingAmount = "R$ 10,00"
 
         let payload = InstallmentReminderPayload(
             agreementID: UUID(),
             installmentNumber: 1,
-            dueDate: dueDate
+            dueDate: dueDate,
+            remainingAmountFormatted: remainingAmount
         )
 
         try await scheduler.scheduleReminder(for: payload)

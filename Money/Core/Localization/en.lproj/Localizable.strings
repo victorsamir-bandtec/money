@@ -115,7 +115,9 @@
 
 "notification.installment.title" = "Installment due soon";
 "notification.installment.subtitle" = "Review your receivables";
-"notification.installment.body" = "Installment %1$lld is about to fall due.";
+"notification.installment.body" = "Installment %1$lld is due soon. Remaining: %2$@.";
+"notification.installment.overdue.title" = "Overdue installment";
+"notification.installment.overdue.body" = "Installment %1$lld is overdue. Remaining: %2$@.";
 
 "expenses.title" = "Expenses";
 "expenses.summary.title" = "Expense planning";

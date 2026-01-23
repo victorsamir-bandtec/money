@@ -164,8 +164,14 @@ final class DebtorDetailViewModel: ObservableObject {
                     onSuccess: { [weak self] in
                         guard let self else { return }
                         if let scheduler = self.notificationScheduler {
-                            for installment in createdInstallments {
-                                Task { await scheduler.syncReminders(for: installment) }
+                            let agreementID = agreement.id
+                            let targetInstallment = InstallmentReminderSelector.selectTarget(from: createdInstallments)
+                            reminderSyncTask?.cancel()
+                            reminderSyncTask = Task { @MainActor in
+                                await scheduler.cancelReminders(for: agreementID)
+                                if let targetInstallment {
+                                    await scheduler.syncReminders(for: targetInstallment)
+                                }
                             }
                         }
                         try self.load()
@@ -245,22 +251,18 @@ final class DebtorDetailViewModel: ObservableObject {
     private func syncReminders(for agreement: DebtAgreement) {
         guard let scheduler = notificationScheduler else { return }
         let agreementID = agreement.id
-        let installments = agreement.installments
+        let installments = installments(for: agreement)
         let isClosed = agreement.closed
-        let startOfToday = Calendar.current.startOfDay(for: Date())
 
         reminderSyncTask?.cancel()
         reminderSyncTask = Task { @MainActor in
             await scheduler.cancelReminders(for: agreementID)
             guard !isClosed else { return }
 
-            let upcoming = installments.filter { installment in
-                installment.status != .paid && installment.dueDate >= startOfToday
+            guard let targetInstallment = InstallmentReminderSelector.selectTarget(from: installments) else {
+                return
             }
-
-            for installment in upcoming {
-                await scheduler.syncReminders(for: installment)
-            }
+            await scheduler.syncReminders(for: targetInstallment)
         }
     }
 

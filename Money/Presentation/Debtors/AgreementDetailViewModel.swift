@@ -206,22 +206,18 @@ final class AgreementDetailViewModel: ObservableObject {
     private func syncReminders(for agreement: DebtAgreement) {
         guard let scheduler = notificationScheduler else { return }
         let agreementID = agreement.id
-        let installments = agreement.installments
+        let candidateInstallments = installments
         let isClosed = agreement.closed
-        let startOfToday = Calendar.current.startOfDay(for: Date())
 
         reminderSyncTask?.cancel()
         reminderSyncTask = Task { @MainActor in
             await scheduler.cancelReminders(for: agreementID)
             guard !isClosed else { return }
 
-            let upcoming = installments.filter { installment in
-                installment.status != .paid && installment.dueDate >= startOfToday
+            guard let targetInstallment = InstallmentReminderSelector.selectTarget(from: candidateInstallments) else {
+                return
             }
-
-            for installment in upcoming {
-                await scheduler.syncReminders(for: installment)
-            }
+            await scheduler.syncReminders(for: targetInstallment)
         }
     }
 
