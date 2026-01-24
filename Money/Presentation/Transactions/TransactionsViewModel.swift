@@ -41,13 +41,16 @@ final class TransactionsViewModel: ObservableObject {
 
     func addTransaction(date: Date, amount: Decimal, type: CashTransactionType, category: String?, note: String?) {
         guard validate(amount: amount) else { return }
-        let transaction = CashTransaction(
+        guard let transaction = CashTransaction(
             date: date,
             amount: amount,
             type: type,
             category: category.normalizedOrNil,
             note: note.normalizedOrNil
-        )
+        ) else {
+            error = .validation("error.transaction.invalid")
+            return
+        }
         context.insert(transaction)
         persistChanges()
     }

@@ -22,10 +22,10 @@ struct TransactionsViewModelTests {
         let freelanceDate = calendar.date(from: DateComponents(year: 2024, month: 6, day: 5, hour: 20))!
         let previousMonth = calendar.date(from: DateComponents(year: 2024, month: 5, day: 28, hour: 10))!
 
-        context.insert(CashTransaction(date: groceriesDate, amount: 80, type: .expense, category: "Mercado", note: "Compras semanais"))
-        context.insert(CashTransaction(date: taxiDate, amount: 45, type: .expense, category: "Transporte", note: "Táxi aeroporto"))
-        context.insert(CashTransaction(date: freelanceDate, amount: 200, type: .income, category: "Freelancer", note: "Site institucional"))
-        context.insert(CashTransaction(date: previousMonth, amount: 100, type: .income, category: "Bônus"))
+        context.insert(CashTransaction(date: groceriesDate, amount: 80, type: .expense, category: "Mercado", note: "Compras semanais")!)
+        context.insert(CashTransaction(date: taxiDate, amount: 45, type: .expense, category: "Transporte", note: "Táxi aeroporto")!)
+        context.insert(CashTransaction(date: freelanceDate, amount: 200, type: .income, category: "Freelancer", note: "Site institucional")!)
+        context.insert(CashTransaction(date: previousMonth, amount: 100, type: .income, category: "Bônus")!)
         try context.save()
 
         let viewModel = TransactionsViewModel(context: context, calendar: calendar)
@@ -112,7 +112,7 @@ struct TransactionsViewModelTests {
             type: .expense,
             category: "Original",
             note: "Nota original"
-        )
+        )!
         context.insert(transaction)
         try context.save()
 
@@ -153,7 +153,7 @@ struct TransactionsViewModelTests {
             amount: 100,
             type: .expense,
             category: "Para Deletar"
-        )
+        )!
         context.insert(transaction)
         try context.save()
 
@@ -223,7 +223,7 @@ struct TransactionsViewModelTests {
             amount: 250,
             type: .income,
             category: "Notificação Teste"
-        )
+        )!
         context.insert(transaction)
         try context.save()
 

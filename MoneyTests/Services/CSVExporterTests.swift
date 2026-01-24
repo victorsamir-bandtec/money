@@ -19,13 +19,13 @@ struct CSVExporterTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)!
         context.insert(agreement)
-        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 1000)
+        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 1000)!
         context.insert(installment)
-        context.insert(FixedExpense(name: "Aluguel", amount: 200, dueDay: 5))
+        context.insert(FixedExpense(name: "Aluguel", amount: 200, dueDay: 5)!)
         try context.save()
 
         let exporter = CSVExporter()
@@ -50,24 +50,24 @@ struct CSVExporterTests {
         let context = container.mainContext
 
         // Criar dados completos
-        let debtor = Debtor(name: "Cliente Teste")
+        let debtor = Debtor(name: "Cliente Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 500)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 500)!
         context.insert(installment1)
         context.insert(installment2)
 
-        let payment = Payment(installment: installment1, date: .now, amount: 500, method: .pix)
+        let payment = Payment(installment: installment1, date: .now, amount: 500, method: .pix)!
         context.insert(payment)
 
-        let expense = FixedExpense(name: "Aluguel", amount: 1000, dueDay: 5)
+        let expense = FixedExpense(name: "Aluguel", amount: 1000, dueDay: 5)!
         context.insert(expense)
 
-        let transaction = CashTransaction(date: .now, amount: 100, type: .expense, category: "Mercado")
+        let transaction = CashTransaction(date: .now, amount: 100, type: .expense, category: "Mercado")!
         context.insert(transaction)
 
         try context.save()
@@ -106,7 +106,7 @@ struct CSVExporterTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste", phone: "123456789", note: "Nota teste")
+        let debtor = Debtor(name: "Teste", phone: "123456789", note: "Nota teste")!
         context.insert(debtor)
         try context.save()
 

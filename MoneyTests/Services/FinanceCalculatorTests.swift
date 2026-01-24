@@ -110,4 +110,17 @@ struct FinanceCalculatorTests {
         // Verifica consistência: Total = PMT * Prazo
         #expect(totalPaid == pmt * 360)
     }
+
+    @Test("Calcula juros corretamente com taxas altas (> 100%)")
+    func handlesHighInterestRates() throws {
+        // 150% de juros
+        let schedule = try calculator.generateSchedule(
+            principal: 1000,
+            installments: 1,
+            monthlyInterest: 150,
+            firstDueDate: Date(timeIntervalSince1970: 0)
+        )
+        // 1000 * (1 + 1.5) = 2500
+        #expect(schedule.first?.amount == 2500)
+    }
 }

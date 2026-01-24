@@ -96,7 +96,7 @@ struct DebtorsListViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste Arquivar")
+        let debtor = Debtor(name: "Teste Arquivar")!
         context.insert(debtor)
         try context.save()
 
@@ -133,13 +133,13 @@ struct DebtorsListViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Deletar")
+        let debtor = Debtor(name: "Deletar")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)!
         context.insert(agreement)
 
-        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 1000)
+        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 1000)!
         context.insert(installment)
         try context.save()
 
@@ -182,9 +182,9 @@ struct DebtorsListViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        context.insert(Debtor(name: "João Silva"))
-        context.insert(Debtor(name: "Maria Santos"))
-        context.insert(Debtor(name: "Pedro Oliveira"))
+        context.insert(Debtor(name: "João Silva")!)
+        context.insert(Debtor(name: "Maria Santos")!)
+        context.insert(Debtor(name: "Pedro Oliveira")!)
         try context.save()
 
         let viewModel = DebtorsListViewModel(context: context)
@@ -222,21 +222,21 @@ struct DebtorsListViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste Resumo")
+        let debtor = Debtor(name: "Teste Resumo")!
         context.insert(debtor)
 
-        let agreement1 = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement1 = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement1)
 
-        let installment1 = Installment(agreement: agreement1, number: 1, dueDate: .now, amount: 500, paidAmount: 500, status: .paid)
-        let installment2 = Installment(agreement: agreement1, number: 2, dueDate: .now, amount: 500, paidAmount: 200, status: .partial)
+        let installment1 = Installment(agreement: agreement1, number: 1, dueDate: .now, amount: 500, paidAmount: 500, status: .paid)!
+        let installment2 = Installment(agreement: agreement1, number: 2, dueDate: .now, amount: 500, paidAmount: 200, status: .partial)!
         context.insert(installment1)
         context.insert(installment2)
 
-        let agreement2 = DebtAgreement(debtor: debtor, principal: 600, startDate: .now, installmentCount: 1, closed: true)
+        let agreement2 = DebtAgreement(debtor: debtor, principal: 600, startDate: .now, installmentCount: 1, closed: true)!
         context.insert(agreement2)
 
-        let installment3 = Installment(agreement: agreement2, number: 1, dueDate: .now, amount: 600, paidAmount: 600, status: .paid)
+        let installment3 = Installment(agreement: agreement2, number: 1, dueDate: .now, amount: 600, paidAmount: 600, status: .paid)!
         context.insert(installment3)
 
         try context.save()
@@ -271,11 +271,11 @@ struct DebtorsListViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        context.insert(Debtor(name: "Ativo 1", archived: false))
-        context.insert(Debtor(name: "Ativo 2", archived: false))
-        context.insert(Debtor(name: "Arquivado 1", archived: true))
-        context.insert(Debtor(name: "Arquivado 2", archived: true))
-        context.insert(Debtor(name: "Arquivado 3", archived: true))
+        context.insert(Debtor(name: "Ativo 1", archived: false)!)
+        context.insert(Debtor(name: "Ativo 2", archived: false)!)
+        context.insert(Debtor(name: "Arquivado 1", archived: true)!)
+        context.insert(Debtor(name: "Arquivado 2", archived: true)!)
+        context.insert(Debtor(name: "Arquivado 3", archived: true)!)
         try context.save()
 
         let viewModel = DebtorsListViewModel(context: context)
@@ -301,13 +301,13 @@ struct DebtorsListViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste Auto-Close")
+        let debtor = Debtor(name: "Teste Auto-Close")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 1, closed: false)
+        let agreement = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 1, closed: false)!
         context.insert(agreement)
 
-        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500, paidAmount: 500, status: .paid)
+        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500, paidAmount: 500, status: .paid)!
         context.insert(installment)
         try context.save()
 

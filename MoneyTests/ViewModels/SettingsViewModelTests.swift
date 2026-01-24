@@ -79,10 +79,10 @@ struct SettingsViewModelTests {
 
         // Criar alguns dados para exportar
         let context = environment.modelContext
-        let debtor = Debtor(name: "Export Teste")
+        let debtor = Debtor(name: "Export Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
         try context.save()
 

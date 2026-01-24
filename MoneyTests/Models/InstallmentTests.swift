@@ -11,13 +11,13 @@ struct InstallmentTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)!
         context.insert(agreement)
 
-        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)
+        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)!
         context.insert(installment)
 
         #expect(installment.remainingAmount == Decimal(500))
@@ -40,40 +40,40 @@ struct InstallmentTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 3)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 3)!
         context.insert(agreement)
 
         let calendar = Calendar.current
 
         // Parcela vencida (data passada, status pending)
         let pastDate = calendar.date(byAdding: .day, value: -5, to: .now)!
-        let overdueInstallment = Installment(agreement: agreement, number: 1, dueDate: pastDate, amount: 100, status: .pending)
+        let overdueInstallment = Installment(agreement: agreement, number: 1, dueDate: pastDate, amount: 100, status: .pending)!
         context.insert(overdueInstallment)
         #expect(overdueInstallment.isOverdue)
 
         // Parcela com status overdue explícito
-        let overdueStatus = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 100, status: .overdue)
+        let overdueStatus = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 100, status: .overdue)!
         context.insert(overdueStatus)
         #expect(overdueStatus.isOverdue)
 
         // Parcela futura não vencida
         let futureDate = calendar.date(byAdding: .day, value: 5, to: .now)!
-        let upcomingInstallment = Installment(agreement: agreement, number: 3, dueDate: futureDate, amount: 100)
+        let upcomingInstallment = Installment(agreement: agreement, number: 3, dueDate: futureDate, amount: 100)!
         context.insert(upcomingInstallment)
         #expect(!upcomingInstallment.isOverdue)
 
         // Parcela paga não é vencida
-        let paidInstallment = Installment(agreement: agreement, number: 4, dueDate: pastDate, amount: 100, status: .paid)
+        let paidInstallment = Installment(agreement: agreement, number: 4, dueDate: pastDate, amount: 100, status: .paid)!
         context.insert(paidInstallment)
         #expect(!paidInstallment.isOverdue)
         
         // Parcela vencendo HOJE (data exata passada por alguns segundos/minutos, mas mesmo dia)
         // Corrigido: dueDate < now não deve retornar true se for o mesmo dia.
         let todayDate = Calendar.current.date(byAdding: .hour, value: -1, to: .now)!
-        let dueToday = Installment(agreement: agreement, number: 5, dueDate: todayDate, amount: 100)
+        let dueToday = Installment(agreement: agreement, number: 5, dueDate: todayDate, amount: 100)!
         context.insert(dueToday)
         #expect(!dueToday.isOverdue) // Agora deve passar com a lógica startOfDay
 
@@ -89,13 +89,13 @@ struct InstallmentTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)!
         context.insert(agreement)
 
-        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 100)
+        let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 100)!
         context.insert(installment)
 
         #expect(installment.status == .pending)
@@ -118,27 +118,27 @@ struct InstallmentTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)!
         context.insert(agreement)
 
         // Número deve ser >= 1
         #expect(throws: Never.self) {
-            let valid = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 100)
+            let valid = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 100)!
             context.insert(valid)
         }
 
         // Valor deve ser > 0
         #expect(throws: Never.self) {
-            let valid = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 0.01)
+            let valid = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 0.01)!
             context.insert(valid)
         }
 
         // Valor pago deve ser >= 0
         #expect(throws: Never.self) {
-            let valid = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 100, paidAmount: 0)
+            let valid = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 100, paidAmount: 0)!
             context.insert(valid)
         }
     }

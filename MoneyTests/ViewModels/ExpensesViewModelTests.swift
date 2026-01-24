@@ -14,9 +14,9 @@ struct ExpensesViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let internet = FixedExpense(name: "Internet", amount: 120, category: "Casa", dueDay: 10)
-        let gym = FixedExpense(name: "Academia", amount: 90, category: "Saúde", dueDay: 5)
-        let archived = FixedExpense(name: "Curso", amount: 200, category: "Educação", dueDay: 20, active: false)
+        let internet = FixedExpense(name: "Internet", amount: 120, category: "Casa", dueDay: 10)!
+        let gym = FixedExpense(name: "Academia", amount: 90, category: "Saúde", dueDay: 5)!
+        let archived = FixedExpense(name: "Curso", amount: 200, category: "Educação", dueDay: 20, active: false)!
 
         context.insert(internet)
         context.insert(gym)
@@ -53,12 +53,12 @@ struct ExpensesViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        context.insert(FixedExpense(name: "Aluguel", amount: 1500, category: "Casa", dueDay: 1))
-        context.insert(FixedExpense(name: "Internet", amount: 120, category: "Casa", dueDay: 10))
+        context.insert(FixedExpense(name: "Aluguel", amount: 1500, category: "Casa", dueDay: 1)!)
+        context.insert(FixedExpense(name: "Internet", amount: 120, category: "Casa", dueDay: 10)!)
 
         let calendar = Calendar.current
         let referenceMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: Date())) ?? Date()
-        context.insert(SalarySnapshot(referenceMonth: referenceMonth, amount: 4000))
+        context.insert(SalarySnapshot(referenceMonth: referenceMonth, amount: 4000)!)
         try context.save()
 
         let viewModel = ExpensesViewModel(context: context)
@@ -111,7 +111,7 @@ struct ExpensesViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let expense = FixedExpense(name: "Teste", amount: 100, dueDay: 5, active: true)
+        let expense = FixedExpense(name: "Teste", amount: 100, dueDay: 5, active: true)!
         context.insert(expense)
         try context.save()
 
@@ -138,7 +138,7 @@ struct ExpensesViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let expense = FixedExpense(name: "Para Deletar", amount: 100, dueDay: 5)
+        let expense = FixedExpense(name: "Para Deletar", amount: 100, dueDay: 5)!
         context.insert(expense)
         try context.save()
 

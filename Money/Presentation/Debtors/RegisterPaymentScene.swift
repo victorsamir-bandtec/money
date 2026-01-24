@@ -101,9 +101,9 @@ struct RegisterPaymentScene: View {
     let container = try! ModelContainer(for: Schema([Debtor.self, DebtAgreement.self, Installment.self, Payment.self]), configurations: configuration)
     let context = container.mainContext
 
-    let debtor = Debtor(name: "João da Silva")
-    let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 12)
-    let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 125)
+    let debtor = Debtor(name: "João da Silva")!
+    let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 12)!
+    let installment = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 125)!
     context.insert(debtor)
     context.insert(agreement)
     context.insert(installment)

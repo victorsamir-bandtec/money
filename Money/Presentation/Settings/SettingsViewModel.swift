@@ -101,7 +101,10 @@ final class SettingsViewModel: ObservableObject {
                 existing.note = normalized(note)
                 salary = existing
             } else {
-                let snapshot = SalarySnapshot(referenceMonth: month, amount: amount, note: normalized(note))
+                guard let snapshot = SalarySnapshot(referenceMonth: month, amount: amount, note: normalized(note)) else {
+                    error = .validation("error.salary.invalid")
+                    return
+                }
                 context.insert(snapshot)
                 salary = snapshot
             }

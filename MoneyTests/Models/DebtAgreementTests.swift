@@ -19,15 +19,15 @@ struct DebtAgreementTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 900, startDate: .now, installmentCount: 3)
+        let agreement = DebtAgreement(debtor: debtor, principal: 900, startDate: .now, installmentCount: 3)!
         context.insert(agreement)
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 300)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 300)
-        let installment3 = Installment(agreement: agreement, number: 3, dueDate: .now, amount: 300)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 300)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 300)!
+        let installment3 = Installment(agreement: agreement, number: 3, dueDate: .now, amount: 300)!
 
         context.insert(installment1)
         context.insert(installment2)
@@ -78,14 +78,14 @@ struct DebtAgreementTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 250, status: .paid)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 250, status: .paid)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 250, status: .paid)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 250, status: .paid)!
 
         context.insert(installment1)
         context.insert(installment2)
@@ -117,10 +117,10 @@ struct DebtAgreementTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)!
         context.insert(agreement)
 
         // Sem parcelas
@@ -144,20 +144,22 @@ struct DebtAgreementTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
         // Principal > 0
-        #expect(throws: Never.self) {
-            let valid = DebtAgreement(debtor: debtor, principal: 0.01, startDate: .now, installmentCount: 1)
-            context.insert(valid)
-        }
+        let validPrincipal = DebtAgreement(debtor: debtor, principal: 0.01, startDate: .now, installmentCount: 1)
+        #expect(validPrincipal != nil)
+        
+        let invalidPrincipal = DebtAgreement(debtor: debtor, principal: 0, startDate: .now, installmentCount: 1)
+        #expect(invalidPrincipal == nil)
 
         // InstallmentCount >= 1
-        #expect(throws: Never.self) {
-            let valid = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
-            context.insert(valid)
-        }
+        let validCount = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 1)
+        #expect(validCount != nil)
+        
+        let invalidCount = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 0)
+        #expect(invalidCount == nil)
     }
 
     @Test("Normaliza taxa de juros percentual") @MainActor
@@ -175,7 +177,7 @@ struct DebtAgreementTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
         // Taxa em formato decimal (já normalizada)
@@ -185,7 +187,7 @@ struct DebtAgreementTests {
             startDate: .now,
             installmentCount: 12,
             interestRateMonthly: Decimal(string: "0.02")
-        )
+        )!
         context.insert(agreement1)
         #expect(agreement1.interestRateMonthly == Decimal(string: "0.02"))
 
@@ -196,7 +198,7 @@ struct DebtAgreementTests {
             startDate: .now,
             installmentCount: 12,
             interestRateMonthly: nil
-        )
+        )!
         context.insert(agreement2)
         #expect(agreement2.interestRateMonthly == nil)
     }
@@ -216,7 +218,7 @@ struct DebtAgreementTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
         // Com título
@@ -226,7 +228,7 @@ struct DebtAgreementTests {
             principal: 1000,
             startDate: .now,
             installmentCount: 12
-        )
+        )!
         context.insert(withTitle)
         #expect(withTitle.title == "Empréstimo Pessoal")
 
@@ -236,7 +238,7 @@ struct DebtAgreementTests {
             principal: 1000,
             startDate: .now,
             installmentCount: 12
-        )
+        )!
         context.insert(withoutTitle)
         #expect(withoutTitle.title == nil)
     }

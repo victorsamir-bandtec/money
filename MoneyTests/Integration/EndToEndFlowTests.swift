@@ -142,14 +142,14 @@ struct EndToEndFlowTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Reabrir Teste")
+        let debtor = Debtor(name: "Reabrir Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 600, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 600, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 300)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 300)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 300)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 300)!
         context.insert(installment1)
         context.insert(installment2)
         try context.save()
@@ -204,7 +204,7 @@ struct EndToEndFlowTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Notificações Teste")
+        let debtor = Debtor(name: "Notificações Teste")!
         context.insert(debtor)
 
         let scheduler = NotificationSchedulerSpy()
@@ -266,22 +266,22 @@ struct EndToEndFlowTests {
         let context = container.mainContext
 
         // Criar dados base
-        let debtor = Debtor(name: "Dashboard Test")
+        let debtor = Debtor(name: "Dashboard Test")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
         let calendar = Calendar.current
         let futureDate = calendar.date(byAdding: .day, value: 5, to: .now)!
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: futureDate, amount: 500)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: futureDate, amount: 500)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: futureDate, amount: 500)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: futureDate, amount: 500)!
         context.insert(installment1)
         context.insert(installment2)
 
-        context.insert(SalarySnapshot(referenceMonth: .now, amount: 4000))
-        context.insert(FixedExpense(name: "Aluguel", amount: 1200, dueDay: 5))
+        context.insert(SalarySnapshot(referenceMonth: .now, amount: 4000)!)
+        context.insert(FixedExpense(name: "Aluguel", amount: 1200, dueDay: 5)!)
         try context.save()
 
         // Verificar dashboard inicial

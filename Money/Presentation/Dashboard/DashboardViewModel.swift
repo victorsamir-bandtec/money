@@ -90,7 +90,15 @@ final class DashboardViewModel: ObservableObject {
     }
 
     func load(currentDate: Date = .now) throws {
+        try loadSummary(currentDate: currentDate)
+        try loadInstallments(currentDate: currentDate)
+    }
+
+    func loadSummary(currentDate: Date = .now) throws {
         try fetchSummary(for: currentDate)
+    }
+
+    func loadInstallments(currentDate: Date = .now) throws {
         try fetchUpcoming(for: currentDate)
     }
 
@@ -140,15 +148,24 @@ final class DashboardViewModel: ObservableObject {
         })
         let salary = try context.fetch(salaryDescriptor).map(\.amount).reduce(.zero, +)
 
-        let transactionsDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
-            transaction.date >= monthInterval.start && transaction.date < monthInterval.end
+        // Optimized: Fetch variable expenses directly
+        let expenseTypeRaw = "expense"
+        let variableExpensesDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
+            transaction.date >= monthInterval.start 
+            && transaction.date < monthInterval.end
+            && transaction.typeRaw == expenseTypeRaw
         })
-        let transactions = try context.fetch(transactionsDescriptor)
-        let variableExpenses = transactions
-            .filter { $0.type == .expense }
+        let variableExpenses = try context.fetch(variableExpensesDescriptor)
             .reduce(into: Decimal.zero) { $0 += $1.amount }
-        let variableIncome = transactions
-            .filter { $0.type == .income }
+
+        // Optimized: Fetch variable income directly
+        let incomeTypeRaw = "income"
+        let variableIncomeDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
+            transaction.date >= monthInterval.start 
+            && transaction.date < monthInterval.end
+            && transaction.typeRaw == incomeTypeRaw
+        })
+        let variableIncome = try context.fetch(variableIncomeDescriptor)
             .reduce(into: Decimal.zero) { $0 += $1.amount }
 
         summary = DashboardSummary(
@@ -195,8 +212,10 @@ final class DashboardViewModel: ObservableObject {
             InstallmentOverview(installment: installment, agreement: installment.agreement, referenceDate: date)
         }
 
-        upcoming = snapshots
-        alerts = snapshots
+        if upcoming != snapshots {
+            upcoming = snapshots
+            alerts = snapshots
+        }
     }
 
     func formatted(_ value: Decimal) -> String {

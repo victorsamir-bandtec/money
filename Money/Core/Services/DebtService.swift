@@ -29,7 +29,7 @@ struct DebtService: Sendable {
     ) throws -> DebtAgreement {
         let normalizedRate = interestRate.map { $0 / 100 }
         
-        let agreement = DebtAgreement(
+        guard let agreement = DebtAgreement(
             debtor: debtor,
             title: title.normalizedOrNil,
             principal: principal,
@@ -37,23 +37,28 @@ struct DebtService: Sendable {
             installmentCount: installmentCount,
             currencyCode: currencyCode,
             interestRateMonthly: normalizedRate
-        )
+        ) else {
+            throw AppError.validation("error.agreement.invalid")
+        }
         context.insert(agreement)
         
         let schedule = try calculator.generateSchedule(
             principal: principal,
             installments: installmentCount,
-            monthlyInterest: normalizedRate,
+            monthlyInterest: interestRate,
             firstDueDate: startDate
         )
         
         for spec in schedule {
-            let installment = Installment(
+            guard let installment = Installment(
                 agreement: agreement,
                 number: spec.number,
                 dueDate: spec.dueDate,
                 amount: spec.amount
-            )
+            ) else {
+                context.delete(agreement)
+                throw AppError.validation("error.installment.invalid")
+            }
             context.insert(installment)
         }
         

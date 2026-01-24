@@ -201,16 +201,17 @@ private struct DebtorsSummaryCard: View {
     ]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 22) {
-            // Título da página
+        VStack(alignment: .leading, spacing: 24) {
+            // Título da seção (opcional, pode ser removido se redundante com o NavigationTitle)
             VStack(alignment: .leading, spacing: 4) {
                 Text("debtors.summary.title")
-                    .font(.title2)
-                    .bold()
+                    .font(.headline)
+                    .foregroundStyle(.primary)
                 Text("debtors.summary.subtitle")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
+            .padding(.horizontal, 4) // Pequeno ajuste para alinhar visualmente com os cards
 
             // Destaques no topo: Ativos e Arquivados
             LazyVGrid(columns: gridColumns, alignment: .leading, spacing: 16) {
@@ -234,10 +235,14 @@ private struct DebtorsSummaryCard: View {
             AppSearchField.forNames(text: $searchText, prompt: "debtors.search")
 
             // Filtro de exibição
-            VStack(alignment: .leading, spacing: 8) {
-                Text("debtors.filter.caption")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("debtors.filter.caption")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                
                 Picker("debtors.filter.caption", selection: $filter) {
                     Text("debtors.filter.active")
                         .tag(ArchiveFilter.activeOnly)
@@ -247,14 +252,7 @@ private struct DebtorsSummaryCard: View {
                 .pickerStyle(.segmented)
             }
         }
-        .padding(24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: .appThemeColor,
-            cornerRadius: 28,
-            shadow: .standard,
-            intensity: .subtle
-        )
+        .padding(.vertical, 8)
     }
 }
 
@@ -434,7 +432,7 @@ private struct DebtorForm: View {
     let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
     let container = try! ModelContainer(for: Schema([Debtor.self, DebtAgreement.self]), configurations: configuration)
     let context = container.mainContext
-    let debtor = Debtor(name: "Ana Paula", note: "Cliente antiga")
+    let debtor = Debtor(name: "Ana Paula", note: "Cliente antiga")!
     debtor.phone = "(11) 90000-0000"
     context.insert(debtor)
     return DebtorsScene(environment: AppEnvironment(), context: context)

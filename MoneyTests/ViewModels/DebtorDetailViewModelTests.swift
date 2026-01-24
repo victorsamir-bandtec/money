@@ -19,7 +19,7 @@ struct DebtorDetailViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Ana")
+        let debtor = Debtor(name: "Ana")!
         context.insert(debtor)
 
         let calculator = FinanceCalculator()
@@ -61,7 +61,7 @@ struct DebtorDetailViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Ana")
+        let debtor = Debtor(name: "Ana")!
         context.insert(debtor)
 
         let calculator = FinanceCalculator()
@@ -116,14 +116,14 @@ struct DebtorDetailViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 500)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 500)!
         context.insert(installment1)
         context.insert(installment2)
         try context.save()
@@ -169,14 +169,14 @@ struct DebtorDetailViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 500)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 500)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 500)!
         context.insert(installment1)
         context.insert(installment2)
         try context.save()
@@ -221,15 +221,15 @@ struct DebtorDetailViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1200, startDate: .now, installmentCount: 3)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1200, startDate: .now, installmentCount: 3)!
         context.insert(agreement)
 
-        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 400, paidAmount: 400, status: .paid)
-        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 400, paidAmount: 200, status: .partial)
-        let installment3 = Installment(agreement: agreement, number: 3, dueDate: .now, amount: 400)
+        let installment1 = Installment(agreement: agreement, number: 1, dueDate: .now, amount: 400, paidAmount: 400, status: .paid)!
+        let installment2 = Installment(agreement: agreement, number: 2, dueDate: .now, amount: 400, paidAmount: 200, status: .partial)!
+        let installment3 = Installment(agreement: agreement, number: 3, dueDate: .now, amount: 400)!
         context.insert(installment1)
         context.insert(installment2)
         context.insert(installment3)

@@ -51,7 +51,7 @@ struct SampleDataServiceTests {
         let context = container.mainContext
 
         // Criar um devedor manualmente
-        let existingDebtor = Debtor(name: "Existente")
+        let existingDebtor = Debtor(name: "Existente")!
         context.insert(existingDebtor)
         try context.save()
 

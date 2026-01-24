@@ -18,8 +18,7 @@ struct FinanceCalculator: Sendable {
         guard installments >= 1 else { throw AppError.validation("error.installments.invalid") }
 
         let normalizedRate = monthlyInterest.map { rate -> Decimal in
-            if rate > 1 { return (rate / 100).rounded(6) }
-            return rate
+            (rate / 100).rounded(6)
         }
 
         let useInterest = (normalizedRate ?? .zero) > .zero

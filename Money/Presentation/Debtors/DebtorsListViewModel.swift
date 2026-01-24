@@ -62,7 +62,10 @@ final class DebtorsListViewModel: ObservableObject {
             error = .validation("error.debtor.name")
             return
         }
-        let debtor = Debtor(name: trimmed, phone: phone, note: note)
+        guard let debtor = Debtor(name: trimmed, phone: phone, note: note) else {
+            error = .validation("error.debtor.invalid")
+            return
+        }
         context.insert(debtor)
         do {
             try context.save()

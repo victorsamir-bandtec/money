@@ -90,14 +90,7 @@ struct ExpensesSummaryCard: View {
             AppSearchField.forCategories(text: $searchText, prompt: "expenses.search")
             filterControls
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: .pink,
-            cornerRadius: 26,
-            shadow: .compact,
-            intensity: .subtle
-        )
+        .padding(.vertical, 8)
     }
 
     private var filterControls: some View {

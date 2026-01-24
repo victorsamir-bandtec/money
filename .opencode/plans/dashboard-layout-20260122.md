@@ -1,3 +1,13 @@
+# Track Definition: Dashboard Layout Reorganization
+
+## Metadata
+- **ID:** dashboard-layout-20260122
+- **Status:** New
+- **Type:** Feature
+- **Description:** Reorganização do layout do Dashboard para melhor visibilidade
+
+## Spec (`spec.md`)
+
 # Feature: Dashboard Layout Reorganization
 
 ### Context
@@ -24,3 +34,20 @@ The current dashboard displays a dense Hero card and a horizontal carousel that 
 4. **Visuals**
    - Apply consistent "Liquid Glass" styling (padding, corner radius, backgrounds).
    - Ensure Accessibility (Dynamic Type) works with the new Grid.
+
+## Plan (`plan.md`)
+
+# Plan: Dashboard Layout Reorganization
+
+### Fase 1: Arquitetura & Componentização
+- [ ] Extrair e refatorar `HeroCard` (Simplificado) 💡 Skill: component-architect
+- [ ] Criar componente `MetricsGrid` (LazyVGrid 2 colunas) 💡 Skill: ios-ui-crafter
+
+### Fase 2: Integração
+- [ ] Atualizar `DashboardScene` com novo layout 💡 Skill: ios-ui-crafter
+- [ ] Ajustar `DashboardViewModel` para fornecer dados estruturados para o Grid (se necessário) 💡 Skill: code-refactor-master
+
+### Fase 3: Qualidade
+- [ ] Verificar Acessibilidade e Dynamic Type 💡 Skill: ios-quality-engineer
+- [ ] Rodar Testes e Linter 💡 Skill: ios-quality-engineer
+- [ ] Tarefa: Conductor - Verificação Manual do Usuário 'UI Polish' (Protocolo em workflow.md)

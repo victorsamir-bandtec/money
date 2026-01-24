@@ -1,0 +1,7 @@
+{
+  "id": "launch_critical_fixes_20260123",
+  "type": "fix",
+  "description": "Corrigir crashes, logica de juros e performance",
+  "status": "in_progress",
+  "created_at": "2026-01-23"
+}

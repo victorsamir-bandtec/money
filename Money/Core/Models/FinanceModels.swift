@@ -18,7 +18,7 @@ import SwiftUI
         return creditProfile?.score ?? 50
     }
 
-    init(
+    init?(
         id: UUID = UUID(),
         name: String,
         phone: String? = nil,
@@ -26,7 +26,7 @@ import SwiftUI
         createdAt: Date = .now,
         archived: Bool = false
     ) {
-        precondition(!name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
         self.id = id
         self.name = name
         self.phone = phone
@@ -50,7 +50,7 @@ import SwiftUI
     var closed: Bool
     var createdAt: Date
 
-    init(
+    init?(
         id: UUID = UUID(),
         debtor: Debtor,
         title: String? = nil,
@@ -62,8 +62,8 @@ import SwiftUI
         closed: Bool = false,
         createdAt: Date = .now
     ) {
-        precondition(principal > 0)
-        precondition(installmentCount >= 1)
+        guard principal > 0 else { return nil }
+        guard installmentCount >= 1 else { return nil }
         self.id = id
         self.debtor = debtor
         self.title = title
@@ -109,7 +109,7 @@ enum InstallmentStatus: Int, Codable, Sendable {
         set { statusRaw = newValue.rawValue }
     }
 
-    init(
+    init?(
         id: UUID = UUID(),
         agreement: DebtAgreement,
         number: Int,
@@ -118,9 +118,9 @@ enum InstallmentStatus: Int, Codable, Sendable {
         paidAmount: Decimal = .zero,
         status: InstallmentStatus = .pending
     ) {
-        precondition(number >= 1)
-        precondition(amount > 0)
-        precondition(paidAmount >= 0)
+        guard number >= 1 else { return nil }
+        guard amount > 0 else { return nil }
+        guard paidAmount >= 0 else { return nil }
         self.id = id
         self.agreement = agreement
         self.number = number
@@ -145,7 +145,7 @@ enum InstallmentStatus: Int, Codable, Sendable {
         set { methodRaw = newValue.rawValue }
     }
 
-    init(
+    init?(
         id: UUID = UUID(),
         installment: Installment,
         date: Date,
@@ -153,7 +153,7 @@ enum InstallmentStatus: Int, Codable, Sendable {
         method: PaymentMethod,
         note: String? = nil
     ) {
-        precondition(amount > 0)
+        guard amount > 0 else { return nil }
         self.id = id
         self.installment = installment
         self.date = date
@@ -195,7 +195,7 @@ enum CashTransactionType: String, Codable, CaseIterable, Sendable {
         set { typeRaw = newValue.rawValue }
     }
 
-    init(
+    init?(
         id: UUID = UUID(),
         date: Date,
         amount: Decimal,
@@ -204,7 +204,7 @@ enum CashTransactionType: String, Codable, CaseIterable, Sendable {
         note: String? = nil,
         createdAt: Date = .now
     ) {
-        precondition(amount > 0)
+        guard amount > 0 else { return nil }
         self.id = id
         self.date = date
         self.amount = amount
@@ -224,7 +224,7 @@ enum CashTransactionType: String, Codable, CaseIterable, Sendable {
     var active: Bool
     var note: String?
 
-    init(
+    init?(
         id: UUID = UUID(),
         name: String,
         amount: Decimal,
@@ -233,9 +233,9 @@ enum CashTransactionType: String, Codable, CaseIterable, Sendable {
         active: Bool = true,
         note: String? = nil
     ) {
-        precondition(!name.trimmingCharacters(in: .whitespaces).isEmpty)
-        precondition(amount >= 0)
-        precondition((1...31).contains(dueDay))
+        guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        guard amount >= 0 else { return nil }
+        guard (1...31).contains(dueDay) else { return nil }
         self.id = id
         self.name = name
         self.amount = amount
@@ -280,8 +280,8 @@ extension CashTransaction {
     var amount: Decimal
     var note: String?
 
-    init(id: UUID = UUID(), referenceMonth: Date, amount: Decimal, note: String? = nil) {
-        precondition(amount >= 0)
+    init?(id: UUID = UUID(), referenceMonth: Date, amount: Decimal, note: String? = nil) {
+        guard amount >= 0 else { return nil }
         self.id = id
         self.referenceMonth = referenceMonth
         self.amount = amount

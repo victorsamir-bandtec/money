@@ -19,11 +19,11 @@ struct DashboardViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Cliente Teste")
+        let debtor = Debtor(name: "Cliente Teste")!
         context.insert(debtor)
 
         let now = Date(timeIntervalSince1970: 1_700_000_000) // referência fixa para estabilidade dos testes
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: now, installmentCount: 3)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: now, installmentCount: 3)!
         context.insert(agreement)
 
         var calendar = Calendar(identifier: .gregorian)
@@ -33,15 +33,15 @@ struct DashboardViewModelTests {
         let upcomingDate = calendar.date(byAdding: .day, value: 5, to: now)!
         let futurePaidDate = calendar.date(byAdding: .day, value: 25, to: now)!
 
-        let overdueInstallment = Installment(agreement: agreement, number: 1, dueDate: overdueDate, amount: 100)
+        let overdueInstallment = Installment(agreement: agreement, number: 1, dueDate: overdueDate, amount: 100)!
         overdueInstallment.paidAmount = 20
         overdueInstallment.status = .partial
         context.insert(overdueInstallment)
 
-        let upcomingInstallment = Installment(agreement: agreement, number: 2, dueDate: upcomingDate, amount: 150)
+        let upcomingInstallment = Installment(agreement: agreement, number: 2, dueDate: upcomingDate, amount: 150)!
         context.insert(upcomingInstallment)
 
-        let paidInstallment = Installment(agreement: agreement, number: 3, dueDate: futurePaidDate, amount: 200, status: .paid)
+        let paidInstallment = Installment(agreement: agreement, number: 3, dueDate: futurePaidDate, amount: 200, status: .paid)!
         paidInstallment.paidAmount = 200
         context.insert(paidInstallment)
 
@@ -82,10 +82,10 @@ struct DashboardViewModelTests {
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!
         let referenceDate = calendar.date(from: DateComponents(year: 2024, month: 6, day: 15, hour: 12))!
 
-        context.insert(CashTransaction(date: referenceDate, amount: 120, type: .expense, category: "Mercado"))
-        context.insert(CashTransaction(date: referenceDate, amount: 60, type: .income, category: "Freelancer"))
+        context.insert(CashTransaction(date: referenceDate, amount: 120, type: .expense, category: "Mercado")!)
+        context.insert(CashTransaction(date: referenceDate, amount: 60, type: .income, category: "Freelancer")!)
         let previousMonth = calendar.date(byAdding: .month, value: -1, to: referenceDate)!
-        context.insert(CashTransaction(date: previousMonth, amount: 50, type: .expense, category: "Viagem"))
+        context.insert(CashTransaction(date: previousMonth, amount: 50, type: .expense, category: "Viagem")!)
         try context.save()
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
@@ -113,9 +113,9 @@ struct DashboardViewModelTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        context.insert(FixedExpense(name: "Aluguel", amount: 1000, dueDay: 5, active: true))
-        context.insert(FixedExpense(name: "Internet", amount: 100, dueDay: 10, active: true))
-        context.insert(FixedExpense(name: "Curso Arquivado", amount: 200, dueDay: 15, active: false))
+        context.insert(FixedExpense(name: "Aluguel", amount: 1000, dueDay: 5, active: true)!)
+        context.insert(FixedExpense(name: "Internet", amount: 100, dueDay: 10, active: true)!)
+        context.insert(FixedExpense(name: "Curso Arquivado", amount: 200, dueDay: 15, active: false)!)
         try context.save()
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
@@ -142,8 +142,8 @@ struct DashboardViewModelTests {
 
         let calendar = Calendar.current
         let currentMonth = calendar.startOfDay(for: Date.now)
-        context.insert(SalarySnapshot(referenceMonth: currentMonth, amount: 5000))
-        context.insert(FixedExpense(name: "Aluguel", amount: 1500, dueDay: 5))
+        context.insert(SalarySnapshot(referenceMonth: currentMonth, amount: 5000)!)
+        context.insert(FixedExpense(name: "Aluguel", amount: 1500, dueDay: 5)!)
         try context.save()
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())

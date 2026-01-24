@@ -19,10 +19,10 @@ struct InstallmentReminderSelectorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 3)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 3)!
         context.insert(agreement)
 
         let calendar = Calendar.current
@@ -31,7 +31,7 @@ struct InstallmentReminderSelectorTests {
             number: 1,
             dueDate: try #require(calendar.date(byAdding: .day, value: -10, to: .now)),
             amount: 100
-        )
+        )!
         context.insert(overdueOld)
 
         let overdueNew = Installment(
@@ -39,7 +39,7 @@ struct InstallmentReminderSelectorTests {
             number: 2,
             dueDate: try #require(calendar.date(byAdding: .day, value: -2, to: .now)),
             amount: 100
-        )
+        )!
         context.insert(overdueNew)
 
         let upcoming = Installment(
@@ -47,7 +47,7 @@ struct InstallmentReminderSelectorTests {
             number: 3,
             dueDate: try #require(calendar.date(byAdding: .day, value: 5, to: .now)),
             amount: 100
-        )
+        )!
         context.insert(upcoming)
 
         let selected = InstallmentReminderSelector.selectTarget(from: [overdueOld, overdueNew, upcoming])
@@ -69,10 +69,10 @@ struct InstallmentReminderSelectorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
         let calendar = Calendar.current
@@ -81,7 +81,7 @@ struct InstallmentReminderSelectorTests {
             number: 2,
             dueDate: try #require(calendar.date(byAdding: .day, value: 10, to: .now)),
             amount: 100
-        )
+        )!
         context.insert(later)
 
         let sooner = Installment(
@@ -89,7 +89,7 @@ struct InstallmentReminderSelectorTests {
             number: 1,
             dueDate: try #require(calendar.date(byAdding: .day, value: 3, to: .now)),
             amount: 100
-        )
+        )!
         context.insert(sooner)
 
         let selected = InstallmentReminderSelector.selectTarget(from: [later, sooner])
@@ -111,10 +111,10 @@ struct InstallmentReminderSelectorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste")
+        let debtor = Debtor(name: "Teste")!
         context.insert(debtor)
 
-        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)
+        let agreement = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 2)!
         context.insert(agreement)
 
         let calendar = Calendar.current
@@ -125,7 +125,7 @@ struct InstallmentReminderSelectorTests {
             amount: 100,
             paidAmount: 100,
             status: .paid
-        )
+        )!
         context.insert(overduePaid)
 
         let upcomingOpen = Installment(
@@ -133,7 +133,7 @@ struct InstallmentReminderSelectorTests {
             number: 2,
             dueDate: try #require(calendar.date(byAdding: .day, value: 5, to: .now)),
             amount: 100
-        )
+        )!
         context.insert(upcomingOpen)
 
         let selected = InstallmentReminderSelector.selectTarget(from: [overduePaid, upcomingOpen])

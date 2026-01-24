@@ -126,7 +126,7 @@ struct TransactionsSummaryCard: View {
     let toggleCategory: (String) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 16) {
             Picker("transactions.filter.type", selection: $typeFilter) {
                 Text(String(localized: "transactions.filter.all")).tag(TransactionsViewModel.TypeFilter.all)
                 Text(String(localized: "transactions.filter.expense")).tag(TransactionsViewModel.TypeFilter.expenses)
@@ -166,15 +166,7 @@ struct TransactionsSummaryCard: View {
                 )
             }
         }
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .moneyCard(
-            tint: .appThemeColor,
-            cornerRadius: 26,
-            shadow: .compact,
-            intensity: .subtle
-        )
-        .compositingGroup()
+        .padding(.vertical, 8)
     }
 }
 

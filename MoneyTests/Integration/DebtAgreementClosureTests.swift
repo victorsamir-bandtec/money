@@ -242,7 +242,7 @@ private func makeEnvironment() throws -> (context: ModelContext, debtor: Debtor,
     let container = try ModelContainer(for: schema, configurations: configuration)
     let context = container.mainContext
 
-    let debtor = Debtor(name: "Cliente Teste")
+    let debtor = Debtor(name: "Cliente Teste")!
     context.insert(debtor)
 
     let agreement = DebtAgreement(
@@ -251,14 +251,14 @@ private func makeEnvironment() throws -> (context: ModelContext, debtor: Debtor,
         principal: 1200,
         startDate: Date(),
         installmentCount: 2
-    )
+    )!
     context.insert(agreement)
 
     let firstDue = Date().addingTimeInterval(7 * 24 * 60 * 60)
     let secondDue = Date().addingTimeInterval(37 * 24 * 60 * 60)
 
-    let firstInstallment = Installment(agreement: agreement, number: 1, dueDate: firstDue, amount: 600)
-    let secondInstallment = Installment(agreement: agreement, number: 2, dueDate: secondDue, amount: 600)
+    let firstInstallment = Installment(agreement: agreement, number: 1, dueDate: firstDue, amount: 600)!
+    let secondInstallment = Installment(agreement: agreement, number: 2, dueDate: secondDue, amount: 600)!
     context.insert(firstInstallment)
     context.insert(secondInstallment)
 

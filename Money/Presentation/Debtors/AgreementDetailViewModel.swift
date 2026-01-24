@@ -71,13 +71,15 @@ final class AgreementDetailViewModel: ObservableObject {
         note: String?
     ) {
         do {
-            let payment = Payment(
+            guard let payment = Payment(
                 installment: installment,
                 date: date,
                 amount: amount,
                 method: method,
                 note: note
-            )
+            ) else {
+                throw AppError.validation("error.payment.invalid")
+            }
             context.insert(payment)
 
             if !installment.payments.contains(where: { $0.id == payment.id }) {
@@ -130,13 +132,15 @@ final class AgreementDetailViewModel: ObservableObject {
             let remainingAmount = installment.remainingAmount
 
             // Create automatic payment for remaining amount
-            let payment = Payment(
+            guard let payment = Payment(
                 installment: installment,
                 date: .now,
                 amount: remainingAmount,
                 method: method,
                 note: String(localized: "payment.quick.note")
-            )
+            ) else {
+                throw AppError.validation("error.payment.invalid")
+            }
             context.insert(payment)
 
             if !installment.payments.contains(where: { $0.id == payment.id }) {

@@ -11,7 +11,7 @@ struct FixedExpenseTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let expense = FixedExpense(name: "Aluguel", amount: 1000, dueDay: 5)
+        let expense = FixedExpense(name: "Aluguel", amount: 1000, dueDay: 5)!
         context.insert(expense)
 
         var calendar = Calendar(identifier: .gregorian)
@@ -44,7 +44,7 @@ struct FixedExpenseTests {
         let context = container.mainContext
 
         // Despesa com vencimento dia 31
-        let expense = FixedExpense(name: "Teste", amount: 100, dueDay: 31)
+        let expense = FixedExpense(name: "Teste", amount: 100, dueDay: 31)!
         context.insert(expense)
 
         var calendar = Calendar(identifier: .gregorian)
@@ -79,22 +79,22 @@ struct FixedExpenseTests {
         let context = container.mainContext
 
         // Categoria válida
-        let expense1 = FixedExpense(name: "Teste 1", amount: 100, category: "Casa", dueDay: 5)
+        let expense1 = FixedExpense(name: "Teste 1", amount: 100, category: "Casa", dueDay: 5)!
         context.insert(expense1)
         #expect(expense1.normalizedCategory == "Casa")
 
         // Categoria vazia
-        let expense2 = FixedExpense(name: "Teste 2", amount: 100, category: "", dueDay: 5)
+        let expense2 = FixedExpense(name: "Teste 2", amount: 100, category: "", dueDay: 5)!
         context.insert(expense2)
         #expect(expense2.normalizedCategory == nil)
 
         // Categoria com espaços
-        let expense3 = FixedExpense(name: "Teste 3", amount: 100, category: "   ", dueDay: 5)
+        let expense3 = FixedExpense(name: "Teste 3", amount: 100, category: "   ", dueDay: 5)!
         context.insert(expense3)
         #expect(expense3.normalizedCategory == nil)
 
         // Categoria nil
-        let expense4 = FixedExpense(name: "Teste 4", amount: 100, category: nil, dueDay: 5)
+        let expense4 = FixedExpense(name: "Teste 4", amount: 100, category: nil, dueDay: 5)!
         context.insert(expense4)
         #expect(expense4.normalizedCategory == nil)
     }
@@ -108,21 +108,21 @@ struct FixedExpenseTests {
 
         // Nome válido
         #expect(throws: Never.self) {
-            let valid = FixedExpense(name: "Válido", amount: 100, dueDay: 5)
+            let valid = FixedExpense(name: "Válido", amount: 100, dueDay: 5)!
             context.insert(valid)
         }
 
         // Valor zero é permitido
         #expect(throws: Never.self) {
-            let valid = FixedExpense(name: "Zero", amount: 0, dueDay: 5)
+            let valid = FixedExpense(name: "Zero", amount: 0, dueDay: 5)!
             context.insert(valid)
         }
 
         // Dia de vencimento válido (1-31)
         #expect(throws: Never.self) {
-            let valid1 = FixedExpense(name: "Dia 1", amount: 100, dueDay: 1)
+            let valid1 = FixedExpense(name: "Dia 1", amount: 100, dueDay: 1)!
             context.insert(valid1)
-            let valid31 = FixedExpense(name: "Dia 31", amount: 100, dueDay: 31)
+            let valid31 = FixedExpense(name: "Dia 31", amount: 100, dueDay: 31)!
             context.insert(valid31)
         }
     }
@@ -134,7 +134,7 @@ struct FixedExpenseTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let expense = FixedExpense(name: "Teste", amount: 100, dueDay: 5, active: true)
+        let expense = FixedExpense(name: "Teste", amount: 100, dueDay: 5, active: true)!
         context.insert(expense)
 
         #expect(expense.active)

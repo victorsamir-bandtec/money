@@ -8,7 +8,7 @@ struct ModelStabilityTests {
     // NOTE: These tests are commented out because the current implementation uses preconditions
     // which cause fatal crashes. We will enable them as we refactor the models to use failable initializers.
     
-    /*
+
     @Test("Debtor initialization fails with empty name")
     func debtorStability() {
         // Should return nil instead of crashing
@@ -70,5 +70,4 @@ struct ModelStabilityTests {
         #expect(CashTransaction(date: .now, amount: 0, type: .expense) == nil)
         #expect(CashTransaction(date: .now, amount: -10, type: .income) == nil)
     }
-    */
 }

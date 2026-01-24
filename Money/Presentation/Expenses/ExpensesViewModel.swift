@@ -43,13 +43,16 @@ final class ExpensesViewModel: ObservableObject {
     func addExpense(name: String, amount: Decimal, category: String?, dueDay: Int, note: String?) {
         guard validate(name: name, amount: amount, dueDay: dueDay) else { return }
 
-        let expense = FixedExpense(
+        guard let expense = FixedExpense(
             name: name.normalized,
             amount: amount,
             category: category.normalizedOrNil,
             dueDay: dueDay,
             note: note.normalizedOrNil
-        )
+        ) else {
+            error = .validation("error.expense.invalid")
+            return
+        }
         context.insert(expense)
         persistChanges()
     }
@@ -66,14 +69,17 @@ final class ExpensesViewModel: ObservableObject {
     }
 
     func duplicate(_ expense: FixedExpense) {
-        let duplicate = FixedExpense(
+        guard let duplicate = FixedExpense(
             name: expense.name,
             amount: expense.amount,
             category: expense.category,
             dueDay: expense.dueDay,
             active: expense.active,
             note: expense.note
-        )
+        ) else {
+            error = .validation("error.expense.invalid")
+            return
+        }
         context.insert(duplicate)
         persistChanges()
     }

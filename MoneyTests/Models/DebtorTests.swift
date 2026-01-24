@@ -19,7 +19,7 @@ struct DebtorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "João Silva")
+        let debtor = Debtor(name: "João Silva")!
         context.insert(debtor)
 
         #expect(debtor.name == "João Silva")
@@ -50,7 +50,7 @@ struct DebtorTests {
             phone: "11999999999",
             note: "Cliente VIP",
             archived: true
-        )
+        )!
         context.insert(debtor)
 
         #expect(debtor.name == "Maria Santos")
@@ -74,11 +74,11 @@ struct DebtorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Pedro Oliveira")
+        let debtor = Debtor(name: "Pedro Oliveira")!
         context.insert(debtor)
 
-        let agreement1 = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 12)
-        let agreement2 = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 6)
+        let agreement1 = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 12)!
+        let agreement2 = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 6)!
 
         context.insert(agreement1)
         context.insert(agreement2)
@@ -103,17 +103,17 @@ struct DebtorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Ana Costa")
+        let debtor = Debtor(name: "Ana Costa")!
         context.insert(debtor)
 
-        let agreement1 = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 12)
-        let agreement2 = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 6)
+        let agreement1 = DebtAgreement(debtor: debtor, principal: 1000, startDate: .now, installmentCount: 12)!
+        let agreement2 = DebtAgreement(debtor: debtor, principal: 500, startDate: .now, installmentCount: 6)!
 
         context.insert(agreement1)
         context.insert(agreement2)
 
-        let installment1 = Installment(agreement: agreement1, number: 1, dueDate: .now, amount: 100)
-        let installment2 = Installment(agreement: agreement2, number: 1, dueDate: .now, amount: 100)
+        let installment1 = Installment(agreement: agreement1, number: 1, dueDate: .now, amount: 100)!
+        let installment2 = Installment(agreement: agreement2, number: 1, dueDate: .now, amount: 100)!
 
         context.insert(installment1)
         context.insert(installment2)
@@ -152,8 +152,8 @@ struct DebtorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor1 = Debtor(name: "Devedor 1")
-        let debtor2 = Debtor(name: "Devedor 2")
+        let debtor1 = Debtor(name: "Devedor 1")!
+        let debtor2 = Debtor(name: "Devedor 2")!
 
         context.insert(debtor1)
         context.insert(debtor2)
@@ -177,7 +177,7 @@ struct DebtorTests {
         let context = container.mainContext
 
         let beforeCreation = Date()
-        let debtor = Debtor(name: "Teste Data")
+        let debtor = Debtor(name: "Teste Data")!
         let afterCreation = Date()
 
         context.insert(debtor)
@@ -187,7 +187,7 @@ struct DebtorTests {
 
         // Com createdAt customizado
         let customDate = Date(timeIntervalSince1970: 1000000)
-        let customDebtor = Debtor(name: "Teste Custom", createdAt: customDate)
+        let customDebtor = Debtor(name: "Teste Custom", createdAt: customDate)!
         context.insert(customDebtor)
         #expect(customDebtor.createdAt == customDate)
     }
@@ -207,7 +207,7 @@ struct DebtorTests {
         let container = try ModelContainer(for: schema, configurations: configuration)
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Teste Arquivar", archived: false)
+        let debtor = Debtor(name: "Teste Arquivar", archived: false)!
         context.insert(debtor)
 
         #expect(!debtor.archived)

@@ -15,7 +15,7 @@ struct CreditScoreCalculatorTests {
         )
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Test User")
+        let debtor = Debtor(name: "Test User")!
         context.insert(debtor)
         try context.save()
 
@@ -37,7 +37,7 @@ struct CreditScoreCalculatorTests {
         )
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Perfect Payer")
+        let debtor = Debtor(name: "Perfect Payer")!
         context.insert(debtor)
 
         let agreement = DebtAgreement(
@@ -45,7 +45,7 @@ struct CreditScoreCalculatorTests {
             principal: 1000,
             startDate: Calendar.current.date(byAdding: .month, value: -3, to: .now)!,
             installmentCount: 3
-        )
+        )!
         context.insert(agreement)
 
         let installmentAmount = Decimal(1000) / 3
@@ -58,7 +58,7 @@ struct CreditScoreCalculatorTests {
                 amount: installmentAmount.rounded(2),
                 paidAmount: installmentAmount.rounded(2),
                 status: .paid
-            )
+            )!
             context.insert(installment)
 
             let payment = Payment(
@@ -66,7 +66,7 @@ struct CreditScoreCalculatorTests {
                 date: dueDate,
                 amount: installmentAmount.rounded(2),
                 method: .pix
-            )
+            )!
             context.insert(payment)
             installment.payments.append(payment)
         }
@@ -92,7 +92,7 @@ struct CreditScoreCalculatorTests {
         )
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Late Payer")
+        let debtor = Debtor(name: "Late Payer")!
         context.insert(debtor)
 
         let agreement = DebtAgreement(
@@ -100,7 +100,7 @@ struct CreditScoreCalculatorTests {
             principal: 1000,
             startDate: Calendar.current.date(byAdding: .month, value: -3, to: .now)!,
             installmentCount: 3
-        )
+        )!
         context.insert(agreement)
 
         let installmentAmount = Decimal(1000) / 3
@@ -114,7 +114,7 @@ struct CreditScoreCalculatorTests {
                 amount: installmentAmount.rounded(2),
                 paidAmount: installmentAmount.rounded(2),
                 status: .paid
-            )
+            )!
             context.insert(installment)
 
             let payment = Payment(
@@ -122,7 +122,7 @@ struct CreditScoreCalculatorTests {
                 date: paymentDate,
                 amount: installmentAmount.rounded(2),
                 method: .pix
-            )
+            )!
             context.insert(payment)
             installment.payments.append(payment)
         }
@@ -148,7 +148,7 @@ struct CreditScoreCalculatorTests {
         )
         let context = container.mainContext
 
-        let debtor = Debtor(name: "Streak Payer")
+        let debtor = Debtor(name: "Streak Payer")!
         context.insert(debtor)
 
         let agreement = DebtAgreement(
@@ -156,7 +156,7 @@ struct CreditScoreCalculatorTests {
             principal: 1000,
             startDate: Calendar.current.date(byAdding: .month, value: -5, to: .now)!,
             installmentCount: 5
-        )
+        )!
         context.insert(agreement)
 
         let installmentAmount = Decimal(1000) / 5
@@ -169,7 +169,7 @@ struct CreditScoreCalculatorTests {
                 amount: installmentAmount.rounded(2),
                 paidAmount: installmentAmount.rounded(2),
                 status: .paid
-            )
+            )!
             context.insert(installment)
 
             let payment = Payment(
@@ -177,7 +177,7 @@ struct CreditScoreCalculatorTests {
                 date: dueDate,
                 amount: installmentAmount.rounded(2),
                 method: .pix
-            )
+            )!
             context.insert(payment)
             installment.payments.append(payment)
         }
