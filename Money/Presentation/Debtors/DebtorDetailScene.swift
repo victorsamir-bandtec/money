@@ -60,38 +60,72 @@ struct DebtorDetailScene: View {
 
     private var metricsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            MetricCard(
-                title: "debtor.metric.remaining",
-                value: environment.currencyFormatter.string(from: viewModel.totalRemaining),
-                caption: "debtor.metric.remaining.caption",
-                icon: "exclamationmark.triangle.fill",
-                tint: viewModel.totalRemaining > 0 ? .orange : .green,
-                style: .prominent
+            // Main Highlight Card (Saldo Devedor)
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(viewModel.totalRemaining > 0 ? Color.orange.opacity(0.15) : Color.green.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                        .overlay {
+                            Image(systemName: viewModel.totalRemaining > 0 ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundStyle(viewModel.totalRemaining > 0 ? Color.orange : Color.green)
+                        }
+                    
+                    Text("debtor.metric.remaining")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(viewModel.totalRemaining > 0 ? Color.orange : Color.green)
+                }
+                
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(environment.currencyFormatter.string(from: viewModel.totalRemaining))
+                        .font(.system(size: 38, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .minimumScaleFactor(0.8)
+                        .lineLimit(1)
+                    
+                    Text("debtor.metric.remaining.caption")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .moneyCard(
+                tint: Color(.systemGray4),
+                cornerRadius: 28,
+                shadow: .standard,
+                intensity: .subtle
             )
 
+            // Metrics Grid
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 16), GridItem(.flexible(), spacing: 16)], alignment: .leading, spacing: 16) {
-                MetricCard(
+                DebtorGridMetricCard(
                     title: "debtor.metric.total",
                     value: environment.currencyFormatter.string(from: viewModel.totalAgreementsValue),
                     caption: "debtor.metric.total.caption",
                     icon: "banknote.fill",
                     tint: .blue
                 )
-                MetricCard(
+                
+                DebtorGridMetricCard(
                     title: "debtor.metric.paid",
                     value: environment.currencyFormatter.string(from: viewModel.totalPaid),
                     caption: "debtor.metric.paid.caption",
                     icon: "checkmark.seal.fill",
                     tint: .green
                 )
-                MetricCard(
+                
+                DebtorGridMetricCard(
                     title: "debtor.metric.installments.paid",
                     value: "\(viewModel.paidInstallmentsCount)",
                     caption: "debtor.metric.installments.paid.caption",
                     icon: "checklist",
                     tint: .teal
                 )
-                MetricCard(
+                
+                DebtorGridMetricCard(
                     title: "debtor.metric.installments.total",
                     value: "\(viewModel.totalInstallmentsCount)",
                     caption: "debtor.metric.installments.total.caption",
@@ -100,26 +134,37 @@ struct DebtorDetailScene: View {
                 )
             }
 
+            // Credit Profile Button
             Button(action: { navigateToCreditProfile = true }) {
-                HStack(spacing: 12) {
+                HStack(spacing: 14) {
                     Image(systemName: "chart.bar.doc.horizontal.fill")
-                        .font(.title3)
+                        .font(.system(size: 20, weight: .semibold))
                         .foregroundStyle(.purple)
-                    VStack(alignment: .leading, spacing: 4) {
+                        .frame(width: 44, height: 44)
+                        .background(
+                            Circle()
+                                .fill(Color.purple.opacity(0.15))
+                        )
+                    
+                    VStack(alignment: .leading, spacing: 3) {
                         Text("credit.profile.title")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                             .foregroundStyle(.primary)
                         Text("Análise de comportamento e risco")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    
                     Spacer()
-                    Image(systemName: "arrow.forward.circle.fill")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                    
+                    Image(systemName: "arrow.forward")
+                        .font(.footnote)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.tertiary)
                 }
                 .padding(16)
-                .moneyCard(tint: .purple, cornerRadius: 22, shadow: .compact, intensity: .subtle)
+                .moneyCard(tint: Color(.systemGray4), cornerRadius: 24, shadow: .compact, intensity: .subtle)
             }
             .buttonStyle(.plain)
             .navigationDestination(isPresented: $navigateToCreditProfile) {
@@ -423,5 +468,56 @@ private struct DebtorDetailBackground: View {
             Color(.systemGroupedBackground),
             Color(.secondarySystemGroupedBackground)
         ]
+    }
+}
+
+private struct DebtorGridMetricCard: View {
+    let title: LocalizedStringKey
+    let value: String
+    let caption: LocalizedStringKey
+    let icon: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(tint.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                    .overlay {
+                        Image(systemName: icon)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(tint)
+                    }
+                
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(tint)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                
+                Spacer(minLength: 0)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(value)
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+                
+                Text(caption)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: Color(.systemGray4),
+            cornerRadius: 22,
+            shadow: .compact,
+            intensity: .subtle
+        )
     }
 }

@@ -83,10 +83,10 @@ struct CreditProfileDetailView: View {
             .padding(.vertical, 36)
             .padding(.horizontal, 24)
             .moneyCard(
-                tint: profile.riskLevel.color,
+                tint: Color(.systemGray4),
                 cornerRadius: 28,
                 shadow: .standard,
-                intensity: .prominent
+                intensity: .subtle
             )
 
             EnhancedScoreProgressBar(
@@ -117,13 +117,13 @@ struct CreditProfileDetailView: View {
                     profitRow(
                         label: "credit.profitability.lent",
                         value: viewModel.currencyFormatter.string(from: profile.totalLent),
-                        color: .blue
+                        color: .primary
                     )
 
                     profitRow(
                         label: "credit.profitability.paid",
                         value: viewModel.currencyFormatter.string(from: profile.totalPaid),
-                        color: .green
+                        color: .primary
                     )
 
                     Divider()
@@ -132,7 +132,7 @@ struct CreditProfileDetailView: View {
                     profitRow(
                         label: "credit.profitability.interest",
                         value: viewModel.formattedTotalInterest(),
-                        color: .teal,
+                        color: .green,
                         prominent: true
                     )
 
@@ -149,21 +149,21 @@ struct CreditProfileDetailView: View {
                     profitRow(
                         label: "credit.profitability.outstanding",
                         value: viewModel.formattedCurrentOutstanding(),
-                        color: .orange
+                        color: .primary
                     )
 
                     profitRow(
                         label: "credit.profitability.collection.rate",
                         value: viewModel.formattedCollectionRate(),
-                        color: .cyan
+                        color: .secondary
                     )
                 }
                 .padding(24)
                 .moneyCard(
-                    tint: .teal,
+                    tint: Color(.systemGray4),
                     cornerRadius: 28,
                     shadow: .standard,
-                    intensity: .standard
+                    intensity: .subtle
                 )
             }
         }
@@ -295,7 +295,7 @@ private struct EnhancedScoreProgressBar: View {
     }
 }
 
-private struct CreditMetricsGrid: View {
+    private struct CreditMetricsGrid: View {
     let profile: DebtorCreditProfile
     let viewModel: DebtorCreditProfileViewModel
 
@@ -307,34 +307,79 @@ private struct CreditMetricsGrid: View {
             ],
             spacing: 16
         ) {
-            MetricCard(
+            CreditMetricCard(
                 title: "credit.metric.ontime.rate",
                 value: viewModel.formattedOnTimeRate(),
                 icon: "checkmark.circle.fill",
                 tint: profile.onTimePaymentRate >= 0.8 ? .green : .orange
             )
 
-            MetricCard(
+            CreditMetricCard(
                 title: "credit.metric.average.delay",
                 value: viewModel.formattedAverageDelay(),
                 icon: "clock.fill",
                 tint: profile.averageDaysLate > 7 ? .red : .orange
             )
 
-            MetricCard(
+            CreditMetricCard(
                 title: "credit.metric.current.overdue",
                 value: "\(profile.overdueCount)",
                 icon: profile.overdueCount > 0 ? "exclamationmark.triangle.fill" : "checkmark.shield.fill",
                 tint: profile.overdueCount > 0 ? .red : .green
             )
 
-            MetricCard(
+            CreditMetricCard(
                 title: "credit.metric.streak",
                 value: "\(profile.consecutiveOnTimePayments)",
                 icon: "flame.fill",
                 tint: .blue
             )
         }
+    }
+}
+
+private struct CreditMetricCard: View {
+    let title: LocalizedStringKey
+    let value: String
+    let icon: String
+    let tint: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(tint.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                    .overlay {
+                        Image(systemName: icon)
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(tint)
+                    }
+                
+                Spacer()
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                
+                Text(value)
+                    .font(.system(size: 22, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.primary)
+            }
+        }
+        .padding(20)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(
+            tint: Color(.systemGray4),
+            cornerRadius: 22,
+            shadow: .compact,
+            intensity: .subtle
+        )
     }
 }
 
@@ -394,7 +439,7 @@ private struct Recommendation: Identifiable {
     }
 }
 
-private struct RecommendationCard: View {
+    private struct RecommendationCard: View {
     let recommendation: Recommendation
 
     var body: some View {
@@ -423,7 +468,7 @@ private struct RecommendationCard: View {
         .padding(18)
         .frame(maxWidth: .infinity, alignment: .leading)
         .moneyCard(
-            tint: recommendation.color,
+            tint: Color(.systemGray4),
             cornerRadius: 22,
             shadow: .compact,
             intensity: .subtle
