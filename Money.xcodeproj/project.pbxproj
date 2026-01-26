@@ -10,13 +10,6 @@
 		9A09CB302E9AE30500B35429 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A09CB2F2E9AE30500B35429 /* WidgetKit.framework */; };
 		9A09CB322E9AE30500B35429 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9A09CB312E9AE30500B35429 /* SwiftUI.framework */; };
 		9A09CB432E9AE30600B35429 /* MoneyWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 9A09CB2D2E9AE30500B35429 /* MoneyWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		9AD690D02F9F91B100BF12E0 /* HistoricalAnalysisScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C12F9F91B100BF12E0 /* HistoricalAnalysisScene.swift */; };
-		9AD690D12F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C22F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift */; };
-		9AD690D22F9F91B100BF12E0 /* TrendChart.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C32F9F91B100BF12E0 /* TrendChart.swift */; };
-		9AD690D32F9F91B100BF12E0 /* ScenarioCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C42F9F91B100BF12E0 /* ScenarioCard.swift */; };
-		9AD690D42F9F91B100BF12E0 /* HistoricalAggregator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C52F9F91B100BF12E0 /* HistoricalAggregator.swift */; };
-		9AD690D52F9F91B100BF12E0 /* CashFlowProjector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C62F9F91B100BF12E0 /* CashFlowProjector.swift */; };
-		9AD690D62F9F91B100BF12E0 /* AnalyticsModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9AD690C72F9F91B100BF12E0 /* AnalyticsModels.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -401,13 +394,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9AD690D02F9F91B100BF12E0 /* HistoricalAnalysisScene.swift in Sources */,
-				9AD690D12F9F91B100BF12E0 /* HistoricalAnalysisViewModel.swift in Sources */,
-				9AD690D22F9F91B100BF12E0 /* TrendChart.swift in Sources */,
-				9AD690D32F9F91B100BF12E0 /* ScenarioCard.swift in Sources */,
-				9AD690D42F9F91B100BF12E0 /* HistoricalAggregator.swift in Sources */,
-				9AD690D52F9F91B100BF12E0 /* CashFlowProjector.swift in Sources */,
-				9AD690D62F9F91B100BF12E0 /* AnalyticsModels.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -637,7 +623,7 @@
 				CODE_SIGN_ENTITLEMENTS = Money/Money.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SNNV75LLA8;
+				DEVELOPMENT_TEAM = 77F93T3UC9;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
@@ -681,7 +667,7 @@
 				CODE_SIGN_ENTITLEMENTS = Money/Money.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = SNNV75LLA8;
+				DEVELOPMENT_TEAM = 77F93T3UC9;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;

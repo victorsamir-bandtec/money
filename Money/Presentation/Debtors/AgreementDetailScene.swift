@@ -584,7 +584,9 @@ private struct InstallmentCard: View {
             }
         }
         .onAppear { animationPhase = installment.status == .paid ? .completed : .idle }
-        .onChange(of: installment.status) { handleStatusChange($0) }
+        .onChange(of: installment.status) { _, newValue in
+            handleStatusChange(newValue)
+        }
         .onDisappear { animationTask?.cancel() }
     }
 

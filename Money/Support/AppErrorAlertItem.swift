@@ -1,12 +1,13 @@
 import SwiftUI
 
 /// Shared item for presenting `AppError` inside SwiftUI alerts.
-struct AppErrorAlertItem: Identifiable {
-    let id = UUID()
+struct AppErrorAlertItem: Identifiable, Sendable {
+    let id: UUID
     let error: AppError
     let message: String
 
-    init(error: AppError) {
+    nonisolated init(error: AppError) {
+        self.id = UUID()
         self.error = error
         self.message = error.errorDescription ?? ""
     }

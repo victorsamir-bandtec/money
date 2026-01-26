@@ -58,7 +58,9 @@ struct RegisterPaymentScene: View {
     private var amountField: some View {
         VStack(alignment: .leading, spacing: 6) {
             CurrencyField("payment.form.amount", value: $draft.amount, currencyCode: installment.agreement.currencyCode)
-                .onChange(of: draft.amount) { _ in validate() }
+                .onChange(of: draft.amount) {
+                    validate()
+                }
             if !isValidAmount {
                 // Dica de validação discreta
                 Text(String(localized: "payment.form.amount.invalid"))

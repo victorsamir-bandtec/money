@@ -80,7 +80,7 @@ struct HistoricalAggregator: Sendable {
                 installment.statusRaw != paidStatusRawValue
             }
         )
-        var overdueInstallments = try context.fetch(overdueDescriptor)
+        let overdueInstallments = try context.fetch(overdueDescriptor)
         // Forçar carregamento de paidAmount (computed property)
         overdueInstallments.forEach { _ = $0.paidAmount }
         snapshot.overdueAmount = overdueInstallments

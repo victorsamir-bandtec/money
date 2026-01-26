@@ -116,7 +116,7 @@ final class WidgetDataProvider: Sendable {
             let overdueDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
                 installment.dueDate < startOfDay && installment.statusRaw != paidStatusRaw
             })
-            var overdueInstallments = try context.fetch(overdueDescriptor)
+            let overdueInstallments = try context.fetch(overdueDescriptor)
             overdueInstallments.forEach { _ = $0.paidAmount } // Trigger paidAmount computation
             let overdueTotal = overdueInstallments
                 .filter { $0.remainingAmount > .zero }
@@ -128,7 +128,7 @@ final class WidgetDataProvider: Sendable {
                 installment.dueDate < monthInterval.end &&
                 installment.statusRaw != paidStatusRaw
             })
-            var plannedInstallments = try context.fetch(plannedDescriptor)
+            let plannedInstallments = try context.fetch(plannedDescriptor)
             plannedInstallments.forEach { _ = $0.paidAmount }
             let planned = plannedInstallments
                 .filter { $0.remainingAmount > .zero }

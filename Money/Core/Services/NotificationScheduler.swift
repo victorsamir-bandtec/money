@@ -14,7 +14,7 @@ protocol UserNotificationCentering: AnyObject {
     func requestAuthorization(options: UNAuthorizationOptions) async throws -> Bool
     func add(_ request: UNNotificationRequest) async throws
     func removePendingNotificationRequests(withIdentifiers identifiers: [String])
-    func getPendingNotificationRequests(completionHandler: @escaping ([UNNotificationRequest]) -> Void)
+    func getPendingNotificationRequests(completionHandler: @escaping @Sendable ([UNNotificationRequest]) -> Void)
 }
 
 @MainActor

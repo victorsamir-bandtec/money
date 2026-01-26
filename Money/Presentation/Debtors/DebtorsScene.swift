@@ -96,13 +96,13 @@ struct DebtorsScene: View {
                     .accessibilityLabel("debtors.add")
                 }
             }
-            .onChange(of: viewModel.searchText) { _ in
+            .onChange(of: viewModel.searchText) {
                 reload()
             }
-            .onChange(of: viewModel.showArchived) { _ in
+            .onChange(of: viewModel.showArchived) {
                 reload()
             }
-            .onChange(of: showingDeleteDebtorDialog) { isPresented in
+            .onChange(of: showingDeleteDebtorDialog) { _, isPresented in
                 if !isPresented {
                     debtorPendingDeletion = nil
                 }

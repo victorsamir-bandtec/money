@@ -30,11 +30,17 @@ struct DashboardSummary: Sendable, Equatable {
         self.variableExpenses = variableExpenses
         self.variableIncome = variableIncome
         self.remainingToReceive = planned + overdue
-        self.availableToSpend = salary + received + planned + variableIncome - (fixedExpenses + overdue + variableExpenses)
+        // Saldo disponível: (Salário + Recebimentos + Renda Extra) - (Despesas Fixas + Despesas Variáveis)
+        // Ignora previsões (planned/overdue) para focar na liquidez real/projetada segura.
+        self.availableToSpend = (salary + received + variableIncome) - (fixedExpenses + variableExpenses)
     }
 
     var totalExpenses: Decimal {
         fixedExpenses + variableExpenses
+    }
+    
+    var totalIncome: Decimal {
+        salary + received + variableIncome
     }
 
     var variableBalance: Decimal {

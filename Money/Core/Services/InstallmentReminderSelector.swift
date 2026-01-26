@@ -10,12 +10,28 @@ enum InstallmentReminderSelector {
         let openInstallments = installments.filter { $0.remainingAmount > .zero }
 
         let overdue = openInstallments.filter { $0.dueDate < startOfToday }
-        if let selectedOverdue = overdue.min(by: isEarlier) {
+        if let selectedOverdue = earliestInstallment(in: overdue) {
             return selectedOverdue
         }
 
         let upcoming = openInstallments.filter { $0.dueDate >= startOfToday }
-        return upcoming.min(by: isEarlier)
+        return earliestInstallment(in: upcoming)
+    }
+
+    private static func earliestInstallment(in installments: [Installment]) -> Installment? {
+        var candidate: Installment?
+        for installment in installments {
+            guard let current = candidate else {
+                candidate = installment
+                continue
+            }
+
+            if isEarlier(installment, current) {
+                candidate = installment
+            }
+        }
+
+        return candidate
     }
 
     private static func isEarlier(_ lhs: Installment, _ rhs: Installment) -> Bool {

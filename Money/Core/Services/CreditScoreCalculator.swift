@@ -16,13 +16,13 @@ struct CreditScoreCalculator: Sendable {
         calendar: Calendar = .current
     ) throws -> DebtorCreditProfile {
         let debtorId = debtor.id
-        var profileDescriptor = FetchDescriptor<DebtorCreditProfile>(
+        let profileDescriptor = FetchDescriptor<DebtorCreditProfile>(
             predicate: #Predicate { $0.debtor.id == debtorId }
         )
         let existingProfile = try context.fetch(profileDescriptor).first
         let profile = existingProfile ?? DebtorCreditProfile(debtor: debtor)
 
-        var agreementsDescriptor = FetchDescriptor<DebtAgreement>(
+        let agreementsDescriptor = FetchDescriptor<DebtAgreement>(
             predicate: #Predicate { $0.debtor.id == debtorId }
         )
         let agreements = try context.fetch(agreementsDescriptor)
@@ -36,11 +36,10 @@ struct CreditScoreCalculator: Sendable {
             return profile
         }
 
-        var allInstallments: [Installment] = []
         let installmentsDescriptor = FetchDescriptor<Installment>(
             predicate: #Predicate { $0.agreement.debtor.id == debtorId }
         )
-        allInstallments = try context.fetch(installmentsDescriptor)
+        let allInstallments = try context.fetch(installmentsDescriptor)
 
         let metrics = calculateMetrics(
             installments: allInstallments,

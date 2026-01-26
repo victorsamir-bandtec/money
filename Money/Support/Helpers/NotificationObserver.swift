@@ -208,29 +208,40 @@ extension NotificationCenter {
         _ name: Notification.Name,
         timeout: TimeInterval = 10
     ) async throws {
-        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+        final class ObserverToken: @unchecked Sendable {
             var observer: NSObjectProtocol?
-            var timeoutTask: Task<Void, Never>?
+            var timeoutItem: DispatchWorkItem?
+            var didComplete = false
+        }
 
-            observer = addObserver(
+        let token = ObserverToken()
+
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            let timeoutItem = DispatchWorkItem {
+                guard !token.didComplete else { return }
+                token.didComplete = true
+                if let observer = token.observer {
+                    NotificationCenter.default.removeObserver(observer)
+                }
+                continuation.resume(throwing: NotificationTimeoutError())
+            }
+            token.timeoutItem = timeoutItem
+
+            token.observer = addObserver(
                 forName: name,
                 object: nil,
                 queue: .main
             ) { _ in
-                if let observer = observer {
+                guard !token.didComplete else { return }
+                token.didComplete = true
+                if let observer = token.observer {
                     NotificationCenter.default.removeObserver(observer)
                 }
-                timeoutTask?.cancel()
+                token.timeoutItem?.cancel()
                 continuation.resume()
             }
 
-            timeoutTask = Task {
-                try? await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
-                if let observer = observer {
-                    NotificationCenter.default.removeObserver(observer)
-                    continuation.resume(throwing: NotificationTimeoutError())
-                }
-            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + timeout, execute: timeoutItem)
         }
     }
 }

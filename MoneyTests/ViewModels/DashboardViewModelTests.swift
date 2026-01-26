@@ -53,7 +53,9 @@ struct DashboardViewModelTests {
         #expect(viewModel.summary.planned == Decimal(150))
         #expect(viewModel.summary.overdue == Decimal(80))
         #expect(viewModel.summary.remainingToReceive == Decimal(230))
-        #expect(viewModel.summary.availableToSpend == Decimal(70))
+        // Nova regra: availableToSpend considera apenas liquidez real (Salário + Recebidos - Despesas).
+        // Neste teste: Salário 0, Recebidos 0 (não há Payments), Despesas 0.
+        #expect(viewModel.summary.availableToSpend == Decimal(0))
         #expect(viewModel.upcoming.count == 2)
 
         let upcomingIdentifiers = viewModel.upcoming.map(\.id)
@@ -187,12 +189,15 @@ struct DashboardSummaryTests {
             overdue: 300,
             fixedExpenses: 1200,
             planned: 700,
-            variableExpenses: 150
+            variableExpenses: 150,
+            variableIncome: 50
         )
 
         #expect(summary.remainingToReceive == Decimal(1000))
-        #expect(summary.availableToSpend == summary.salary + summary.received + summary.planned + summary.variableIncome - (summary.fixedExpenses + summary.overdue + summary.variableExpenses))
+        // Nova fórmula: (Salary + Received + VariableIncome) - (FixedExpenses + VariableExpenses)
+        // 4000 + 850 + 50 - (1200 + 150) = 4900 - 1350 = 3550
+        #expect(summary.availableToSpend == Decimal(3550))
         #expect(summary.totalExpenses == Decimal(1350))
-        #expect(summary.variableBalance == Decimal(-150))
+        #expect(summary.variableBalance == Decimal(-100))
     }
 }

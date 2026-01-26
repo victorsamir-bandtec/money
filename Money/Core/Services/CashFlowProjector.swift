@@ -180,7 +180,7 @@ struct CashFlowProjector: Sendable {
                 installment.statusRaw != paidStatusRawValue
             }
         )
-        var installments = try context.fetch(descriptor)
+        let installments = try context.fetch(descriptor)
         // Forçar carregamento de paidAmount
         installments.forEach { _ = $0.paidAmount }
         return installments.reduce(.zero) { $0 + $1.remainingAmount }
