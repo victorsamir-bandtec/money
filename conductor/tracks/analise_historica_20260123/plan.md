@@ -10,7 +10,7 @@
 - [x] Implementar nova lógica em `CashFlowProjector.swift`. 💡 Skill: `critical-thinking`
 - [x] Implementar ajustes no `HistoricalAggregator` (se necessário para filtrar "apenas pagos"). 💡 Skill: `critical-thinking`
 - [x] Garantir que testes unitários passem. 💡 Skill: `ios-quality-engineer`
-- [ ] Tarefa: Conductor - Verificação Manual do Usuário 'Fase 1' (Protocolo em workflow.md).
+- [x] Tarefa: Conductor - Verificação Manual do Usuário 'Fase 1' (Protocolo em workflow.md).
 
 ## Fase 2: Interface de Usuário (UI)
 - [ ] Criar novo componente `ProjectionCardView.swift` com design profissional (Novo Padrão). 💡 Skill: `ios-ui-crafter`

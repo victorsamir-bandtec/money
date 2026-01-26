@@ -136,7 +136,8 @@ final class HistoricalAnalysisViewModel: ObservableObject {
     }
 
     func formattedConfidence(_ confidence: Double) -> String {
-        confidence.formatted(.percent.precision(.fractionLength(0)))
+        let percent = confidence.formatted(.percent.precision(.fractionLength(0)))
+        return "\(String(localized: "projection.confidence")): \(percent)"
     }
 
     // MARK: - Chart Data Helpers

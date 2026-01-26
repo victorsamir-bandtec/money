@@ -75,22 +75,54 @@ struct HistoricalAnalysisScene: View {
 
     private var summaryCards: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-            MetricCard(
-                title: "analytics.metric.avg.income",
+            compactMetricCard(
                 value: viewModel.formatted(viewModel.averageIncome),
-                caption: growthCaption(for: viewModel.totalIncomeGrowth),
-                icon: "arrow.down.circle.fill",
+                growth: viewModel.totalIncomeGrowth,
+                icon: "arrow.up.circle.fill",
                 tint: .green
             )
 
-            MetricCard(
-                title: "analytics.metric.avg.expenses",
+            compactMetricCard(
                 value: viewModel.formatted(viewModel.averageExpenses),
-                caption: growthCaption(for: viewModel.totalExpensesGrowth),
-                icon: "arrow.up.circle.fill",
+                growth: viewModel.totalExpensesGrowth,
+                icon: "arrow.down.circle.fill",
                 tint: .red
             )
         }
+    }
+
+    private func compactMetricCard(value: String, growth: Double?, icon: String, tint: Color) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(tint.opacity(0.2))
+                    .overlay {
+                        Circle()
+                            .strokeBorder(tint.opacity(0.3), lineWidth: 1)
+                    }
+                    .overlay {
+                        Image(systemName: icon)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(tint)
+                    }
+                    .frame(width: 32, height: 32)
+                
+                Text(value)
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                
+                Spacer(minLength: 0)
+            }
+
+            Text(growthCaption(for: growth))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .moneyCard(tint: tint, cornerRadius: 20)
     }
 
     private var chartsSection: some View {
@@ -133,14 +165,16 @@ struct HistoricalAnalysisScene: View {
                 ForEach(ProjectionScenario.allCases, id: \.self) { scenario in
                     if let scenarioProjections = viewModel.projections[scenario],
                        let nextMonthProjection = scenarioProjections.first {
-                        ScenarioCard(
+                        ProjectionCardView(
                             scenario: scenario,
                             projectedBalance: viewModel.formatted(nextMonthProjection.projectedBalance),
                             confidence: viewModel.formattedConfidence(nextMonthProjection.confidenceLevel),
                             isSelected: viewModel.selectedScenario == scenario
                         )
                         .onTapGesture {
-                            viewModel.selectedScenario = scenario
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                viewModel.selectedScenario = scenario
+                            }
                         }
                     }
                 }
@@ -157,8 +191,7 @@ struct HistoricalAnalysisScene: View {
         )
     }
 
-    private func growthCaption(for growth: Double?) -> LocalizedStringKey? {
-        guard let growth else { return nil }
+    private func growthCaption(for growth: Double?) -> LocalizedStringKey {
         let label = String(localized: "analytics.metric.growth.label")
         let value = viewModel.formattedGrowth(growth)
         return LocalizedStringKey("\(label) \(value)")
