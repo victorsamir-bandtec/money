@@ -78,7 +78,7 @@ struct DashboardScene: View {
                 .animation(.snappy, value: viewModel.summary)
                 .animation(.snappy, value: viewModel.upcoming)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(AppBackground(variant: .dashboard))
             .navigationTitle("Resumo")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
