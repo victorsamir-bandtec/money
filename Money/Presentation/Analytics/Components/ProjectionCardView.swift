@@ -32,7 +32,7 @@ struct ProjectionCardView: View {
                     .fill(scenarioColor.opacity(isSelected ? 0.2 : 0.1))
                 
                 Image(systemName: scenarioIcon)
-                    .font(.system(size: 22, weight: .semibold))
+                    .font(.system(.title2, design: .default, weight: .semibold))
                     .foregroundStyle(scenarioColor)
             }
             .frame(width: 52, height: 52)
@@ -46,14 +46,14 @@ struct ProjectionCardView: View {
                 
                 // Value
                 Text(projectedBalance)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(.title2, design: .rounded, weight: .bold))
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
                 
                 // Confidence Badge
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark.shield.fill")
-                        .font(.system(size: 10))
+                        .font(.caption2)
                     Text(confidence)
                         .font(.caption2.weight(.medium))
                 }
