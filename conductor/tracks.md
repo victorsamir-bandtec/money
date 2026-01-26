@@ -7,5 +7,3 @@
 
 ---
 
-- [x] **Track: Redesign da tela de Resumo (Dashboard) para visual moderno (Liquid Glass) e foco em saldo disponível.**
-*Link: [./tracks/dashboard-redesign-20260125/](./tracks/dashboard-redesign-20260125/)*
