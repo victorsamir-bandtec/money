@@ -12,7 +12,7 @@ Ajudar pessoas a controlarem emprestimos informais e acordos parcelados, junto c
 - Apoiar organizacao com dashboard, lembretes locais e exportacao (CSV).
 
 ## Funcionalidades (escopo atual)
-- Dashboard do mes (metricas, vencimentos, alertas).
+- Dashboard moderno (Liquid Glass) com foco em Saldo Disponivel e metricas do mes.
 - Gestao de devedores e acordos parcelados (geracao automatica de parcelas).
 - Registro de pagamentos e historico.
 - Despesas fixas e salario (calculo de saldo mensal).

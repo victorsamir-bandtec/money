@@ -10,6 +10,7 @@
 
 ## UI
 - SwiftUI.
+- Design System: Estilo "Liquid Glass" (Material, Translucidez).
 - Acessibilidade: Dynamic Type e VoiceOver como requisitos de qualidade.
 
 ## Persistencia
