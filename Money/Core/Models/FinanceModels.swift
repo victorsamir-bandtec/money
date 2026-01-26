@@ -10,7 +10,7 @@ import SwiftUI
     var phone: String?
     var note: String?
     @Relationship(deleteRule: .cascade) var agreements: [DebtAgreement]
-    @Relationship(deleteRule: .nullify, inverse: \DebtorCreditProfile.debtor) var creditProfile: DebtorCreditProfile?
+    @Relationship(deleteRule: .cascade, inverse: \DebtorCreditProfile.debtor) var creditProfile: DebtorCreditProfile?
     var createdAt: Date
     var archived: Bool
 
@@ -39,7 +39,7 @@ import SwiftUI
 
 @Model final class DebtAgreement {
     @Attribute(.unique) var id: UUID
-    @Relationship var debtor: Debtor
+    @Relationship(inverse: \Debtor.agreements) var debtor: Debtor
     var title: String?
     var principal: Decimal
     var startDate: Date
@@ -96,7 +96,7 @@ enum InstallmentStatus: Int, Codable, Sendable {
 
 @Model final class Installment {
     @Attribute(.unique) var id: UUID
-    @Relationship var agreement: DebtAgreement
+    @Relationship(inverse: \DebtAgreement.installments) var agreement: DebtAgreement
     var number: Int
     var dueDate: Date
     var amount: Decimal
@@ -134,7 +134,7 @@ enum InstallmentStatus: Int, Codable, Sendable {
 
 @Model final class Payment {
     @Attribute(.unique) var id: UUID
-    @Relationship var installment: Installment
+    @Relationship(inverse: \Installment.payments) var installment: Installment
     var date: Date
     var amount: Decimal
     var methodRaw: String
