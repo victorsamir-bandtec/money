@@ -54,12 +54,15 @@ struct CashFlowProjector: Sendable {
         }
         duplicatesToDelete.forEach { context.delete($0) }
 
-        // 1. Buscar histórico (últimos 6 meses para média)
-        let sixMonthsAgo = calendar.date(byAdding: .month, value: -6, to: today) ?? today
-        let historicalStartMonth = calendar.dateInterval(of: .month, for: sixMonthsAgo)?.start ?? sixMonthsAgo
+        // 1. Buscar histórico (últimos 6 meses FECHADOS para média)
+        // Ignorar mês atual (parcial)
+        let startOfCurrentMonth = calendar.dateInterval(of: .month, for: today)?.start ?? today
+        let endOfLastMonth = calendar.date(byAdding: .second, value: -1, to: startOfCurrentMonth) ?? today
+        let sixMonthsAgo = calendar.date(byAdding: .month, value: -6, to: startOfCurrentMonth) ?? startOfCurrentMonth
+        
         let historicalSnapshots = try aggregator.fetchSnapshots(
-            from: historicalStartMonth,
-            to: today,
+            from: sixMonthsAgo,
+            to: endOfLastMonth,
             context: context
         )
 
@@ -203,9 +206,9 @@ struct CashFlowProjector: Sendable {
     ) -> Decimal {
         let multiplier: Decimal
         switch (scenario, type) {
-        case (.optimistic, .income): multiplier = 1.20 // +20%
+        case (.optimistic, .income): multiplier = 1.10 // +10%
         case (.optimistic, .expense): multiplier = 0.90 // -10%
-        case (.pessimistic, .income): multiplier = 0.80 // -20%
+        case (.pessimistic, .income): multiplier = 0.90 // -10%
         case (.pessimistic, .expense): multiplier = 1.10 // +10%
         case (.realistic, _): multiplier = 1.0
         }

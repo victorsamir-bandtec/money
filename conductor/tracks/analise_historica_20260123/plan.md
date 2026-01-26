@@ -1,15 +1,15 @@
 # Plan: Melhoria na Análise Histórica e Projeções
 
 ## Fase 1: Preparação e Testes (Logic First)
-- [ ] Criar fixture de dados para `HistoricalAnalysisTests` (Snapshots variados e Installments). 💡 Skill: `ios-quality-engineer`
-- [ ] Escrever testes unitários em `CashFlowProjectorTests` validando: 💡 Skill: `ios-quality-engineer`
-    - [ ] Cálculo de média ignorando mês atual e não pagos.
-    - [ ] Variação Otimista (+10% Rec, -10% Desp).
-    - [ ] Variação Realista (Sem mudança).
-    - [ ] Variação Pessimista (-10% Rec, +10% Desp).
-- [ ] Implementar nova lógica em `CashFlowProjector.swift`. 💡 Skill: `critical-thinking`
-- [ ] Implementar ajustes no `HistoricalAggregator` (se necessário para filtrar "apenas pagos"). 💡 Skill: `critical-thinking`
-- [ ] Garantir que testes unitários passem. 💡 Skill: `ios-quality-engineer`
+- [x] Criar fixture de dados para `HistoricalAnalysisTests` (Snapshots variados e Installments). 💡 Skill: `ios-quality-engineer`
+- [x] Escrever testes unitários em `CashFlowProjectorTests` validando: 💡 Skill: `ios-quality-engineer`
+    - [x] Cálculo de média ignorando mês atual e não pagos.
+    - [x] Variação Otimista (+10% Rec, -10% Desp).
+    - [x] Variação Realista (Sem mudança).
+    - [x] Variação Pessimista (-10% Rec, +10% Desp).
+- [x] Implementar nova lógica em `CashFlowProjector.swift`. 💡 Skill: `critical-thinking`
+- [x] Implementar ajustes no `HistoricalAggregator` (se necessário para filtrar "apenas pagos"). 💡 Skill: `critical-thinking`
+- [x] Garantir que testes unitários passem. 💡 Skill: `ios-quality-engineer`
 - [ ] Tarefa: Conductor - Verificação Manual do Usuário 'Fase 1' (Protocolo em workflow.md).
 
 ## Fase 2: Interface de Usuário (UI)
