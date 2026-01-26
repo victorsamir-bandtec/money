@@ -6,27 +6,47 @@ struct ProjectionCardView: View {
     let confidence: String
     let isSelected: Bool
     
+    // MARK: - Design Tokens
+    
+    private var scenarioColor: Color {
+        switch scenario {
+        case .optimistic: return .mint
+        case .realistic: return .indigo
+        case .pessimistic: return .orange
+        }
+    }
+    
+    private var scenarioIcon: String {
+        switch scenario {
+        case .optimistic: return "chart.line.uptrend.xyaxis"
+        case .realistic: return "chart.line.flattrend.xyaxis"
+        case .pessimistic: return "chart.line.downtrend.xyaxis"
+        }
+    }
+    
     var body: some View {
         HStack(spacing: 16) {
             // Icon Container
-            Circle()
-                .fill(scenario.color.opacity(isSelected ? 0.2 : 0.1))
-                .frame(width: 48, height: 48)
-                .overlay {
-                    Image(systemName: scenario.iconName)
-                        .font(.system(size: 20, weight: .semibold))
-                        .foregroundStyle(scenario.color)
-                }
+            ZStack {
+                Circle()
+                    .fill(scenarioColor.opacity(isSelected ? 0.2 : 0.1))
+                
+                Image(systemName: scenarioIcon)
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(scenarioColor)
+            }
+            .frame(width: 52, height: 52)
             
             VStack(alignment: .leading, spacing: 4) {
                 // Title
                 Text(scenario.titleKey)
-                    .font(.subheadline.weight(.medium))
+                    .font(.subheadline)
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                 
                 // Value
                 Text(projectedBalance)
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .contentTransition(.numericText())
                 
@@ -37,31 +57,45 @@ struct ProjectionCardView: View {
                     Text(confidence)
                         .font(.caption2.weight(.medium))
                 }
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.secondary.opacity(0.1))
+                .clipShape(Capsule())
                 .foregroundStyle(.secondary)
             }
             
             Spacer()
             
             // Selection Indicator
-            if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title3)
-                    .foregroundStyle(scenario.color)
-                    .transition(.scale.combined(with: .opacity))
-            } else {
-                Image(systemName: "circle")
-                    .font(.title3)
-                    .foregroundStyle(.quaternary)
+            ZStack {
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(scenarioColor)
+                        .transition(.scale.combined(with: .opacity))
+                } else {
+                    Image(systemName: "circle")
+                        .font(.title2)
+                        .foregroundStyle(.quaternary)
+                }
             }
         }
         .padding(16)
-        .moneyCard(
-            tint: scenario.color,
-            cornerRadius: 20,
-            shadow: isSelected ? .standard : .compact,
-            intensity: isSelected ? .subtle : .subtle
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(uiColor: .secondarySystemGroupedBackground))
         )
-        .scaleEffect(isSelected ? 1.0 : 0.98)
+        .moneyCard(
+            tint: scenarioColor,
+            cornerRadius: 24,
+            shadow: isSelected ? .standard : .compact,
+            intensity: isSelected ? .standard : .subtle
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(isSelected ? scenarioColor : Color.clear, lineWidth: 2)
+        )
+        .scaleEffect(isSelected ? 1.02 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
@@ -70,7 +104,7 @@ struct ProjectionCardView: View {
     ZStack {
         AppBackground(variant: .dashboard)
         
-        VStack(spacing: 16) {
+        VStack(spacing: 20) {
             ProjectionCardView(
                 scenario: .optimistic,
                 projectedBalance: "R$ 5.230,00",

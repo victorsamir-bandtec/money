@@ -152,7 +152,7 @@ struct HistoricalAnalysisScene: View {
     }
 
     private var projectionsSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: 20) {
             Text("analytics.projections.title")
                 .font(.headline)
                 .foregroundStyle(.secondary)
@@ -162,22 +162,25 @@ struct HistoricalAnalysisScene: View {
                 .foregroundStyle(.secondary)
 
             if !viewModel.projections.isEmpty {
-                ForEach(ProjectionScenario.allCases, id: \.self) { scenario in
-                    if let scenarioProjections = viewModel.projections[scenario],
-                       let nextMonthProjection = scenarioProjections.first {
-                        ProjectionCardView(
-                            scenario: scenario,
-                            projectedBalance: viewModel.formatted(nextMonthProjection.projectedBalance),
-                            confidence: viewModel.formattedConfidence(nextMonthProjection.confidenceLevel),
-                            isSelected: viewModel.selectedScenario == scenario
-                        )
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                viewModel.selectedScenario = scenario
+                VStack(spacing: 16) {
+                    ForEach(ProjectionScenario.allCases, id: \.self) { scenario in
+                        if let scenarioProjections = viewModel.projections[scenario],
+                           let nextMonthProjection = scenarioProjections.first {
+                            ProjectionCardView(
+                                scenario: scenario,
+                                projectedBalance: viewModel.formatted(nextMonthProjection.projectedBalance),
+                                confidence: viewModel.formattedConfidence(nextMonthProjection.confidenceLevel),
+                                isSelected: viewModel.selectedScenario == scenario
+                            )
+                            .onTapGesture {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    viewModel.selectedScenario = scenario
+                                }
                             }
                         }
                     }
                 }
+                .padding(.top, 8)
             }
         }
     }
