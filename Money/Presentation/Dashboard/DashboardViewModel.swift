@@ -82,7 +82,8 @@ struct InstallmentOverview: Identifiable, Equatable, Sendable {
 final class DashboardViewModel: ObservableObject {
     private let context: ModelContext
     private let currencyFormatter: CurrencyFormatter
-    private let observers = NotificationObservers()
+    private let financialObserver = DebouncedNotificationObserver(.financialDataDidChange, debounceInterval: 0.4)
+    private let paymentObserver = DebouncedNotificationObserver(.paymentDataDidChange, debounceInterval: 0.4)
 
     @Published var summary: DashboardSummary = .empty
     @Published var upcoming: [InstallmentOverview] = []
@@ -91,8 +92,8 @@ final class DashboardViewModel: ObservableObject {
     init(context: ModelContext, currencyFormatter: CurrencyFormatter) {
         self.context = context
         self.currencyFormatter = currencyFormatter
-        observers.observe(.financialDataDidChange) { [weak self] in try? self?.load() }
-        observers.observe(.paymentDataDidChange) { [weak self] in try? self?.load() }
+        financialObserver.observe { [weak self] in try? self?.load() }
+        paymentObserver.observe { [weak self] in try? self?.load() }
     }
 
     func load(currentDate: Date = .now) throws {
@@ -113,26 +114,22 @@ final class DashboardViewModel: ObservableObject {
         let startOfDay = calendar.startOfDay(for: date)
         let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: startOfDay, end: startOfDay)
 
-        // Parcelas previstas para o restante do mês (a receber)
-        let plannedPredicate = #Predicate<Installment> { installment in
-            installment.dueDate >= startOfDay
-            && installment.dueDate < monthInterval.end
-            && installment.statusRaw != 2 // paid
+        let paidStatusRaw = InstallmentStatus.paid.rawValue
+        let openInstallmentsDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
+            installment.dueDate < monthInterval.end
+            && installment.statusRaw != paidStatusRaw
             && installment.amount > installment.paidAmount
+        })
+        let openInstallments = try context.fetch(openInstallmentsDescriptor)
+        var planned = Decimal.zero
+        var overdueTotal = Decimal.zero
+        for installment in openInstallments {
+            if installment.dueDate >= startOfDay {
+                planned += installment.remainingAmount
+            } else {
+                overdueTotal += installment.remainingAmount
+            }
         }
-        let plannedDescriptor = FetchDescriptor<Installment>(predicate: plannedPredicate)
-        let plannedInstallments = try context.fetch(plannedDescriptor)
-        let planned = plannedInstallments.reduce(into: Decimal.zero) { $0 += $1.remainingAmount }
-
-        // Total em atraso acumulado (qualquer parcela vencida com valor restante)
-        let overduePredicate = #Predicate<Installment> { installment in
-            installment.dueDate < startOfDay
-            && installment.statusRaw != 2 // paid
-            && installment.amount > installment.paidAmount
-        }
-        let overdueDescriptor = FetchDescriptor<Installment>(predicate: overduePredicate)
-        let overdueInstallments = try context.fetch(overdueDescriptor)
-        let overdueTotal = overdueInstallments.reduce(into: Decimal.zero) { $0 += $1.remainingAmount }
 
         // Recebido no mês corrente
         let paymentsDescriptor = FetchDescriptor<Payment>(predicate: #Predicate { payment in
@@ -154,25 +151,20 @@ final class DashboardViewModel: ObservableObject {
         })
         let salary = try context.fetch(salaryDescriptor).map(\.amount).reduce(.zero, +)
 
-        // Optimized: Fetch variable expenses directly
-        let expenseTypeRaw = "expense"
-        let variableExpensesDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
-            transaction.date >= monthInterval.start 
+        let transactionsDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
+            transaction.date >= monthInterval.start
             && transaction.date < monthInterval.end
-            && transaction.typeRaw == expenseTypeRaw
         })
-        let variableExpenses = try context.fetch(variableExpensesDescriptor)
-            .reduce(into: Decimal.zero) { $0 += $1.amount }
-
-        // Optimized: Fetch variable income directly
-        let incomeTypeRaw = "income"
-        let variableIncomeDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
-            transaction.date >= monthInterval.start 
-            && transaction.date < monthInterval.end
-            && transaction.typeRaw == incomeTypeRaw
-        })
-        let variableIncome = try context.fetch(variableIncomeDescriptor)
-            .reduce(into: Decimal.zero) { $0 += $1.amount }
+        let transactions = try context.fetch(transactionsDescriptor)
+        var variableExpenses = Decimal.zero
+        var variableIncome = Decimal.zero
+        for transaction in transactions {
+            if transaction.typeRaw == CashTransactionType.expense.rawValue {
+                variableExpenses += transaction.amount
+            } else if transaction.typeRaw == CashTransactionType.income.rawValue {
+                variableIncome += transaction.amount
+            }
+        }
 
         summary = DashboardSummary(
             salary: salary,
@@ -189,30 +181,15 @@ final class DashboardViewModel: ObservableObject {
         let calendar = Calendar.current
         let startOfDay = calendar.startOfDay(for: date)
         let windowEnd = calendar.date(byAdding: .day, value: 14, to: startOfDay) ?? startOfDay
-
-        // 1. Fetch Overdue (Any date < startOfDay, status != paid)
-        // Note: statusRaw 2 is .paid
-        let overduePredicate = #Predicate<Installment> { installment in
-            installment.statusRaw != 2
-            && installment.dueDate < startOfDay
-            && installment.amount > installment.paidAmount
-        }
-        var overdueDescriptor = FetchDescriptor<Installment>(predicate: overduePredicate)
-        overdueDescriptor.sortBy = [SortDescriptor(\.dueDate), SortDescriptor(\.number)]
-        let overdueInstallments = try context.fetch(overdueDescriptor)
-
-        // 2. Fetch Upcoming (startOfDay <= date <= windowEnd, status != paid)
-        let upcomingPredicate = #Predicate<Installment> { installment in
-            installment.statusRaw != 2
-            && installment.dueDate >= startOfDay
+        let paidStatusRaw = InstallmentStatus.paid.rawValue
+        let predicate = #Predicate<Installment> { installment in
+            installment.statusRaw != paidStatusRaw
             && installment.dueDate <= windowEnd
             && installment.amount > installment.paidAmount
         }
-        var upcomingDescriptor = FetchDescriptor<Installment>(predicate: upcomingPredicate)
-        upcomingDescriptor.sortBy = [SortDescriptor(\.dueDate), SortDescriptor(\.number)]
-        let upcomingInstallments = try context.fetch(upcomingDescriptor)
-
-        let allInstallments = overdueInstallments + upcomingInstallments
+        var descriptor = FetchDescriptor<Installment>(predicate: predicate)
+        descriptor.sortBy = [SortDescriptor(\.dueDate), SortDescriptor(\.number)]
+        let allInstallments = try context.fetch(descriptor)
 
         let snapshots = allInstallments.map { installment in
             InstallmentOverview(installment: installment, agreement: installment.agreement, referenceDate: date)

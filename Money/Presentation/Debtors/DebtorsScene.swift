@@ -220,14 +220,16 @@ private struct DebtorsSummaryCard: View {
                     value: String(metrics.active),
                     caption: "debtors.metric.active.caption",
                     icon: "person.3.sequence.fill",
-                    tint: .green
+                    tint: .green,
+                    layoutMode: .uniform
                 )
                 MetricCard(
                     title: "debtors.metric.archived",
                     value: String(metrics.archived),
                     caption: "debtors.metric.archived.caption",
                     icon: "archivebox.fill",
-                    tint: .orange
+                    tint: .orange,
+                    layoutMode: .uniform
                 )
             }
 

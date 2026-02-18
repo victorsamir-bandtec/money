@@ -12,59 +12,70 @@ struct DashboardScene: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    // 1. Available Balance
-                    BalanceHeroView(
-                        availableAmount: viewModel.summary.availableToSpend,
+                    DashboardHeroCard(
+                        summary: viewModel.summary,
                         formatter: viewModel.formatted
                     )
-                    
-                    // 2. Metrics Grid
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
-                        SummaryCardView(
-                            title: "Despesas Fixas",
-                            value: viewModel.formatted(viewModel.summary.fixedExpenses),
-                            icon: "house.fill",
-                            color: .orange
-                        )
-                        
-                        SummaryCardView(
-                            title: "Variáveis",
-                            value: viewModel.formatted(viewModel.summary.variableExpenses),
-                            icon: "cart.fill",
-                            color: .pink
-                        )
-                        
-                        SummaryCardView(
-                            title: "Renda Extra",
-                            value: viewModel.formatted(viewModel.summary.variableIncome),
-                            icon: "banknote.fill",
-                            color: .green
-                        )
-                        
-                        SummaryCardView(
-                            title: "Recebidos",
-                            value: viewModel.formatted(viewModel.summary.received),
-                            icon: "arrow.down.circle.fill",
-                            color: .blue
-                        )
+
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("dashboard.summary")
+                            .font(.headline)
+                            .foregroundStyle(.secondary)
+
+                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
+                            MetricCard(
+                                title: "dashboard.metric.expenses.fixed",
+                                value: viewModel.formatted(viewModel.summary.fixedExpenses),
+                                caption: "dashboard.metric.expenses.caption",
+                                icon: "house.fill",
+                                tint: .expenseRed,
+                                layoutMode: .uniform
+                            )
+
+                            MetricCard(
+                                title: "dashboard.metric.expenses.variable",
+                                value: viewModel.formatted(viewModel.summary.variableExpenses),
+                                caption: "dashboard.metric.expenses.caption",
+                                icon: "cart.fill",
+                                tint: .warningOrange,
+                                layoutMode: .uniform
+                            )
+
+                            MetricCard(
+                                title: "dashboard.metric.expenses.income",
+                                value: viewModel.formatted(viewModel.summary.variableIncome),
+                                icon: "banknote.fill",
+                                tint: .seaGreen,
+                                layoutMode: .uniform
+                            )
+
+                            MetricCard(
+                                title: "dashboard.metric.received",
+                                value: viewModel.formatted(viewModel.summary.received),
+                                caption: "dashboard.metric.received.caption",
+                                icon: "arrow.down.circle.fill",
+                                tint: .blue,
+                                layoutMode: .uniform
+                            )
+                        }
                     }
-                    
-                    // 3. Budget Progress
+
                     BudgetProgressView(
-                        title: "Balanço Mensal",
+                        title: "dashboard.metric.spent.total",
+                        caption: "dashboard.metric.spent.caption",
                         current: viewModel.summary.totalExpenses,
                         total: viewModel.summary.totalIncome,
-                        color: viewModel.summary.totalExpenses > viewModel.summary.totalIncome ? .red : .blue,
+                        color: viewModel.summary.totalExpenses > viewModel.summary.totalIncome ? .overdueRed : .appThemeColor,
                         formatter: viewModel.formatted
                     )
-                    
-                    // 4. Upcoming Payments
+
                     UpcomingPaymentsView(
+                        title: "dashboard.upcoming",
                         items: viewModel.upcoming.map { item in
                             UpcomingPaymentItem(
                                 id: item.id,
                                 title: item.displayTitle,
-                                subtitle: item.agreementTitle ?? "Empréstimo",
+                                subtitle: item.agreementTitle ?? String(localized: "debtor.agreement.untitled"),
                                 amount: item.amount,
                                 date: item.dueDate,
                                 type: .receivable
@@ -73,13 +84,13 @@ struct DashboardScene: View {
                         formatter: viewModel.formatted
                     )
                 }
-                .padding(.horizontal, 16)
+                .padding(.horizontal, 20)
                 .padding(.vertical, 24)
                 .animation(.snappy, value: viewModel.summary)
                 .animation(.snappy, value: viewModel.upcoming)
             }
             .background(AppBackground(variant: .dashboard))
-            .navigationTitle("Resumo")
+            .navigationTitle(String(localized: "dashboard.title"))
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -87,6 +98,7 @@ struct DashboardScene: View {
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
+                    .accessibilityLabel(String(localized: "dashboard.refresh"))
                 }
             }
         }
@@ -101,75 +113,9 @@ struct DashboardScene: View {
 
 // MARK: - Components
 
-fileprivate struct BalanceHeroView: View {
-    let availableAmount: Decimal
-    let formatter: (Decimal) -> String
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text("Saldo disponível")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
-            
-            Text(formatter(availableAmount))
-                .font(.system(size: 42, weight: .bold, design: .rounded))
-                .foregroundStyle(.primary)
-                .contentTransition(.numericText())
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
-        .padding(.horizontal, 16)
-        .glassBackground(cornerRadius: 28, material: .thickMaterial)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Saldo disponível: \(formatter(availableAmount))")
-        .accessibilityAddTraits(.isHeader)
-    }
-}
-
-fileprivate struct SummaryCardView: View {
-    let title: String
-    let value: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 32, height: 32)
-                    .overlay {
-                        Image(systemName: icon)
-                            .foregroundStyle(color)
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                Spacer()
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                
-                Text(value)
-                    .font(.system(.title3, design: .rounded, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .minimumScaleFactor(0.8)
-                    .lineLimit(1)
-            }
-        }
-        .padding(16)
-        .glassBackground(cornerRadius: 20, material: .regularMaterial)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(title), \(value)")
-    }
-}
-
 fileprivate struct BudgetProgressView: View {
-    let title: String
+    let title: LocalizedStringKey
+    let caption: LocalizedStringKey
     let current: Decimal
     let total: Decimal
     let color: Color
@@ -182,26 +128,40 @@ fileprivate struct BudgetProgressView: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(title)
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(color.opacity(0.2))
+                    .overlay {
+                        Image(systemName: "chart.pie.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(color)
+                    }
+                    .frame(width: 36, height: 36)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text(caption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Spacer()
-                
+
                 Text("\(Int(progress * 100))%")
-                    .font(.subheadline)
+                    .font(.headline)
                     .fontWeight(.bold)
                     .foregroundStyle(color)
             }
-            
+
             GeometryReader { proxy in
                 ZStack(alignment: .leading) {
                     Capsule()
-                        .fill(Color.secondary.opacity(0.1))
+                        .fill(Color.secondary.opacity(0.12))
                         .frame(height: 12)
-                    
+
                     Capsule()
                         .fill(color)
                         .frame(width: proxy.size.width * CGFloat(progress), height: 12)
@@ -209,21 +169,21 @@ fileprivate struct BudgetProgressView: View {
                 }
             }
             .frame(height: 12)
-            
+
             HStack {
                 Text(formatter(current))
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                
+
                 Spacer()
-                
+
                 Text(formatter(total))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
         }
-        .padding()
-        .glassBackground(cornerRadius: 20, material: .regularMaterial)
+        .padding(20)
+        .moneyCard(tint: color, cornerRadius: 24, shadow: .compact, intensity: .standard)
     }
 }
 
@@ -242,57 +202,100 @@ fileprivate struct UpcomingPaymentItem: Identifiable {
 }
 
 fileprivate struct UpcomingPaymentsView: View {
+    let title: LocalizedStringKey
     let items: [UpcomingPaymentItem]
     let formatter: (Decimal) -> String
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Próximos Vencimentos")
-                .font(.headline)
-                .padding(.horizontal, 4)
-            
-            if items.isEmpty {
-                ContentUnavailableView(
-                    "Tudo em dia!",
-                    systemImage: "checkmark.circle",
-                    description: Text("Nenhum pagamento ou recebimento próximo.")
-                )
-                .frame(maxWidth: .infinity)
-                .padding()
-                .glassBackground(cornerRadius: 20, material: .regularMaterial)
-            } else {
-                VStack(spacing: 12) {
-                    ForEach(items) { item in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(item.title)
-                                    .font(.body)
-                                    .fontWeight(.medium)
-                                
-                                Text(item.subtitle)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text(formatter(item.amount))
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(item.type == .receivable ? .green : .primary)
-                                
-                                Text(item.date, format: .dateTime.day().month())
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+        MoneyCard(tint: .appThemeColor, cornerRadius: 28, shadow: .standard, intensity: .standard) {
+            VStack(alignment: .leading, spacing: 16) {
+                Text(title)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+
+                if items.isEmpty {
+                    AppEmptyState(
+                        icon: "checkmark.circle.fill",
+                        title: "dashboard.upcoming",
+                        message: "dashboard.upcoming.empty",
+                        style: .minimal
+                    )
+                    .frame(maxWidth: .infinity)
+                } else {
+                    VStack(spacing: 12) {
+                        ForEach(items.indices, id: \.self) { index in
+                            UpcomingPaymentRow(
+                                item: items[index],
+                                showDivider: index < items.count - 1,
+                                formatter: formatter
+                            )
                         }
-                        .padding()
-                        .glassBackground(cornerRadius: 16, material: .thinMaterial)
                     }
                 }
             }
+            .padding(20)
         }
     }
 }
 
+fileprivate struct UpcomingPaymentRow: View {
+    let item: UpcomingPaymentItem
+    let showDivider: Bool
+    let formatter: (Decimal) -> String
 
+    private var amountColor: Color {
+        item.type == .receivable ? .seaGreen : .primary
+    }
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Circle()
+                    .fill(amountColor.opacity(0.2))
+                    .overlay {
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(amountColor)
+                    }
+                    .frame(width: 32, height: 32)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title)
+                        .font(.body)
+                        .fontWeight(.medium)
+
+                    Text(item.subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text(formatter(item.amount))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(amountColor)
+
+                    Text(item.date, format: .dateTime.day().month())
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if showDivider {
+                Divider()
+                    .opacity(0.2)
+            }
+        }
+        .padding(16)
+        .moneyCard(tint: amountColor, cornerRadius: 20, shadow: .compact, intensity: .subtle)
+    }
+}
+
+#Preview {
+    let environment = AppEnvironment(isStoredInMemoryOnly: true)
+    let context = environment.modelContext
+    try? environment.sampleDataService.populateData()
+
+    return DashboardScene(environment: environment, context: context)
+}

@@ -87,18 +87,12 @@ struct HistoricalAggregator: Sendable {
             .filter { $0.remainingAmount > .zero }
             .reduce(.zero) { $0 + $1.remainingAmount }
 
-        let debtorsDescriptor = FetchDescriptor<Debtor>(
-            predicate: #Predicate { !$0.archived }
-        )
-        let debtors = try context.fetch(debtorsDescriptor)
-        snapshot.activeDebtors = debtors.filter { debtor in
-            debtor.agreements.contains { !$0.closed }
-        }.count
-
         let agreementsDescriptor = FetchDescriptor<DebtAgreement>(
             predicate: #Predicate { !$0.closed }
         )
-        snapshot.activeAgreements = try context.fetch(agreementsDescriptor).count
+        let activeAgreements = try context.fetch(agreementsDescriptor)
+        snapshot.activeAgreements = activeAgreements.count
+        snapshot.activeDebtors = Set(activeAgreements.map { $0.debtor.id }).count
 
         // 6. Recalcular totais
         snapshot.totalIncome = snapshot.salary + snapshot.paymentsReceived + snapshot.variableIncome

@@ -184,28 +184,32 @@ struct AgreementDetailScene: View {
                 value: environment.currencyFormatter.string(from: viewModel.totalAmount),
                 caption: "agreement.metric.total.caption",
                 icon: "banknote.fill",
-                tint: .blue
+                tint: .blue,
+                layoutMode: .uniform
             )
             MetricCard(
                 title: "agreement.metric.paid",
                 value: environment.currencyFormatter.string(from: viewModel.totalPaid),
                 caption: "agreement.metric.paid.caption",
                 icon: "checkmark.seal.fill",
-                tint: .green
+                tint: .green,
+                layoutMode: .uniform
             )
             MetricCard(
                 title: "agreement.metric.installments.paid",
                 value: "\(viewModel.paidInstallmentsCount)/\(viewModel.agreement.installmentCount)",
                 caption: "agreement.metric.installments.paid.caption",
                 icon: "checklist",
-                tint: .teal
+                tint: .teal,
+                layoutMode: .uniform
             )
             MetricCard(
                 title: "agreement.metric.installments.overdue",
                 value: "\(viewModel.overdueInstallmentsCount)",
                 caption: "agreement.metric.installments.overdue.caption",
                 icon: "clock.badge.exclamationmark.fill",
-                tint: .red
+                tint: .red,
+                layoutMode: .uniform
             )
         }
     }

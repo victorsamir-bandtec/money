@@ -6,18 +6,28 @@ struct MetricCard: View {
         case prominent
     }
 
+    enum LayoutMode {
+        case automatic
+        case uniform
+    }
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let title: LocalizedStringKey
     let value: String
     var caption: LocalizedStringKey? = nil
     var icon: String = "chart.bar"
     var tint: Color = .accentColor
     var style: Style = .standard
+    var layoutMode: LayoutMode = .automatic
 
     private var padding: CGFloat { style == .prominent ? 24 : 20 }
     private var cornerRadius: CGFloat { style == .prominent ? 28 : 22 }
     private var spacing: CGFloat { style == .prominent ? 18 : 14 }
     private var iconSize: CGFloat { style == .prominent ? 42 : 36 }
     private var iconFont: Font { .system(size: style == .prominent ? 19 : 17, weight: .semibold) }
+    private var titleFont: Font { style == .prominent ? .headline : .subheadline }
+    private var captionFont: Font { .footnote }
     private var shadow: MoneyCardShadow { style == .prominent ? .standard : .compact }
     private var intensity: MoneyCardIntensity { style == .prominent ? .prominent : .standard }
     private var valueFont: Font {
@@ -25,26 +35,15 @@ struct MetricCard: View {
             ? .system(size: 32, weight: .bold, design: .rounded)
             : .system(size: 22, weight: .semibold, design: .rounded)
     }
+    private var useUniformLayout: Bool { layoutMode == .uniform && !dynamicTypeSize.isAccessibilitySize }
+    private var shouldRenderCaptionSection: Bool { caption != nil || useUniformLayout }
 
     var body: some View {
         VStack(alignment: .leading, spacing: spacing) {
-            HStack(spacing: 12) {
-                iconBadge
-                Text(title)
-                    .font(style == .prominent ? .headline : .subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(tint)
-                Spacer(minLength: 0)
-            }
-
-            Text(value)
-                .font(valueFont)
-                .foregroundStyle(.primary)
-
-            if let caption {
-                Text(caption)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            headerSection
+            valueSection
+            if shouldRenderCaptionSection {
+                captionSection
             }
         }
         .padding(padding)
@@ -55,6 +54,77 @@ struct MetricCard: View {
             shadow: shadow,
             intensity: intensity
         )
+    }
+
+    private var headerSection: some View {
+        HStack(spacing: 12) {
+            iconBadge
+            if useUniformLayout {
+                ZStack(alignment: .topLeading) {
+                    twoLinePlaceholder(font: titleFont, weight: .semibold)
+                    titleText(lineLimit: 2)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                titleText()
+                Spacer(minLength: 0)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var valueSection: some View {
+        if useUniformLayout {
+            Text(value)
+                .font(valueFont)
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(style == .prominent ? 0.7 : 0.75)
+        } else {
+            Text(value)
+                .font(valueFont)
+                .foregroundStyle(.primary)
+        }
+    }
+
+    @ViewBuilder
+    private var captionSection: some View {
+        if useUniformLayout {
+            ZStack(alignment: .topLeading) {
+                twoLinePlaceholder(font: captionFont)
+                if let caption {
+                    captionText(caption, lineLimit: 2)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } else if let caption {
+            captionText(caption)
+        }
+    }
+
+    private func titleText(lineLimit: Int? = nil) -> some View {
+        Text(title)
+            .font(titleFont)
+            .fontWeight(.semibold)
+            .foregroundStyle(tint)
+            .multilineTextAlignment(.leading)
+            .lineLimit(lineLimit)
+    }
+
+    private func captionText(_ caption: LocalizedStringKey, lineLimit: Int? = nil) -> some View {
+        Text(caption)
+            .font(captionFont)
+            .foregroundStyle(.secondary)
+            .multilineTextAlignment(.leading)
+            .lineLimit(lineLimit)
+    }
+
+    private func twoLinePlaceholder(font: Font, weight: Font.Weight = .regular) -> some View {
+        Text("A\nA")
+            .font(font)
+            .fontWeight(weight)
+            .hidden()
+            .accessibilityHidden(true)
     }
 
     private var iconBadge: some View {

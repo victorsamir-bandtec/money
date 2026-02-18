@@ -8,7 +8,7 @@ final class TransactionsViewModel: ObservableObject {
     @Published private(set) var metrics: TransactionsMetrics = .empty
     @Published private(set) var availableCategories: [String] = []
     @Published var searchText: String = "" {
-        didSet { applyFilters() }
+        didSet { scheduleFilterUpdate() }
     }
     @Published var typeFilter: TypeFilter = .all {
         didSet { applyFilters() }
@@ -26,6 +26,8 @@ final class TransactionsViewModel: ObservableObject {
     private var monthInterval: DateInterval?
     private var allTransactions: [CashTransaction] = []
     private let transactionObserver = NotificationObserver(.cashTransactionDataDidChange)
+    private var filterTask: Task<Void, Never>?
+    private let filterDebounceDelay: UInt64 = 300_000_000
 
     init(context: ModelContext, calendar: Calendar = .current) {
         self.context = context
@@ -137,6 +139,18 @@ final class TransactionsViewModel: ObservableObject {
         }
 
         sections = makeSections(from: results)
+    }
+
+    private func scheduleFilterUpdate() {
+        let delay = filterDebounceDelay
+        filterTask?.cancel()
+        filterTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: delay)
+            guard let self, !Task.isCancelled else { return }
+            await MainActor.run {
+                self.applyFilters()
+            }
+        }
     }
 
     private func makeSections(from transactions: [CashTransaction]) -> [DaySection] {

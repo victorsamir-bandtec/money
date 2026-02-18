@@ -75,30 +75,33 @@ struct CashFlowProjector: Sendable {
         let avgVariableExpenses = historicalSnapshots.reduce(.zero) { $0 + $1.variableExpenses } / Decimal(historicalSnapshots.count)
         let avgSalary = historicalSnapshots.reduce(.zero) { $0 + $1.salary } / Decimal(historicalSnapshots.count)
 
-        // 3. Gerar projeções para cada mês
+        // 3. Pré-carregar dados para o intervalo projetado
+        let salariesByMonth = try fetchSalariesByMonth(
+            from: projectionStart,
+            to: projectionEnd,
+            context: context,
+            calendar: calendar
+        )
+        let confirmedPaymentsByMonth = try fetchConfirmedPaymentsByMonth(
+            from: projectionStart,
+            to: projectionEnd,
+            context: context,
+            calendar: calendar
+        )
+        let projectedFixedExpenses = try fetchFixedExpenses(context: context)
+
+        // 4. Gerar projeções para cada mês
         var projections: [CashFlowProjection] = []
 
         for monthOffset in 1...months {
             guard let targetMonth = calendar.date(byAdding: .month, value: monthOffset, to: today) else { continue }
-            let monthInterval = calendar.dateInterval(of: .month, for: targetMonth)
-                ?? DateInterval(start: targetMonth, end: targetMonth)
+            let monthStart = monthStart(for: targetMonth, calendar: calendar)
 
-            // Projetar salário (usar média histórica)
-            let projectedSalary = try fetchOrEstimateSalary(
-                for: targetMonth,
-                avgSalary: avgSalary,
-                context: context,
-                calendar: calendar
-            )
+            // Projetar salário (usar média histórica quando não há snapshot)
+            let projectedSalary = salariesByMonth[monthStart] ?? avgSalary
 
             // Projetar pagamentos confirmados (parcelas a receber)
-            let confirmedPayments = try fetchConfirmedPayments(
-                for: monthInterval,
-                context: context
-            )
-
-            // Projetar despesas fixas
-            let projectedFixedExpenses = try fetchFixedExpenses(context: context)
+            let confirmedPayments = confirmedPaymentsByMonth[monthStart] ?? .zero
 
             // Aplicar ajuste de cenário
             let adjustedIncome = applyScenarioAdjustment(
@@ -115,7 +118,6 @@ struct CashFlowProjector: Sendable {
             // Calcular confiança (mais próximo = mais confiável)
             let confidence = calculateConfidence(monthOffset: monthOffset)
 
-            let monthStart = monthInterval.start
             let projection: CashFlowProjection
             if let existingProjection = reusableProjections.removeValue(forKey: monthStart) {
                 projection = existingProjection
@@ -150,43 +152,50 @@ struct CashFlowProjector: Sendable {
 
     // MARK: - Helpers
 
-    /// Busca salário confirmado ou estima usando média histórica.
-    private func fetchOrEstimateSalary(
-        for month: Date,
-        avgSalary: Decimal,
+    /// Mapeia salários confirmados por mês.
+    private func fetchSalariesByMonth(
+        from start: Date,
+        to end: Date,
         context: ModelContext,
         calendar: Calendar
-    ) throws -> Decimal {
-        let monthInterval = calendar.dateInterval(of: .month, for: month)
-            ?? DateInterval(start: month, end: month)
-
+    ) throws -> [Date: Decimal] {
         let descriptor = FetchDescriptor<SalarySnapshot>(
             predicate: #Predicate { snapshot in
-                snapshot.referenceMonth >= monthInterval.start &&
-                snapshot.referenceMonth < monthInterval.end
+                snapshot.referenceMonth >= start && snapshot.referenceMonth < end
             }
         )
         let salaries = try context.fetch(descriptor)
-        return salaries.isEmpty ? avgSalary : salaries.reduce(.zero) { $0 + $1.amount }
+        var output: [Date: Decimal] = [:]
+        for snapshot in salaries {
+            let monthStart = monthStart(for: snapshot.referenceMonth, calendar: calendar)
+            output[monthStart, default: .zero] += snapshot.amount
+        }
+        return output
     }
 
-    /// Busca parcelas confirmadas a receber no mês.
-    private func fetchConfirmedPayments(
-        for interval: DateInterval,
-        context: ModelContext
-    ) throws -> Decimal {
+    /// Mapeia parcelas confirmadas a receber por mês.
+    private func fetchConfirmedPaymentsByMonth(
+        from start: Date,
+        to end: Date,
+        context: ModelContext,
+        calendar: Calendar
+    ) throws -> [Date: Decimal] {
         let paidStatusRawValue = InstallmentStatus.paid.rawValue
         let descriptor = FetchDescriptor<Installment>(
             predicate: #Predicate { installment in
-                installment.dueDate >= interval.start &&
-                installment.dueDate < interval.end &&
-                installment.statusRaw != paidStatusRawValue
+                installment.dueDate >= start &&
+                installment.dueDate < end &&
+                installment.statusRaw != paidStatusRawValue &&
+                installment.amount > installment.paidAmount
             }
         )
         let installments = try context.fetch(descriptor)
-        // Forçar carregamento de paidAmount
-        installments.forEach { _ = $0.paidAmount }
-        return installments.reduce(.zero) { $0 + $1.remainingAmount }
+        var output: [Date: Decimal] = [:]
+        for installment in installments {
+            let monthStart = monthStart(for: installment.dueDate, calendar: calendar)
+            output[monthStart, default: .zero] += installment.remainingAmount
+        }
+        return output
     }
 
     /// Busca total de despesas fixas ativas.
@@ -221,6 +230,10 @@ struct CashFlowProjector: Sendable {
         let baseConfidence = 0.90
         let decayRate = 0.05
         return max(0.4, baseConfidence - (Double(monthOffset - 1) * decayRate))
+    }
+
+    private func monthStart(for date: Date, calendar: Calendar) -> Date {
+        calendar.dateInterval(of: .month, for: date)?.start ?? date
     }
 
     private enum AdjustmentType {
