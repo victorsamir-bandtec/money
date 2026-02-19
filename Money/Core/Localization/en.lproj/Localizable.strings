@@ -190,6 +190,8 @@
 "settings.notifications.section" = "Alerts";
 "settings.notifications" = "Due reminders";
 "settings.notifications.request" = "Allow notifications";
+"settings.notifications.toggle" = "Due reminders";
+"settings.export.csv" = "Export CSV";
 "settings.data" = "Data";
 "settings.export" = "Export CSV";
 "settings.share" = "Share export";

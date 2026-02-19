@@ -13,6 +13,11 @@ final class AppEnvironment {
     let debtService: DebtService
     let notificationScheduler: NotificationScheduling
     let sampleDataService: SampleDataService
+    let domainEventBus: DomainEventBus
+    let financialProjectionUpdater: FinancialProjectionUpdater
+    let financialReadModelService: FinancialReadModelService
+    let debtorMetricsEngine: DebtorMetricsEngine
+    let commandService: CommandService
 
     init(
         featureFlags: FeatureFlags? = nil,
@@ -41,6 +46,14 @@ final class AppEnvironment {
         financeCalculator = FinanceCalculator()
         currencyFormatter = CurrencyFormatter()
         debtService = DebtService(calculator: financeCalculator)
+        domainEventBus = DomainEventBus()
+        financialProjectionUpdater = FinancialProjectionUpdater()
+        financialReadModelService = FinancialReadModelService(context: modelContext)
+        debtorMetricsEngine = DebtorMetricsEngine(container: container)
+        commandService = CommandService(
+            eventBus: domainEventBus,
+            projectionUpdater: financialProjectionUpdater
+        )
         if let notificationScheduler {
             self.notificationScheduler = notificationScheduler
         } else {
@@ -55,5 +68,19 @@ final class AppEnvironment {
 
     func saveFeatureFlags() {
         featureFlagsStore.save(featureFlags)
+    }
+
+    func bootstrapReadModels(monthsBack: Int = 12) {
+        do {
+            try financialProjectionUpdater.refreshForHistory(
+                context: modelContext,
+                referenceDate: .now,
+                monthsBack: monthsBack
+            )
+        } catch {
+            #if DEBUG
+            print("Falha ao bootstrap dos read models: \(error)")
+            #endif
+        }
     }
 }

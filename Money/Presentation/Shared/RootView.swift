@@ -29,5 +29,8 @@ struct RootView: View {
                 }
         }
         .tint(.appThemeColor)
+        .task {
+            environment.bootstrapReadModels()
+        }
     }
 }

@@ -23,15 +23,26 @@ final class TransactionsViewModel: ObservableObject {
 
     private let context: ModelContext
     private let calendar: Calendar
+    private let commandService: CommandService?
+    private let eventBus: DomainEventSubscribing?
     private var monthInterval: DateInterval?
     private var allTransactions: [CashTransaction] = []
-    private let transactionObserver = NotificationObserver(.cashTransactionDataDidChange)
+    private let transactionObserver: NotificationObserver?
+    private var eventTask: Task<Void, Never>?
     private var filterTask: Task<Void, Never>?
     private let filterDebounceDelay: UInt64 = 300_000_000
 
-    init(context: ModelContext, calendar: Calendar = .current) {
+    init(
+        context: ModelContext,
+        calendar: Calendar = .current,
+        commandService: CommandService? = nil,
+        eventBus: DomainEventSubscribing? = nil
+    ) {
         self.context = context
         self.calendar = calendar
+        self.commandService = commandService
+        self.eventBus = eventBus
+        self.transactionObserver = eventBus == nil ? NotificationObserver(.cashTransactionDataDidChange) : nil
         setupObservers()
     }
 
@@ -43,33 +54,77 @@ final class TransactionsViewModel: ObservableObject {
 
     func addTransaction(date: Date, amount: Decimal, type: CashTransactionType, category: String?, note: String?) {
         guard validate(amount: amount) else { return }
-        guard let transaction = CashTransaction(
-            date: date,
-            amount: amount,
-            type: type,
-            category: category.normalizedOrNil,
-            note: note.normalizedOrNil
-        ) else {
-            error = .validation("error.transaction.invalid")
-            return
+        do {
+            if let commandService {
+                _ = try commandService.upsertTransaction(
+                    existing: nil,
+                    date: date,
+                    amount: amount,
+                    type: type,
+                    category: category,
+                    note: note,
+                    context: context
+                )
+            } else {
+                guard let transaction = CashTransaction(
+                    date: date,
+                    amount: amount,
+                    type: type,
+                    category: category.normalizedOrNil,
+                    note: note.normalizedOrNil
+                ) else {
+                    error = .validation("error.transaction.invalid")
+                    return
+                }
+                context.insert(transaction)
+                persistChanges()
+            }
+        } catch let appError as AppError {
+            self.error = appError
+        } catch {
+            self.error = .persistence("error.generic")
         }
-        context.insert(transaction)
-        persistChanges()
     }
 
     func updateTransaction(_ transaction: CashTransaction, date: Date, amount: Decimal, type: CashTransactionType, category: String?, note: String?) {
         guard validate(amount: amount) else { return }
-        transaction.date = date
-        transaction.amount = amount
-        transaction.type = type
-        transaction.category = category.normalizedOrNil
-        transaction.note = note.normalizedOrNil
-        persistChanges()
+        do {
+            if let commandService {
+                _ = try commandService.upsertTransaction(
+                    existing: transaction,
+                    date: date,
+                    amount: amount,
+                    type: type,
+                    category: category,
+                    note: note,
+                    context: context
+                )
+            } else {
+                transaction.date = date
+                transaction.amount = amount
+                transaction.type = type
+                transaction.category = category.normalizedOrNil
+                transaction.note = note.normalizedOrNil
+                persistChanges()
+            }
+        } catch let appError as AppError {
+            self.error = appError
+        } catch {
+            self.error = .persistence("error.generic")
+        }
     }
 
     func removeTransaction(_ transaction: CashTransaction) {
-        context.delete(transaction)
-        persistChanges()
+        do {
+            if let commandService {
+                try commandService.deleteTransaction(transaction, context: context)
+            } else {
+                context.delete(transaction)
+                persistChanges()
+            }
+        } catch {
+            self.error = .persistence("error.generic")
+        }
     }
 
     private func fetchTransactions() throws {
@@ -234,6 +289,14 @@ final class TransactionsViewModel: ObservableObject {
         }
     }
 
+    private func reloadCurrentMonth() throws {
+        if let reference = monthInterval?.start {
+            try load(for: reference)
+        } else {
+            try load()
+        }
+    }
+
     private func validate(amount: Decimal) -> Bool {
         guard amount > 0 else {
             error = .validation("error.transaction.amount")
@@ -243,10 +306,24 @@ final class TransactionsViewModel: ObservableObject {
     }
 
     private func setupObservers() {
-        transactionObserver.observe { [weak self] in
+        if let eventBus {
+            eventTask = Task { [weak self] in
+                let stream = await eventBus.stream()
+                for await event in stream {
+                    guard !Task.isCancelled else { return }
+                    guard let self else { return }
+                    if case .transactionChanged = event {
+                        try? self.reloadCurrentMonth()
+                    }
+                }
+            }
+            return
+        }
+
+        transactionObserver?.observe { [weak self] in
             guard let self else { return }
             Task { @MainActor in
-                try? self.load(for: self.monthInterval?.start ?? .now)
+                try? self.reloadCurrentMonth()
             }
         }
     }

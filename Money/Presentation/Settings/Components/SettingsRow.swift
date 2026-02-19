@@ -1,21 +1,36 @@
 import SwiftUI
 
-struct SettingsRow: View {
+struct SettingsRow<Accessory: View>: View {
     let title: LocalizedStringKey
     let icon: String
     let color: Color
     var subtitle: String? = nil
+    @ViewBuilder var accessory: () -> Accessory
+
+    init(
+        title: LocalizedStringKey,
+        icon: String,
+        color: Color,
+        subtitle: String? = nil,
+        @ViewBuilder accessory: @escaping () -> Accessory = { EmptyView() }
+    ) {
+        self.title = title
+        self.icon = icon
+        self.color = color
+        self.subtitle = subtitle
+        self.accessory = accessory
+    }
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(alignment: .center, spacing: 12) {
             Image(systemName: icon)
-                .font(.subheadline)
+                .font(.headline)
                 .foregroundStyle(.white)
-                .frame(width: 30, height: 30)
+                .frame(width: 32, height: 32)
                 .background(color.gradient)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(.rect(cornerRadius: 8))
             
-            VStack(alignment: .leading) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.body)
                     .foregroundStyle(.primary)
@@ -24,8 +39,12 @@ struct SettingsRow: View {
                     Text(subtitle)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(2)
                 }
             }
+            
+            Spacer(minLength: 0)
+            accessory()
         }
     }
 }
@@ -34,5 +53,10 @@ struct SettingsRow: View {
     List {
         SettingsRow(title: "Notificações", icon: "bell.fill", color: .red)
         SettingsRow(title: "Aparência", icon: "paintbrush.fill", color: .blue, subtitle: "Sistema")
+        SettingsRow(title: "Tema", icon: "paintbrush.fill", color: .blue) {
+            Text("Claro")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
     }
 }

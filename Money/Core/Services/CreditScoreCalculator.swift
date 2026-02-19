@@ -50,6 +50,47 @@ struct CreditScoreCalculator: Sendable {
         let score = calculateScore(from: metrics)
         let riskLevel = determineRiskLevel(score: score)
 
+        apply(metrics: metrics, score: score, riskLevel: riskLevel, to: profile)
+
+        if existingProfile == nil { context.insert(profile) }
+        try context.save()
+
+        return profile
+    }
+
+    func calculateMetrics(
+        for debtor: Debtor,
+        context: ModelContext,
+        calendar: Calendar = .current
+    ) throws -> Metrics {
+        let debtorId = debtor.id
+        let agreementsDescriptor = FetchDescriptor<DebtAgreement>(
+            predicate: #Predicate { $0.debtor.id == debtorId }
+        )
+        let agreements = try context.fetch(agreementsDescriptor)
+        let installmentsDescriptor = FetchDescriptor<Installment>(
+            predicate: #Predicate { $0.agreement.debtor.id == debtorId }
+        )
+        let installments = try context.fetch(installmentsDescriptor)
+        return calculateMetrics(
+            installments: installments,
+            agreements: agreements,
+            calendar: calendar
+        )
+    }
+
+    func apply(metrics: Metrics, to profile: DebtorCreditProfile) {
+        let score = calculateScore(from: metrics)
+        let riskLevel = determineRiskLevel(score: score)
+        apply(metrics: metrics, score: score, riskLevel: riskLevel, to: profile)
+    }
+
+    private func apply(
+        metrics: Metrics,
+        score: Int,
+        riskLevel: RiskLevel,
+        to profile: DebtorCreditProfile
+    ) {
         profile.score = score
         profile.riskLevel = riskLevel
         profile.lastCalculated = .now
@@ -68,14 +109,9 @@ struct CreditScoreCalculator: Sendable {
         profile.lastPaymentDate = metrics.lastPaymentDate
         profile.consecutiveOnTimePayments = metrics.consecutiveOnTimePayments
         profile.longestDelayDays = metrics.longestDelayDays
-
-        if existingProfile == nil { context.insert(profile) }
-        try context.save()
-
-        return profile
     }
 
-    private struct Metrics {
+    struct Metrics {
         var totalAgreements: Int
         var totalInstallments: Int
         var paidOnTimeCount: Int

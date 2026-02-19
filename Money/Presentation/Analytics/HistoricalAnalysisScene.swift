@@ -9,7 +9,8 @@ struct HistoricalAnalysisScene: View {
         _viewModel = StateObject(
             wrappedValue: HistoricalAnalysisViewModel(
                 context: context,
-                currencyFormatter: environment.currencyFormatter
+                currencyFormatter: environment.currencyFormatter,
+                readModel: environment.financialReadModelService
             )
         )
     }

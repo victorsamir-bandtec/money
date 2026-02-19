@@ -10,7 +10,8 @@ struct CreditProfileDetailView: View {
         _viewModel = StateObject(
             wrappedValue: DebtorCreditProfileViewModel(
                 context: context,
-                currencyFormatter: environment.currencyFormatter
+                currencyFormatter: environment.currencyFormatter,
+                commandService: environment.commandService
             )
         )
     }

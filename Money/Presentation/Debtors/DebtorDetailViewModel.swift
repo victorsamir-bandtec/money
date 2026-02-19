@@ -12,6 +12,7 @@ final class DebtorDetailViewModel: ObservableObject {
     private let context: ModelContext
     private let calculator: FinanceCalculator
     private let debtService: DebtService
+    private let commandService: CommandService?
     private let notificationScheduler: NotificationScheduling?
     private let observers = NotificationObservers()
     private var reminderSyncTask: Task<Void, Never>?
@@ -21,12 +22,14 @@ final class DebtorDetailViewModel: ObservableObject {
         context: ModelContext,
         calculator: FinanceCalculator,
         debtService: DebtService,
+        commandService: CommandService? = nil,
         notificationScheduler: NotificationScheduling?
     ) {
         self.debtor = debtor
         self.context = context
         self.calculator = calculator
         self.debtService = debtService
+        self.commandService = commandService
         self.notificationScheduler = notificationScheduler
         setupNotificationObservers()
     }
@@ -83,15 +86,7 @@ final class DebtorDetailViewModel: ObservableObject {
         let agreementsDescriptor = FetchDescriptor<DebtAgreement>(predicate: #Predicate { agreement in
             agreement.debtor.id == targetID
         }, sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
-        let fetchedAgreements = try context.fetch(agreementsDescriptor)
-        var refreshedAgreements: [DebtAgreement] = []
-        for agreement in fetchedAgreements {
-            if agreement.updateClosedStatus() {
-                try context.save()
-            }
-            refreshedAgreements.append(agreement)
-        }
-        agreements = refreshedAgreements
+        agreements = try context.fetch(agreementsDescriptor)
 
         // Fetch all installments for the debtor to compute metrics using fresh values
         let installmentsDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
@@ -135,45 +130,44 @@ final class DebtorDetailViewModel: ObservableObject {
 
     func createAgreement(from draft: AgreementDraft) {
         do {
-            let agreement = try debtService.createAgreement(
-                debtor: debtor,
-                title: draft.title,
-                principal: draft.principal,
-                startDate: draft.startDate,
-                installmentCount: draft.installmentCount,
-                currencyCode: draft.currencyCode,
-                interestRate: draft.interestRate,
-                context: context
-            )
+            let agreement: DebtAgreement
+            if let commandService {
+                agreement = try commandService.createAgreement(
+                    debtor: debtor,
+                    draft: draft,
+                    debtService: debtService,
+                    context: context
+                )
+            } else {
+                agreement = try debtService.createAgreement(
+                    debtor: debtor,
+                    title: draft.title,
+                    principal: draft.principal,
+                    startDate: draft.startDate,
+                    installmentCount: draft.installmentCount,
+                    currencyCode: draft.currencyCode,
+                    interestRate: draft.interestRate,
+                    context: context
+                )
+                try context.save()
+                NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
+            }
 
             Task {
-                await context.saveWithCallbacks(
-                    notification: .agreementDataDidChange,
-                    onSuccess: { [weak self] in
-                        guard let self else { return }
-                        if let scheduler = self.notificationScheduler {
-                            let agreementID = agreement.id
-                            let installments = agreement.installments
-                            let targetInstallment = InstallmentReminderSelector.selectTarget(from: installments)
-                            
-                            reminderSyncTask?.cancel()
-                            reminderSyncTask = Task { @MainActor in
-                                await scheduler.cancelReminders(for: agreementID)
-                                if let targetInstallment {
-                                    await scheduler.syncReminders(for: targetInstallment)
-                                }
-                            }
-                        }
-                        try self.load()
-                    },
-                    onError: { [weak self] error in
-                        if let appError = error as? AppError {
-                            self?.error = appError
-                        } else {
-                            self?.error = .persistence("error.generic")
+                if let scheduler = self.notificationScheduler {
+                    let agreementID = agreement.id
+                    let installments = agreement.installments
+                    let targetInstallment = InstallmentReminderSelector.selectTarget(from: installments)
+
+                    reminderSyncTask?.cancel()
+                    reminderSyncTask = Task { @MainActor in
+                        await scheduler.cancelReminders(for: agreementID)
+                        if let targetInstallment {
+                            await scheduler.syncReminders(for: targetInstallment)
                         }
                     }
-                )
+                }
+                try? self.load()
             }
         } catch let error as AppError {
             self.error = error
@@ -193,18 +187,19 @@ final class DebtorDetailViewModel: ObservableObject {
         let targetID = agreement.id
         agreements.removeAll { $0.id == targetID }
         installments.removeAll { $0.agreement.id == targetID }
-        context.delete(agreement)
-
-        Task {
-            await context.saveWithCallbacks(
-                notification: .agreementDataDidChange,
-                onSuccess: { [weak self] in
-                    try self?.load()
-                },
-                onError: { [weak self] _ in
-                    self?.error = .persistence("error.generic")
-                }
-            )
+        do {
+            if let commandService {
+                try commandService.deleteAgreement(agreement, context: context)
+            } else {
+                context.delete(agreement)
+                try context.save()
+                NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
+            }
+            Task { @MainActor [weak self] in
+                try? self?.load()
+            }
+        } catch {
+            self.error = .persistence("error.generic")
         }
     }
 
@@ -222,19 +217,18 @@ final class DebtorDetailViewModel: ObservableObject {
             installment.status = .pending
         }
 
-        let closedChanged = agreement.updateClosedStatus()
-        Task {
-            await context.saveWithCallbacks(
-                notification: closedChanged ? .agreementDataDidChange : .financialDataDidChange,
-                onSuccess: { [weak self] in
-                    guard let self else { return }
-                    self.syncReminders(for: agreement)
-                    try self.load()
-                },
-                onError: { [weak self] _ in
-                    self?.error = .persistence("error.generic")
-                }
-            )
+        do {
+            if let commandService {
+                try commandService.markInstallment(installment, status: status, context: context)
+            } else {
+                _ = agreement.updateClosedStatus()
+                try context.save()
+                NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
+            }
+            syncReminders(for: agreement)
+            try load()
+        } catch {
+            self.error = .persistence("error.generic")
         }
     }
 

@@ -9,12 +9,19 @@ final class AgreementDetailViewModel: ObservableObject {
 
     let agreement: DebtAgreement
     private let context: ModelContext
+    private let commandService: CommandService?
     private let notificationScheduler: NotificationScheduling?
     private var reminderSyncTask: Task<Void, Never>?
 
-    init(agreement: DebtAgreement, context: ModelContext, notificationScheduler: NotificationScheduling? = nil) {
+    init(
+        agreement: DebtAgreement,
+        context: ModelContext,
+        commandService: CommandService? = nil,
+        notificationScheduler: NotificationScheduling? = nil
+    ) {
         self.agreement = agreement
         self.context = context
+        self.commandService = commandService
         self.notificationScheduler = notificationScheduler
     }
 
@@ -71,38 +78,42 @@ final class AgreementDetailViewModel: ObservableObject {
         note: String?
     ) {
         do {
-            guard let payment = Payment(
-                installment: installment,
-                date: date,
-                amount: amount,
-                method: method,
-                note: note
-            ) else {
-                throw AppError.validation("error.payment.invalid")
+            if let commandService {
+                _ = try commandService.registerPayment(
+                    installment: installment,
+                    amount: amount,
+                    date: date,
+                    method: method,
+                    note: note,
+                    context: context
+                )
+            } else {
+                guard let payment = Payment(
+                    installment: installment,
+                    date: date,
+                    amount: amount,
+                    method: method,
+                    note: note
+                ) else {
+                    throw AppError.validation("error.payment.invalid")
+                }
+                context.insert(payment)
+
+                if !installment.payments.contains(where: { $0.id == payment.id }) {
+                    installment.payments.append(payment)
+                }
+                installment.paidAmount += amount
+                if installment.paidAmount >= installment.amount {
+                    installment.status = .paid
+                } else if installment.paidAmount > 0 {
+                    installment.status = .partial
+                }
+                _ = installment.agreement.updateClosedStatus()
+                try context.save()
+                NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
             }
-            context.insert(payment)
-
-            if !installment.payments.contains(where: { $0.id == payment.id }) {
-                installment.payments.append(payment)
-            }
-
-            // Update installment paid amount
-            installment.paidAmount += amount
-
-            // Update status
-            if installment.paidAmount >= installment.amount {
-                installment.status = .paid
-            } else if installment.paidAmount > 0 {
-                installment.status = .partial
-            }
-
-            let agreement = installment.agreement
-            let closedChanged = agreement.updateClosedStatus()
-            try context.save()
             publishInstallmentsChange()
-            syncReminders(for: agreement)
-
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
+            syncReminders(for: installment.agreement)
         } catch let error as AppError {
             context.rollback()
             self.error = error
@@ -114,13 +125,16 @@ final class AgreementDetailViewModel: ObservableObject {
 
     func updateInstallmentStatus(_ installment: Installment, to status: InstallmentStatus) {
         do {
-            installment.status = status
-            let agreement = installment.agreement
-            let closedChanged = agreement.updateClosedStatus()
-            try context.save()
+            if let commandService {
+                try commandService.markInstallment(installment, status: status, context: context)
+            } else {
+                installment.status = status
+                _ = installment.agreement.updateClosedStatus()
+                try context.save()
+                NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
+            }
             publishInstallmentsChange()
-            syncReminders(for: agreement)
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
+            syncReminders(for: installment.agreement)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
@@ -130,34 +144,37 @@ final class AgreementDetailViewModel: ObservableObject {
     func markAsPaidFull(_ installment: Installment, method: PaymentMethod = .other) {
         do {
             let remainingAmount = installment.remainingAmount
-
-            // Create automatic payment for remaining amount
-            guard let payment = Payment(
-                installment: installment,
-                date: .now,
-                amount: remainingAmount,
-                method: method,
-                note: String(localized: "payment.quick.note")
-            ) else {
-                throw AppError.validation("error.payment.invalid")
+            if let commandService {
+                _ = try commandService.registerPayment(
+                    installment: installment,
+                    amount: remainingAmount,
+                    date: .now,
+                    method: method,
+                    note: String(localized: "payment.quick.note"),
+                    context: context
+                )
+            } else {
+                guard let payment = Payment(
+                    installment: installment,
+                    date: .now,
+                    amount: remainingAmount,
+                    method: method,
+                    note: String(localized: "payment.quick.note")
+                ) else {
+                    throw AppError.validation("error.payment.invalid")
+                }
+                context.insert(payment)
+                if !installment.payments.contains(where: { $0.id == payment.id }) {
+                    installment.payments.append(payment)
+                }
+                installment.paidAmount = installment.amount
+                installment.status = .paid
+                _ = installment.agreement.updateClosedStatus()
+                try context.save()
+                NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
             }
-            context.insert(payment)
-
-            if !installment.payments.contains(where: { $0.id == payment.id }) {
-                installment.payments.append(payment)
-            }
-
-            // Mark as fully paid
-            installment.paidAmount = installment.amount
-            installment.status = .paid
-
-            let agreement = installment.agreement
-            let closedChanged = agreement.updateClosedStatus()
-            try context.save()
             publishInstallmentsChange()
-            syncReminders(for: agreement)
-
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
+            syncReminders(for: installment.agreement)
         } catch let error as AppError {
             context.rollback()
             self.error = error
@@ -193,10 +210,9 @@ final class AgreementDetailViewModel: ObservableObject {
             let agreement = installment.agreement
             let closedChanged = agreement.updateClosedStatus()
             try context.save()
+            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
             publishInstallmentsChange()
             syncReminders(for: agreement)
-
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: closedChanged)
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")

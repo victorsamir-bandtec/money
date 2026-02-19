@@ -10,13 +10,19 @@ final class DebtorCreditProfileViewModel: ObservableObject {
 
     private let context: ModelContext
     private let calculator: CreditScoreCalculator
+    private let commandService: CommandService?
     let currencyFormatter: CurrencyFormatter
     private var lastLoadedDebtorId: UUID?
     private let cacheDuration: TimeInterval = 300
 
-    init(context: ModelContext, currencyFormatter: CurrencyFormatter) {
+    init(
+        context: ModelContext,
+        currencyFormatter: CurrencyFormatter,
+        commandService: CommandService? = nil
+    ) {
         self.context = context
         self.calculator = CreditScoreCalculator()
+        self.commandService = commandService
         self.currencyFormatter = currencyFormatter
     }
 
@@ -29,7 +35,11 @@ final class DebtorCreditProfileViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
-            profile = try calculator.calculateProfile(for: debtor, context: context)
+            let debtorID = debtor.id
+            let descriptor = FetchDescriptor<DebtorCreditProfile>(predicate: #Predicate { profile in
+                profile.debtor.id == debtorID
+            })
+            profile = try context.fetch(descriptor).first
             lastLoadedDebtorId = debtor.id
         } catch {
             self.error = .persistence("error.generic")
@@ -38,7 +48,20 @@ final class DebtorCreditProfileViewModel: ObservableObject {
 
     func recalculate(for debtor: Debtor) async {
         lastLoadedDebtorId = nil
-        await loadProfile(for: debtor)
+        do {
+            if let commandService {
+                _ = try commandService.recalculateCreditProfile(
+                    for: debtor,
+                    calculator: calculator,
+                    context: context
+                )
+            } else {
+                _ = try calculator.calculateProfile(for: debtor, context: context)
+            }
+            await loadProfile(for: debtor)
+        } catch {
+            self.error = .persistence("error.generic")
+        }
     }
 
     private func shouldUseCachedProfile(for debtor: Debtor) -> Bool {

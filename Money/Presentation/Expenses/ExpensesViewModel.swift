@@ -24,13 +24,25 @@ final class ExpensesViewModel: ObservableObject {
 
     private let context: ModelContext
     private let calendar: Calendar
+    private let commandService: CommandService?
+    private let eventBus: DomainEventSubscribing?
+    private var eventTask: Task<Void, Never>?
     private var referenceDate: Date
     private var salarySnapshot: SalarySnapshot?
 
-    init(context: ModelContext, calendar: Calendar = .current, referenceDate: Date = .now) {
+    init(
+        context: ModelContext,
+        calendar: Calendar = .current,
+        referenceDate: Date = .now,
+        commandService: CommandService? = nil,
+        eventBus: DomainEventSubscribing? = nil
+    ) {
         self.context = context
         self.calendar = calendar
         self.referenceDate = referenceDate
+        self.commandService = commandService
+        self.eventBus = eventBus
+        subscribeToEvents()
     }
 
     func load(currentMonth: Date = .now) throws {
@@ -42,56 +54,134 @@ final class ExpensesViewModel: ObservableObject {
 
     func addExpense(name: String, amount: Decimal, category: String?, dueDay: Int, note: String?) {
         guard validate(name: name, amount: amount, dueDay: dueDay) else { return }
-
-        guard let expense = FixedExpense(
-            name: name.normalized,
-            amount: amount,
-            category: category.normalizedOrNil,
-            dueDay: dueDay,
-            note: note.normalizedOrNil
-        ) else {
-            error = .validation("error.expense.invalid")
-            return
+        do {
+            if let commandService {
+                _ = try commandService.upsertExpense(
+                    existing: nil,
+                    name: name,
+                    amount: amount,
+                    category: category,
+                    dueDay: dueDay,
+                    active: true,
+                    note: note,
+                    context: context
+                )
+            } else {
+                guard let expense = FixedExpense(
+                    name: name.normalized,
+                    amount: amount,
+                    category: category.normalizedOrNil,
+                    dueDay: dueDay,
+                    note: note.normalizedOrNil
+                ) else {
+                    error = .validation("error.expense.invalid")
+                    return
+                }
+                context.insert(expense)
+                persistChanges()
+            }
+        } catch let appError as AppError {
+            self.error = appError
+        } catch {
+            self.error = .persistence("error.generic")
         }
-        context.insert(expense)
-        persistChanges()
     }
 
     func updateExpense(_ expense: FixedExpense, name: String, amount: Decimal, category: String?, dueDay: Int, note: String?) {
         guard validate(name: name, amount: amount, dueDay: dueDay) else { return }
-
-        expense.name = name.normalized
-        expense.amount = amount
-        expense.category = category.normalizedOrNil
-        expense.dueDay = dueDay
-        expense.note = note.normalizedOrNil
-        persistChanges()
+        do {
+            if let commandService {
+                _ = try commandService.upsertExpense(
+                    existing: expense,
+                    name: name,
+                    amount: amount,
+                    category: category,
+                    dueDay: dueDay,
+                    active: expense.active,
+                    note: note,
+                    context: context
+                )
+            } else {
+                expense.name = name.normalized
+                expense.amount = amount
+                expense.category = category.normalizedOrNil
+                expense.dueDay = dueDay
+                expense.note = note.normalizedOrNil
+                persistChanges()
+            }
+        } catch let appError as AppError {
+            self.error = appError
+        } catch {
+            self.error = .persistence("error.generic")
+        }
     }
 
     func duplicate(_ expense: FixedExpense) {
-        guard let duplicate = FixedExpense(
-            name: expense.name,
-            amount: expense.amount,
-            category: expense.category,
-            dueDay: expense.dueDay,
-            active: expense.active,
-            note: expense.note
-        ) else {
-            error = .validation("error.expense.invalid")
-            return
+        do {
+            if let commandService {
+                _ = try commandService.upsertExpense(
+                    existing: nil,
+                    name: expense.name,
+                    amount: expense.amount,
+                    category: expense.category,
+                    dueDay: expense.dueDay,
+                    active: expense.active,
+                    note: expense.note,
+                    context: context
+                )
+            } else {
+                guard let duplicate = FixedExpense(
+                    name: expense.name,
+                    amount: expense.amount,
+                    category: expense.category,
+                    dueDay: expense.dueDay,
+                    active: expense.active,
+                    note: expense.note
+                ) else {
+                    error = .validation("error.expense.invalid")
+                    return
+                }
+                context.insert(duplicate)
+                persistChanges()
+            }
+        } catch {
+            self.error = .persistence("error.generic")
         }
-        context.insert(duplicate)
-        persistChanges()
     }
 
     func toggleArchive(_ expense: FixedExpense) {
-        expense.active.toggle()
-        persistChanges()
+        do {
+            if let commandService {
+                _ = try commandService.upsertExpense(
+                    existing: expense,
+                    name: expense.name,
+                    amount: expense.amount,
+                    category: expense.category,
+                    dueDay: expense.dueDay,
+                    active: !expense.active,
+                    note: expense.note,
+                    context: context
+                )
+            } else {
+                expense.active.toggle()
+                persistChanges()
+            }
+        } catch {
+            self.error = .persistence("error.generic")
+        }
     }
 
     func removeExpense(_ expense: FixedExpense) {
-        context.delete(expense)
-        persistChanges()
+        do {
+            if let commandService {
+                try commandService.deleteExpense(expense, context: context)
+            } else {
+                context.delete(expense)
+                persistChanges()
+            }
+        } catch {
+            self.error = .persistence("error.generic")
+        }
     }
 
     func formattedCoveragePercentage() -> String? {
@@ -227,6 +317,24 @@ final class ExpensesViewModel: ObservableObject {
             return false
         }
         return true
+    }
+
+    private func subscribeToEvents() {
+        guard let eventBus else { return }
+
+        eventTask = Task { [weak self] in
+            let stream = await eventBus.stream()
+            for await event in stream {
+                guard !Task.isCancelled else { return }
+                guard let self else { return }
+                switch event {
+                case .salaryChanged, .transactionChanged, .paymentChanged, .agreementChanged:
+                    try? self.load(currentMonth: self.referenceDate)
+                case .debtorChanged:
+                    break
+                }
+            }
+        }
     }
 }
 

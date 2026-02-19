@@ -11,13 +11,25 @@ final class DebtorsListViewModel: ObservableObject {
     @Published private(set) var totalCount: Int = 0
     @Published private(set) var archivedCount: Int = 0
     @Published private(set) var summaries: [UUID: DebtorSummary] = [:]
-    @Published private(set) var profiles: [UUID: DebtorCreditProfile] = [:]
+    @Published private(set) var profiles: [UUID: DebtorCreditProfileDTO] = [:]
 
     private let context: ModelContext
-    private let calculator = CreditScoreCalculator()
+    private let commandService: CommandService?
+    private let metricsEngine: DebtorMetricsProviding?
+    private let eventBus: DomainEventSubscribing?
+    private var eventTask: Task<Void, Never>?
 
-    init(context: ModelContext) {
+    init(
+        context: ModelContext,
+        commandService: CommandService? = nil,
+        metricsEngine: DebtorMetricsProviding? = nil,
+        eventBus: DomainEventSubscribing? = nil
+    ) {
         self.context = context
+        self.commandService = commandService
+        self.metricsEngine = metricsEngine
+        self.eventBus = eventBus
+        subscribeToEvents()
     }
 
     func load() throws {
@@ -35,26 +47,90 @@ final class DebtorsListViewModel: ObservableObject {
 
         if let term = searchText.normalizedOrNil {
             results = results.filter { debtor in
-                debtor.name.localizedCaseInsensitiveContains(term)
+                debtor.name.localizedStandardContains(term)
             }
         }
+
         summaries = try computeSummaries(for: results)
         profiles = try loadProfiles(for: results)
         debtors = results
     }
 
-    func creditProfile(for debtor: Debtor) -> DebtorCreditProfile? {
+    func loadAsync() async {
+        guard let metricsEngine else {
+            try? load()
+            return
+        }
+
+        do {
+            let shouldIncludeArchived = showArchived
+            let predicate = #Predicate<Debtor> { debtor in
+                shouldIncludeArchived || debtor.archived == false
+            }
+            let descriptor = FetchDescriptor<Debtor>(predicate: predicate, sortBy: [SortDescriptor(\.createdAt, order: .reverse)])
+            var results = try context.fetch(descriptor)
+
+            let fullDescriptor = FetchDescriptor<Debtor>()
+            let fullList = try context.fetch(fullDescriptor)
+            totalCount = fullList.count
+            archivedCount = fullList.filter(\.archived).count
+
+            if let term = searchText.normalizedOrNil {
+                results = results.filter { debtor in
+                    debtor.name.localizedStandardContains(term)
+                }
+            }
+
+            let debtorIDs = results.map(\.id)
+            async let computedSummaries = metricsEngine.summaries(for: debtorIDs)
+            async let computedProfiles = metricsEngine.profiles(for: debtorIDs)
+
+            let summaryDTOs = try await computedSummaries
+            let profileDTOs = try await computedProfiles
+
+            summaries = summaryDTOs.mapValues { dto in
+                DebtorSummary(
+                    totalAgreements: dto.totalAgreements,
+                    activeAgreements: dto.activeAgreements,
+                    totalInstallments: dto.totalInstallments,
+                    paidInstallments: dto.paidInstallments,
+                    openInstallments: dto.openInstallments,
+                    overdueInstallments: dto.overdueInstallments,
+                    totalAmount: dto.totalAmount,
+                    paidAmount: dto.paidAmount
+                )
+            }
+            profiles = profileDTOs
+            debtors = results
+        } catch {
+            self.error = .persistence("error.generic")
+        }
+    }
+
+    func creditProfile(for debtor: Debtor) -> DebtorCreditProfileDTO? {
         profiles[debtor.id]
     }
 
-    private func loadProfiles(for debtors: [Debtor]) throws -> [UUID: DebtorCreditProfile] {
-        var output: [UUID: DebtorCreditProfile] = [:]
-        for debtor in debtors {
-            if let profile = try? calculator.calculateProfile(for: debtor, context: context) {
-                output[debtor.id] = profile
-            }
-        }
-        return output
+    private func loadProfiles(for debtors: [Debtor]) throws -> [UUID: DebtorCreditProfileDTO] {
+        guard !debtors.isEmpty else { return [:] }
+
+        let debtorIDs = Set(debtors.map(\.id))
+        let descriptor = FetchDescriptor<DebtorCreditProfile>(predicate: #Predicate { profile in
+            debtorIDs.contains(profile.debtor.id)
+        })
+
+        let fetchedProfiles = try context.fetch(descriptor)
+        return Dictionary(uniqueKeysWithValues: fetchedProfiles.map { profile in
+            (
+                profile.debtor.id,
+                DebtorCreditProfileDTO(
+                    debtorID: profile.debtor.id,
+                    score: profile.score,
+                    riskLevel: profile.riskLevel,
+                    lastCalculated: profile.lastCalculated
+                )
+            )
+        })
     }
 
     func addDebtor(name: String, phone: String?, note: String?) {
@@ -62,16 +138,27 @@ final class DebtorsListViewModel: ObservableObject {
             error = .validation("error.debtor.name")
             return
         }
-        guard let debtor = Debtor(name: trimmed, phone: phone, note: note) else {
-            error = .validation("error.debtor.invalid")
-            return
-        }
-        context.insert(debtor)
+
         do {
-            try context.save()
-            try load()
+            if let commandService {
+                _ = try commandService.addDebtor(name: trimmed, phone: phone, note: note, context: context)
+                Task {
+                    if let metricsEngine {
+                        await metricsEngine.invalidate(debtorIDs: nil)
+                    }
+                }
+            } else {
+                guard let debtor = Debtor(name: trimmed, phone: phone, note: note) else {
+                    error = .validation("error.debtor.invalid")
+                    return
+                }
+                context.insert(debtor)
+                try context.save()
+                try load()
+            }
+        } catch let appError as AppError {
+            self.error = appError
         } catch {
-            context.delete(debtor)
             self.error = .persistence("error.generic")
         }
     }
@@ -81,26 +168,62 @@ final class DebtorsListViewModel: ObservableObject {
     }
 
     func toggleArchive(_ debtor: Debtor) {
-        debtor.archived.toggle()
         do {
-            try context.save()
-            try load()
+            if let commandService {
+                try commandService.toggleArchive(debtor: debtor, context: context)
+                Task {
+                    if let metricsEngine {
+                        await metricsEngine.invalidate(debtorIDs: [debtor.id])
+                    }
+                }
+            } else {
+                debtor.archived.toggle()
+                try context.save()
+                try load()
+            }
         } catch {
-            context.undoManager?.undo()
+            context.rollback()
             self.error = .persistence("error.generic")
         }
     }
 
     func deleteDebtor(_ debtor: Debtor) {
-        context.delete(debtor)
         do {
-            try context.save()
-            try load()
-            NotificationCenter.default.post(name: .debtorDataDidChange, object: nil)
-            NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
+            if let commandService {
+                try commandService.deleteDebtor(debtor, context: context)
+                Task {
+                    if let metricsEngine {
+                        await metricsEngine.invalidate(debtorIDs: nil)
+                    }
+                }
+            } else {
+                context.delete(debtor)
+                try context.save()
+                try load()
+                NotificationCenter.default.post(name: .debtorDataDidChange, object: nil)
+                NotificationCenter.default.postFinanceDataUpdates(agreementChanged: true)
+            }
         } catch {
             context.rollback()
             self.error = .persistence("error.generic")
+        }
+    }
+
+    private func subscribeToEvents() {
+        guard let eventBus else { return }
+
+        eventTask = Task { [weak self] in
+            let stream = await eventBus.stream()
+            for await event in stream {
+                guard !Task.isCancelled else { return }
+                guard let self else { return }
+                switch event {
+                case .debtorChanged, .agreementChanged, .paymentChanged:
+                    await self.loadAsync()
+                case .salaryChanged, .transactionChanged:
+                    break
+                }
+            }
         }
     }
 }
@@ -157,22 +280,18 @@ extension DebtorsListViewModel {
         }
 
         var output: [UUID: DebtorSummary] = [:]
-        var needsSave = false
 
         for debtor in debtors {
             let debtorAgreements = agreementsByDebtor[debtor.id] ?? []
-
-            for agreement in debtorAgreements {
+            let closedMap: [UUID: Bool] = Dictionary(uniqueKeysWithValues: debtorAgreements.map { agreement in
                 let agreementInstallments = installmentsByAgreement[agreement.id] ?? []
-                let shouldClose = !agreementInstallments.isEmpty && agreementInstallments.allSatisfy { $0.status == .paid }
-                if agreement.closed != shouldClose {
-                    agreement.closed = shouldClose
-                    needsSave = true
-                }
-            }
+                let isClosed = !agreementInstallments.isEmpty && agreementInstallments.allSatisfy { $0.status == .paid }
+                return (agreement.id, isClosed)
+            })
 
-            let activeAgreements = debtorAgreements.filter { !$0.closed }
-            let activeInstallments = (installmentsByDebtor[debtor.id] ?? []).filter { !$0.agreement.closed }
+            let activeAgreements = debtorAgreements.filter { !(closedMap[$0.id] ?? $0.closed) }
+            let activeAgreementIDs = Set(activeAgreements.map(\.id))
+            let activeInstallments = (installmentsByDebtor[debtor.id] ?? []).filter { activeAgreementIDs.contains($0.agreement.id) }
 
             let totalInstallments = activeInstallments.count
             let paidInstallments = activeInstallments.filter { $0.status == .paid }.count
@@ -197,10 +316,6 @@ extension DebtorsListViewModel {
                 totalAmount: totalAmount,
                 paidAmount: paidAmount
             )
-        }
-
-        if needsSave {
-            try context.save()
         }
 
         return output

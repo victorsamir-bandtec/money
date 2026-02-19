@@ -47,8 +47,20 @@ struct TransactionsScene: View {
     @State private var expenseDetailContext: ExpenseDetailContext?
 
     init(environment: AppEnvironment, context: ModelContext) {
-        _transactionsViewModel = StateObject(wrappedValue: TransactionsViewModel(context: context))
-        _expensesViewModel = StateObject(wrappedValue: ExpensesViewModel(context: context))
+        _transactionsViewModel = StateObject(
+            wrappedValue: TransactionsViewModel(
+                context: context,
+                commandService: environment.commandService,
+                eventBus: environment.domainEventBus
+            )
+        )
+        _expensesViewModel = StateObject(
+            wrappedValue: ExpensesViewModel(
+                context: context,
+                commandService: environment.commandService,
+                eventBus: environment.domainEventBus
+            )
+        )
         self.formatter = environment.currencyFormatter
     }
 
@@ -109,9 +121,6 @@ struct TransactionsScene: View {
                 onDelete: { expensesViewModel.removeExpense(context.expense) }
             )
             .presentationDetents([.medium, .large])
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .financialDataDidChange)) { _ in
-            try? expensesViewModel.load()
         }
         .appErrorAlert(errorBinding)
     }

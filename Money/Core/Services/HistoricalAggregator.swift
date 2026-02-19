@@ -84,7 +84,10 @@ struct HistoricalAggregator: Sendable {
         // Forçar carregamento de paidAmount (computed property)
         overdueInstallments.forEach { _ = $0.paidAmount }
         snapshot.overdueAmount = overdueInstallments
-            .filter { $0.remainingAmount > .zero }
+            .filter { $0.dueDate < monthInterval.start && $0.remainingAmount > .zero }
+            .reduce(.zero) { $0 + $1.remainingAmount }
+        snapshot.plannedReceivables = overdueInstallments
+            .filter { $0.dueDate >= monthInterval.start && $0.remainingAmount > .zero }
             .reduce(.zero) { $0 + $1.remainingAmount }
 
         let agreementsDescriptor = FetchDescriptor<DebtAgreement>(

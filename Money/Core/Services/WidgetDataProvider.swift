@@ -30,7 +30,7 @@ struct WidgetSummary: Sendable, Codable {
     }
 
     var availableToSpend: Decimal {
-        salary + received + planned + variableIncome - (fixedExpenses + overdue + variableExpenses)
+        salary + received + variableIncome - (fixedExpenses + variableExpenses)
     }
 
     static let empty = WidgetSummary(
@@ -104,75 +104,24 @@ final class WidgetDataProvider: Sendable {
     /// - Parameter date: Reference date for calculations (defaults to now)
     /// - Returns: WidgetSummary with current financial metrics
     func fetchWidgetSummary(for date: Date = .now) async throws -> WidgetSummary {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: startOfDay, end: startOfDay)
-
         return try await Task { @MainActor in
             let context = container.mainContext
-
-            // Query 1a: Overdue installments (direct predicate - no memory filtering)
-            let paidStatusRaw = InstallmentStatus.paid.rawValue
-            let overdueDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
-                installment.dueDate < startOfDay && installment.statusRaw != paidStatusRaw
-            })
-            let overdueInstallments = try context.fetch(overdueDescriptor)
-            overdueInstallments.forEach { _ = $0.paidAmount } // Trigger paidAmount computation
-            let overdueTotal = overdueInstallments
-                .filter { $0.remainingAmount > .zero }
-                .reduce(Decimal.zero) { $0 + $1.remainingAmount }
-
-            // Query 1b: Planned installments for rest of month (direct predicate)
-            let plannedDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
-                installment.dueDate >= startOfDay &&
-                installment.dueDate < monthInterval.end &&
-                installment.statusRaw != paidStatusRaw
-            })
-            let plannedInstallments = try context.fetch(plannedDescriptor)
-            plannedInstallments.forEach { _ = $0.paidAmount }
-            let planned = plannedInstallments
-                .filter { $0.remainingAmount > .zero }
-                .reduce(Decimal.zero) { $0 + $1.remainingAmount }
-
-            // Query 2: Payments received this month
-            let paymentsDescriptor = FetchDescriptor<Payment>(predicate: #Predicate { payment in
-                payment.date >= monthInterval.start && payment.date < monthInterval.end
-            })
-            let received = try context.fetch(paymentsDescriptor).reduce(Decimal.zero) { $0 + $1.amount }
-
-            // Query 3: Active fixed expenses + salary (separate but adjacent)
-            let expenseDescriptor = FetchDescriptor<FixedExpense>(predicate: #Predicate { $0.active })
-            let fixedExpenses = try context.fetch(expenseDescriptor).reduce(Decimal.zero) { $0 + $1.amount }
-
-            let salaryDescriptor = FetchDescriptor<SalarySnapshot>(predicate: #Predicate { snapshot in
-                snapshot.referenceMonth >= monthInterval.start && snapshot.referenceMonth < monthInterval.end
-            })
-            let salary = try context.fetch(salaryDescriptor).reduce(Decimal.zero) { $0 + $1.amount }
-
-            // Query 4: Variable transactions (income + expenses in single query)
-            let transactionsDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
-                transaction.date >= monthInterval.start && transaction.date < monthInterval.end
-            })
-            let transactions = try context.fetch(transactionsDescriptor)
-
-            var variableExpenses = Decimal.zero
-            var variableIncome = Decimal.zero
-            for transaction in transactions {
-                if transaction.type == .expense {
-                    variableExpenses += transaction.amount
-                } else {
-                    variableIncome += transaction.amount
+            let monthStart = Calendar.current.dateInterval(of: .month, for: date)?.start ?? date
+            let descriptor = FetchDescriptor<MonthlySnapshot>(
+                predicate: #Predicate { snapshot in
+                    snapshot.referenceMonth == monthStart
                 }
-            }
+            )
+            let summarySnapshot = try context.fetch(descriptor).first
 
             return WidgetSummary(
-                salary: salary,
-                received: received,
-                overdue: overdueTotal,
-                fixedExpenses: fixedExpenses,
-                planned: planned,
-                variableExpenses: variableExpenses,
-                variableIncome: variableIncome
+                salary: summarySnapshot?.salary ?? .zero,
+                received: summarySnapshot?.paymentsReceived ?? .zero,
+                overdue: summarySnapshot?.overdueAmount ?? .zero,
+                fixedExpenses: summarySnapshot?.fixedExpenses ?? .zero,
+                planned: summarySnapshot?.plannedReceivables ?? .zero,
+                variableExpenses: summarySnapshot?.variableExpenses ?? .zero,
+                variableIncome: summarySnapshot?.variableIncome ?? .zero
             )
         }.value
     }
@@ -183,28 +132,23 @@ final class WidgetDataProvider: Sendable {
     ///   - date: Reference date (defaults to now)
     /// - Returns: Array of upcoming installments sorted by due date
     func fetchUpcomingInstallments(limit: Int = 5, for date: Date = .now) async throws -> [WidgetInstallment] {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let windowEnd = calendar.date(byAdding: .day, value: WidgetConstants.upcomingDaysWindow, to: startOfDay) ?? startOfDay
-
         return try await Task { @MainActor in
             let context = container.mainContext
-
-            // Direct query with prefetching to avoid N+1 problem
+            let startOfDay = Calendar.current.startOfDay(for: date)
+            let windowEnd = Calendar.current.date(byAdding: .day, value: WidgetConstants.upcomingDaysWindow, to: startOfDay) ?? startOfDay
             let paidStatusRaw = InstallmentStatus.paid.rawValue
-            var descriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
-                installment.dueDate < windowEnd && installment.statusRaw != paidStatusRaw
-            })
-            descriptor.sortBy = [SortDescriptor(\.dueDate)]
-            descriptor.relationshipKeyPathsForPrefetching = [\.agreement, \.agreement.debtor]
 
+            var descriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
+                installment.statusRaw != paidStatusRaw
+                    && installment.dueDate <= windowEnd
+                    && installment.amount > installment.paidAmount
+            })
+            descriptor.sortBy = [SortDescriptor(\.dueDate), SortDescriptor(\.number)]
+            descriptor.relationshipKeyPathsForPrefetching = [\.agreement, \.agreement.debtor]
             let installments = try context.fetch(descriptor)
 
-            // Map to widget format, filter remaining > 0, and limit
-            let snapshots = installments
-                .filter { $0.remainingAmount > .zero }
-                .prefix(limit)
-                .map { installment -> WidgetInstallment in
+            return Array(
+                installments.prefix(limit).map { installment in
                     let agreement = installment.agreement
                     return WidgetInstallment(
                         id: installment.id,
@@ -212,13 +156,12 @@ final class WidgetDataProvider: Sendable {
                         debtorName: agreement.debtor.name,
                         agreementTitle: agreement.title,
                         dueDate: installment.dueDate,
-                        amount: installment.amount,
+                        amount: installment.remainingAmount,
                         statusRaw: installment.statusRaw,
-                        isOverdue: installment.dueDate < startOfDay
+                        isOverdue: installment.isOverdue(relativeTo: startOfDay)
                     )
                 }
-
-            return Array(snapshots)
+            )
         }.value
     }
 }

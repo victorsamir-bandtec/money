@@ -10,12 +10,16 @@ enum AppThemeOption: Int, CaseIterable, Identifiable {
 
     var id: Int { rawValue }
 
-    var label: LocalizedStringKey {
+    var label: String {
         switch self {
         case .system: return "theme.system"
         case .light: return "theme.light"
         case .dark: return "theme.dark"
         }
+    }
+
+    var localizedLabel: String {
+        NSLocalizedString(label, bundle: .main, comment: "")
     }
 
     var colorScheme: ColorScheme? {
@@ -82,37 +86,19 @@ final class SettingsViewModel: ObservableObject {
     }
 
     func updateSalary(amount: Decimal, month: Date, note: String?) {
-        guard amount >= 0 else {
-            error = .validation("error.salary.invalid")
-            return
-        }
-
-        let context = environment.modelContext
-        let interval = calendar.dateInterval(of: .month, for: month) ?? DateInterval(start: month, end: month)
-        let descriptor = FetchDescriptor<SalarySnapshot>(predicate: #Predicate { snapshot in
-            snapshot.referenceMonth >= interval.start && snapshot.referenceMonth < interval.end
-        })
-
         do {
-            let snapshots = try context.fetch(descriptor)
-            if let existing = snapshots.first {
-                existing.amount = amount
-                existing.referenceMonth = month
-                existing.note = normalized(note)
-                salary = existing
-            } else {
-                guard let snapshot = SalarySnapshot(referenceMonth: month, amount: amount, note: normalized(note)) else {
-                    error = .validation("error.salary.invalid")
-                    return
-                }
-                context.insert(snapshot)
-                salary = snapshot
-            }
-
-            try context.save()
+            let snapshot = try environment.commandService.updateSalary(
+                amount: amount,
+                month: month,
+                note: normalized(note),
+                context: environment.modelContext,
+                calendar: calendar
+            )
+            salary = snapshot
             refreshAfterSaving(month: month)
+        } catch let appError as AppError {
+            self.error = appError
         } catch {
-            context.rollback()
             self.error = .persistence("error.generic")
         }
     }
@@ -131,6 +117,14 @@ final class SettingsViewModel: ObservableObject {
     func populateSampleData() {
         do {
             try environment.sampleDataService.populateData()
+            environment.bootstrapReadModels()
+            Task {
+                await environment.domainEventBus.publish(.debtorChanged)
+                await environment.domainEventBus.publish(.agreementChanged)
+                await environment.domainEventBus.publish(.paymentChanged)
+                await environment.domainEventBus.publish(.salaryChanged)
+                await environment.domainEventBus.publish(.transactionChanged)
+            }
             NotificationCenter.default.postTransactionDataUpdates()
             load()
         } catch {
@@ -141,6 +135,14 @@ final class SettingsViewModel: ObservableObject {
     func clearAllData() {
         do {
             try environment.sampleDataService.clearAllData()
+            environment.bootstrapReadModels()
+            Task {
+                await environment.domainEventBus.publish(.debtorChanged)
+                await environment.domainEventBus.publish(.agreementChanged)
+                await environment.domainEventBus.publish(.paymentChanged)
+                await environment.domainEventBus.publish(.salaryChanged)
+                await environment.domainEventBus.publish(.transactionChanged)
+            }
             NotificationCenter.default.postDataStoreCleared()
             load()
         } catch {
@@ -184,7 +186,6 @@ final class SettingsViewModel: ObservableObject {
     }
 
     private func refreshAfterSaving(month: Date) {
-        NotificationCenter.default.post(name: .financialDataDidChange, object: nil)
         load(referenceDate: month)
     }
 

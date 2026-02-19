@@ -5,7 +5,14 @@ struct DashboardScene: View {
     @StateObject private var viewModel: DashboardViewModel
     
     init(environment: AppEnvironment, context: ModelContext) {
-        _viewModel = StateObject(wrappedValue: DashboardViewModel(context: context, currencyFormatter: environment.currencyFormatter))
+        _viewModel = StateObject(
+            wrappedValue: DashboardViewModel(
+                context: context,
+                currencyFormatter: environment.currencyFormatter,
+                readModel: environment.financialReadModelService,
+                eventBus: environment.domainEventBus
+            )
+        )
     }
     
     var body: some View {
@@ -94,7 +101,7 @@ struct DashboardScene: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
-                        Task { try? await viewModel.load() }
+                        Task { try? viewModel.load() }
                     } label: {
                         Image(systemName: "arrow.clockwise")
                     }
@@ -103,10 +110,10 @@ struct DashboardScene: View {
             }
         }
         .task {
-            try? await viewModel.load()
+            try? viewModel.load()
         }
         .refreshable {
-            try? await viewModel.load()
+            try? viewModel.load()
         }
     }
 }

@@ -13,7 +13,8 @@ struct DashboardViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            MonthlySnapshot.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -46,6 +47,7 @@ struct DashboardViewModelTests {
         context.insert(paidInstallment)
 
         try context.save()
+        try FinancialProjectionUpdater().refreshForCurrentMonth(context: context, referenceDate: now)
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
         try viewModel.load(currentDate: now)
@@ -74,7 +76,8 @@ struct DashboardViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            MonthlySnapshot.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -89,6 +92,7 @@ struct DashboardViewModelTests {
         let previousMonth = calendar.date(byAdding: .month, value: -1, to: referenceDate)!
         context.insert(CashTransaction(date: previousMonth, amount: 50, type: .expense, category: "Viagem")!)
         try context.save()
+        try FinancialProjectionUpdater().refreshForCurrentMonth(context: context, referenceDate: referenceDate)
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
         try viewModel.load(currentDate: referenceDate)
@@ -109,7 +113,8 @@ struct DashboardViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            MonthlySnapshot.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -119,6 +124,7 @@ struct DashboardViewModelTests {
         context.insert(FixedExpense(name: "Internet", amount: 100, dueDay: 10, active: true)!)
         context.insert(FixedExpense(name: "Curso Arquivado", amount: 200, dueDay: 15, active: false)!)
         try context.save()
+        try FinancialProjectionUpdater().refreshForCurrentMonth(context: context, referenceDate: Date.now)
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
         try viewModel.load(currentDate: Date.now)
@@ -136,7 +142,8 @@ struct DashboardViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            MonthlySnapshot.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -147,6 +154,7 @@ struct DashboardViewModelTests {
         context.insert(SalarySnapshot(referenceMonth: currentMonth, amount: 5000)!)
         context.insert(FixedExpense(name: "Aluguel", amount: 1500, dueDay: 5)!)
         try context.save()
+        try FinancialProjectionUpdater().refreshForCurrentMonth(context: context, referenceDate: Date.now)
 
         let viewModel = DashboardViewModel(context: context, currencyFormatter: CurrencyFormatter())
         try viewModel.load(currentDate: Date.now)
@@ -161,6 +169,7 @@ struct DashboardViewModelTests {
         let environment = AppEnvironment(isStoredInMemoryOnly: true)
 
         try environment.sampleDataService.populateData()
+        environment.bootstrapReadModels()
 
         let viewModel = DashboardViewModel(
             context: environment.modelContext,
@@ -172,6 +181,7 @@ struct DashboardViewModelTests {
         #expect(!viewModel.upcoming.isEmpty)
 
         try environment.sampleDataService.clearAllData()
+        environment.bootstrapReadModels()
         try viewModel.load(currentDate: Date.now)
 
         #expect(viewModel.summary == DashboardSummary.empty)

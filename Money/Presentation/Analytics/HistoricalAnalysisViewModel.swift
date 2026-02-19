@@ -14,9 +14,9 @@ final class HistoricalAnalysisViewModel: ObservableObject {
     @Published var selectedScenario: ProjectionScenario = .realistic
 
     private let context: ModelContext
-    private let aggregator: HistoricalAggregator
     private let projector: CashFlowProjector
     private let currencyFormatter: CurrencyFormatter
+    private let readModel: FinancialSummaryQuerying
 
     enum TimeRange: String, CaseIterable {
         case threeMonths = "analytics.range.3months"
@@ -32,11 +32,15 @@ final class HistoricalAnalysisViewModel: ObservableObject {
         }
     }
 
-    init(context: ModelContext, currencyFormatter: CurrencyFormatter) {
+    init(
+        context: ModelContext,
+        currencyFormatter: CurrencyFormatter,
+        readModel: FinancialSummaryQuerying? = nil
+    ) {
         self.context = context
-        self.aggregator = HistoricalAggregator()
         self.projector = CashFlowProjector()
         self.currencyFormatter = currencyFormatter
+        self.readModel = readModel ?? FinancialReadModelService(context: context)
     }
 
     func loadHistoricalData() async {
@@ -52,16 +56,7 @@ final class HistoricalAnalysisViewModel: ObservableObject {
             let startMonthComponents = calendar.dateComponents([.year, .month], from: rawStartMonth)
             let startMonth = calendar.date(from: startMonthComponents) ?? rawStartMonth
 
-            // Garantir que snapshots existam para o período (calcular sob demanda)
-            var currentMonth = startMonth
-            while currentMonth <= today {
-                _ = try aggregator.calculateSnapshot(for: currentMonth, context: context, calendar: calendar)
-                guard let nextMonth = calendar.date(byAdding: .month, value: 1, to: currentMonth) else { break }
-                currentMonth = nextMonth
-            }
-
-            // Buscar snapshots
-            snapshots = try aggregator.fetchSnapshots(from: startMonth, to: today, context: context)
+            snapshots = try readModel.history(from: startMonth, to: today)
 
         } catch {
             self.error = .persistence("error.historical.load")
@@ -114,14 +109,18 @@ final class HistoricalAnalysisViewModel: ObservableObject {
         guard snapshots.count >= 2 else { return nil }
         let first = snapshots.first!.totalIncome
         let last = snapshots.last!.totalIncome
-        return aggregator.calculateGrowthRate(current: last, previous: first)
+        guard first > 0 else { return nil }
+        let growth = (last - first) / first
+        return Double(truncating: NSDecimalNumber(decimal: growth))
     }
 
     var totalExpensesGrowth: Double? {
         guard snapshots.count >= 2 else { return nil }
         let first = snapshots.first!.totalExpenses
         let last = snapshots.last!.totalExpenses
-        return aggregator.calculateGrowthRate(current: last, previous: first)
+        guard first > 0 else { return nil }
+        let growth = (last - first) / first
+        return Double(truncating: NSDecimalNumber(decimal: growth))
     }
 
     // MARK: - Formatters

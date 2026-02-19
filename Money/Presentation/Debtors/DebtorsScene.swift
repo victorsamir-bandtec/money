@@ -14,7 +14,14 @@ struct DebtorsScene: View {
     init(environment: AppEnvironment, context: ModelContext) {
         self.environment = environment
         self.context = context
-        _viewModel = StateObject(wrappedValue: DebtorsListViewModel(context: context))
+        _viewModel = StateObject(
+            wrappedValue: DebtorsListViewModel(
+                context: context,
+                commandService: environment.commandService,
+                metricsEngine: environment.debtorMetricsEngine,
+                eventBus: environment.domainEventBus
+            )
+        )
     }
 
     var body: some View {
@@ -97,10 +104,10 @@ struct DebtorsScene: View {
                 }
             }
             .onChange(of: viewModel.searchText) {
-                reload()
+                Task { await reload() }
             }
             .onChange(of: viewModel.showArchived) {
-                reload()
+                Task { await reload() }
             }
             .onChange(of: showingDeleteDebtorDialog) { _, isPresented in
                 if !isPresented {
@@ -108,7 +115,7 @@ struct DebtorsScene: View {
                 }
             }
             .task {
-                reload()
+                await reload()
             }
             .sheet(isPresented: $showingCreateSheet) {
                 NavigationStack {
@@ -124,12 +131,6 @@ struct DebtorsScene: View {
                 }
             }
             .appErrorAlert(errorBinding)
-            .onReceive(NotificationCenter.default.publisher(for: .financialDataDidChange)) { _ in
-                reload()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .debtorDataDidChange)) { _ in
-                reload()
-            }
             .confirmationDialog(
                 String(localized: "debtors.delete.confirmation.title"),
                 isPresented: $showingDeleteDebtorDialog,
@@ -175,8 +176,8 @@ struct DebtorsScene: View {
     }
 
     @MainActor
-    private func reload() {
-        try? viewModel.load()
+    private func reload() async {
+        await viewModel.loadAsync()
     }
 }
 
@@ -261,7 +262,7 @@ private struct DebtorsSummaryCard: View {
 private struct DebtorRow: View {
     let debtor: Debtor
     let summary: DebtorsListViewModel.DebtorSummary
-    let profile: DebtorCreditProfile?
+    let profile: DebtorCreditProfileDTO?
     let environment: AppEnvironment
 
     var body: some View {

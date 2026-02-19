@@ -13,7 +13,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -39,7 +40,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -67,7 +69,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -90,7 +93,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -127,7 +131,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -176,7 +181,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -216,7 +222,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -265,7 +272,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -286,8 +294,8 @@ struct DebtorsListViewModelTests {
         #expect(viewModel.activeCount == 2)
     }
 
-    @Test("Atualiza status de acordo fechado ao calcular resumo") @MainActor
-    func updatesClosedStatusWhenComputingSummary() throws {
+    @Test("Não persiste fechamento de acordo durante leitura de resumo") @MainActor
+    func doesNotMutateAgreementClosedStatusDuringSummaryRead() throws {
         let schema = Schema([
             Debtor.self,
             DebtAgreement.self,
@@ -295,7 +303,8 @@ struct DebtorsListViewModelTests {
             Payment.self,
             CashTransaction.self,
             FixedExpense.self,
-            SalarySnapshot.self
+            SalarySnapshot.self,
+            DebtorCreditProfile.self
         ])
         let configuration = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try ModelContainer(for: schema, configurations: configuration)
@@ -316,10 +325,10 @@ struct DebtorsListViewModelTests {
         let viewModel = DebtorsListViewModel(context: context)
         try viewModel.load()
 
-        // Após calcular o resumo, o acordo deve estar fechado
-        #expect(agreement.closed)
+        // Leitura deve ser pura: status persistido não é alterado neste fluxo
+        #expect(!agreement.closed)
 
         let summary = viewModel.summary(for: debtor)
-        #expect(summary.activeAgreements == 0)
+        #expect(summary.activeAgreements == 0) // derivado em memória, sem persistir
     }
 }

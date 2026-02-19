@@ -199,8 +199,10 @@
 "settings.salary.empty" = "Nenhum salário cadastrado para este mês.";
 "settings.salary.history" = "Histórico recente";
 "settings.notifications.section" = "Alertas";
+"settings.notifications.toggle" = "Notificações de vencimento";
 "settings.notifications" = "Alertas de vencimento";
 "settings.notifications.request" = "Permitir notificações";
+"settings.export.csv" = "Exportar CSV";
 "settings.data" = "Dados";
 "settings.export" = "Exportar CSV";
 "settings.share" = "Compartilhar exportação";

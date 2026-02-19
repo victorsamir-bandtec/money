@@ -1,6 +1,6 @@
 import Foundation
-import SwiftData
 import Combine
+import SwiftData
 
 struct DashboardSummary: Sendable, Equatable {
     var salary: Decimal
@@ -30,15 +30,13 @@ struct DashboardSummary: Sendable, Equatable {
         self.variableExpenses = variableExpenses
         self.variableIncome = variableIncome
         self.remainingToReceive = planned + overdue
-        // Saldo disponível: (Salário + Recebimentos + Renda Extra) - (Despesas Fixas + Despesas Variáveis)
-        // Ignora previsões (planned/overdue) para focar na liquidez real/projetada segura.
         self.availableToSpend = (salary + received + variableIncome) - (fixedExpenses + variableExpenses)
     }
 
     var totalExpenses: Decimal {
         fixedExpenses + variableExpenses
     }
-    
+
     var totalIncome: Decimal {
         salary + received + variableIncome
     }
@@ -73,6 +71,18 @@ struct InstallmentOverview: Identifiable, Equatable, Sendable {
         self.isOverdue = installment.isOverdue(relativeTo: referenceDate)
     }
 
+    init(snapshot: UpcomingInstallmentSnapshot) {
+        self.id = snapshot.id
+        self.agreementID = snapshot.agreementID
+        self.debtorName = snapshot.debtorName
+        self.agreementTitle = snapshot.agreementTitle
+        self.dueDate = snapshot.dueDate
+        self.amount = snapshot.amount
+        self.status = snapshot.status
+        self.number = snapshot.number
+        self.isOverdue = snapshot.isOverdue
+    }
+
     var displayTitle: String {
         agreementTitle ?? debtorName
     }
@@ -80,20 +90,25 @@ struct InstallmentOverview: Identifiable, Equatable, Sendable {
 
 @MainActor
 final class DashboardViewModel: ObservableObject {
-    private let context: ModelContext
+    private let readModel: FinancialSummaryQuerying
     private let currencyFormatter: CurrencyFormatter
-    private let financialObserver = DebouncedNotificationObserver(.financialDataDidChange, debounceInterval: 0.4)
-    private let paymentObserver = DebouncedNotificationObserver(.paymentDataDidChange, debounceInterval: 0.4)
+    private let eventBus: DomainEventSubscribing?
+    private var eventTask: Task<Void, Never>?
 
     @Published var summary: DashboardSummary = .empty
     @Published var upcoming: [InstallmentOverview] = []
     @Published var alerts: [InstallmentOverview] = []
 
-    init(context: ModelContext, currencyFormatter: CurrencyFormatter) {
-        self.context = context
+    init(
+        context: ModelContext,
+        currencyFormatter: CurrencyFormatter,
+        readModel: FinancialSummaryQuerying? = nil,
+        eventBus: DomainEventSubscribing? = nil
+    ) {
         self.currencyFormatter = currencyFormatter
-        financialObserver.observe { [weak self] in try? self?.load() }
-        paymentObserver.observe { [weak self] in try? self?.load() }
+        self.readModel = readModel ?? FinancialReadModelService(context: context)
+        self.eventBus = eventBus
+        subscribeToEvents()
     }
 
     func load(currentDate: Date = .now) throws {
@@ -102,102 +117,24 @@ final class DashboardViewModel: ObservableObject {
     }
 
     func loadSummary(currentDate: Date = .now) throws {
-        try fetchSummary(for: currentDate)
-    }
-
-    func loadInstallments(currentDate: Date = .now) throws {
-        try fetchUpcoming(for: currentDate)
-    }
-
-    private func fetchSummary(for date: Date) throws {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let monthInterval = calendar.dateInterval(of: .month, for: date) ?? DateInterval(start: startOfDay, end: startOfDay)
-
-        let paidStatusRaw = InstallmentStatus.paid.rawValue
-        let openInstallmentsDescriptor = FetchDescriptor<Installment>(predicate: #Predicate { installment in
-            installment.dueDate < monthInterval.end
-            && installment.statusRaw != paidStatusRaw
-            && installment.amount > installment.paidAmount
-        })
-        let openInstallments = try context.fetch(openInstallmentsDescriptor)
-        var planned = Decimal.zero
-        var overdueTotal = Decimal.zero
-        for installment in openInstallments {
-            if installment.dueDate >= startOfDay {
-                planned += installment.remainingAmount
-            } else {
-                overdueTotal += installment.remainingAmount
-            }
-        }
-
-        // Recebido no mês corrente
-        let paymentsDescriptor = FetchDescriptor<Payment>(predicate: #Predicate { payment in
-            payment.date >= monthInterval.start && payment.date < monthInterval.end
-        })
-        let payments = try context.fetch(paymentsDescriptor)
-        let received: Decimal = payments.reduce(.zero) { $0 + $1.amount }
-
-        // Despesas fixas ativas
-        let expenseDescriptor = FetchDescriptor<FixedExpense>(predicate: #Predicate { expense in
-            expense.active
-        })
-        let expenses = try context.fetch(expenseDescriptor)
-        let fixedExpenses = expenses.reduce(into: Decimal.zero) { $0 += $1.amount }
-
-        // Salário registrado para o mês corrente
-        let salaryDescriptor = FetchDescriptor<SalarySnapshot>(predicate: #Predicate { snapshot in
-            snapshot.referenceMonth >= monthInterval.start && snapshot.referenceMonth < monthInterval.end
-        })
-        let salary = try context.fetch(salaryDescriptor).map(\.amount).reduce(.zero, +)
-
-        let transactionsDescriptor = FetchDescriptor<CashTransaction>(predicate: #Predicate { transaction in
-            transaction.date >= monthInterval.start
-            && transaction.date < monthInterval.end
-        })
-        let transactions = try context.fetch(transactionsDescriptor)
-        var variableExpenses = Decimal.zero
-        var variableIncome = Decimal.zero
-        for transaction in transactions {
-            if transaction.typeRaw == CashTransactionType.expense.rawValue {
-                variableExpenses += transaction.amount
-            } else if transaction.typeRaw == CashTransactionType.income.rawValue {
-                variableIncome += transaction.amount
-            }
-        }
-
+        let snapshot = try readModel.summary(for: currentDate)
         summary = DashboardSummary(
-            salary: salary,
-            received: received,
-            overdue: overdueTotal,
-            fixedExpenses: fixedExpenses,
-            planned: planned,
-            variableExpenses: variableExpenses,
-            variableIncome: variableIncome
+            salary: snapshot.salary,
+            received: snapshot.received,
+            overdue: snapshot.overdue,
+            fixedExpenses: snapshot.fixedExpenses,
+            planned: snapshot.planned,
+            variableExpenses: snapshot.variableExpenses,
+            variableIncome: snapshot.variableIncome
         )
     }
 
-    private func fetchUpcoming(for date: Date) throws {
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: date)
-        let windowEnd = calendar.date(byAdding: .day, value: 14, to: startOfDay) ?? startOfDay
-        let paidStatusRaw = InstallmentStatus.paid.rawValue
-        let predicate = #Predicate<Installment> { installment in
-            installment.statusRaw != paidStatusRaw
-            && installment.dueDate <= windowEnd
-            && installment.amount > installment.paidAmount
-        }
-        var descriptor = FetchDescriptor<Installment>(predicate: predicate)
-        descriptor.sortBy = [SortDescriptor(\.dueDate), SortDescriptor(\.number)]
-        let allInstallments = try context.fetch(descriptor)
-
-        let snapshots = allInstallments.map { installment in
-            InstallmentOverview(installment: installment, agreement: installment.agreement, referenceDate: date)
-        }
-
-        if upcoming != snapshots {
-            upcoming = snapshots
-            alerts = snapshots
+    func loadInstallments(currentDate: Date = .now) throws {
+        let snapshots = try readModel.upcomingInstallments(for: currentDate, windowDays: 14)
+        let mapped = snapshots.map(InstallmentOverview.init(snapshot:))
+        if mapped != upcoming {
+            upcoming = mapped
+            alerts = mapped
         }
     }
 
@@ -205,10 +142,21 @@ final class DashboardViewModel: ObservableObject {
         currencyFormatter.string(from: value)
     }
 
-    private static func installmentSorter(_ lhs: InstallmentOverview, _ rhs: InstallmentOverview) -> Bool {
-        if lhs.dueDate == rhs.dueDate {
-            return lhs.number < rhs.number
+    private func subscribeToEvents() {
+        guard let eventBus else { return }
+
+        eventTask = Task { [weak self] in
+            let stream = await eventBus.stream()
+            for await event in stream {
+                guard !Task.isCancelled else { return }
+                guard let self else { return }
+                switch event {
+                case .agreementChanged, .paymentChanged, .salaryChanged, .transactionChanged:
+                    try? self.load()
+                case .debtorChanged:
+                    break
+                }
+            }
         }
-        return lhs.dueDate < rhs.dueDate
     }
 }

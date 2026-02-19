@@ -454,6 +454,7 @@ enum RiskLevel: String, Codable, CaseIterable, Sendable {
 
     // Métricas de devedores
     var overdueAmount: Decimal // Valor em atraso no final do mês
+    var plannedReceivables: Decimal = Decimal.zero // Parcelas a receber dentro do mês
     var activeDebtors: Int // Devedores com saldo devedor
     var activeAgreements: Int // Acordos ativos
 
@@ -468,6 +469,7 @@ enum RiskLevel: String, Codable, CaseIterable, Sendable {
         fixedExpenses: Decimal = .zero,
         variableExpenses: Decimal = .zero,
         overdueAmount: Decimal = .zero,
+        plannedReceivables: Decimal = .zero,
         activeDebtors: Int = 0,
         activeAgreements: Int = 0,
         createdAt: Date = .now
@@ -483,6 +485,7 @@ enum RiskLevel: String, Codable, CaseIterable, Sendable {
         self.totalExpenses = fixedExpenses + variableExpenses
         self.netBalance = (salary + paymentsReceived + variableIncome) - (fixedExpenses + variableExpenses)
         self.overdueAmount = overdueAmount
+        self.plannedReceivables = plannedReceivables
         self.activeDebtors = activeDebtors
         self.activeAgreements = activeAgreements
         self.createdAt = createdAt
